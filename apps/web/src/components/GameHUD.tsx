@@ -10,8 +10,10 @@ interface GameHUDProps {
   opponentName: string;
   onOfferDouble: () => void;
   onRollDice: () => void;
+  onUndo?: () => void;
   canRoll: boolean;
   canDouble: boolean;
+  canUndo?: boolean;
   soundManager: SoundManager;
 }
 
@@ -21,8 +23,10 @@ export function GameHUD({
   opponentName,
   onOfferDouble,
   onRollDice,
+  onUndo,
   canRoll,
   canDouble,
+  canUndo = false,
   soundManager,
 }: GameHUDProps) {
   const [muted, setMuted] = useState(soundManager.isMuted());
@@ -104,8 +108,25 @@ export function GameHUD({
 
       {/* Bottom bar: player info + turn indicator (doubles as roll button) */}
       <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between px-3 pb-2">
-        <div className="pointer-events-auto">
+        <div className="flex items-center gap-2 pointer-events-auto">
           <PlayerBadge name="You" color={playerColor} />
+          {canUndo && onUndo && (
+            <button
+              onClick={onUndo}
+              className="
+                bg-[#1A1A0E]/80 hover:bg-[#1A1A0E]
+                text-[#D4A857] font-heading text-xs
+                px-3 py-1.5 rounded-lg
+                border border-[#8B4513]
+                hover:border-[#D4A857]
+                transition-all duration-150
+                cursor-pointer
+              "
+              title="Undo last move"
+            >
+              Undo
+            </button>
+          )}
         </div>
         {canRoll ? (
           <button

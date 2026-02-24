@@ -71,30 +71,45 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
           }
           break;
         case "Escape":
+        case "q": // vim: quit selection
           e.preventDefault();
           ctrl.deselectPiece();
           break;
         case "Tab":
+        case "n": // vim: next piece
           e.preventDefault();
           ctrl.selectNextPiece();
           break;
         case "ArrowRight":
         case "ArrowDown":
+        case "l": // vim: right
+        case "j": // vim: down
           e.preventDefault();
           ctrl.cycleTarget(1);
           break;
         case "ArrowLeft":
         case "ArrowUp":
+        case "h": // vim: left
+        case "k": // vim: up
           e.preventDefault();
           ctrl.cycleTarget(-1);
+          break;
+        case "r": // vim-style roll
+          e.preventDefault();
+          if (waitingForRoll) {
+            soundManager.resumeContext();
+            ctrl.rollForHuman();
+          }
+          break;
+        case "u": // vim: undo
+          e.preventDefault();
+          ctrl.undoMove();
           break;
         case "z":
           if (e.metaKey || e.ctrlKey) {
             e.preventDefault();
-            ctrl.undoMove();
-          } else {
-            ctrl.undoMove();
           }
+          ctrl.undoMove();
           break;
       }
     };
