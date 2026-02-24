@@ -1,4 +1,6 @@
 import { Howl, Howler } from "howler";
+import { MusicEngine, type MusicMood } from "./MusicEngine";
+import { Player, type GameState } from "@backyamon/engine";
 
 export type SFXName =
   | "dice-roll"
@@ -36,11 +38,13 @@ export class SoundManager {
   private syntheticPlayers: Partial<Record<SFXName, () => void>> = {};
   private loadFailed: Set<SFXName> = new Set();
   private audioCtx: AudioContext | null = null;
+  private music: MusicEngine;
   private _volume = 0.5;
   private _muted = false;
   private destroyed = false;
 
   private constructor() {
+    this.music = new MusicEngine();
     this.initHowls();
     this.initSynthetic();
   }
@@ -507,14 +511,18 @@ export class SoundManager {
 
   mute(): void {
     this._muted = true;
+    this.music.mute();
   }
 
   unmute(): void {
     this._muted = false;
+    this.music.unmute();
   }
 
   toggleMute(): boolean {
     this._muted = !this._muted;
+    if (this._muted) this.music.mute();
+    else this.music.unmute();
     return this._muted;
   }
 
@@ -522,7 +530,50 @@ export class SoundManager {
     return this._muted;
   }
 
+  // ---------------------------------------------------------------------------
+  // Music API
+  // ---------------------------------------------------------------------------
+
+  startMusic(): void {
+    this.resumeContext();
+    this.music.start();
+  }
+
+  stopMusic(): void {
+    this.music.stop();
+  }
+
+  updateMood(state: GameState): void {
+    const mood = this.deriveMood(state);
+    this.music.setMood(mood);
+  }
+
+  setMusicVolume(v: number): void {
+    this.music.setVolume(v);
+  }
+
+  getMusicVolume(): number {
+    return this.music.getVolume();
+  }
+
+  isMusicPlaying(): boolean {
+    return this.music.isPlaying();
+  }
+
+  private deriveMood(state: GameState): MusicMood {
+    if (state.phase === "GAME_OVER") return "climax";
+    const goldOff = state.borneOff[Player.Gold];
+    const redOff = state.borneOff[Player.Red];
+    if (goldOff >= 10 || redOff >= 10) return "climax";
+    const totalOnBar = state.bar[Player.Gold] + state.bar[Player.Red];
+    if (totalOnBar >= 2) return "tension";
+    if (state.doublingCube.value >= 4) return "tension";
+    if (state.phase === "MOVING") return "moving";
+    return "chill";
+  }
+
   destroy(): void {
+    this.music.destroy();
     this.destroyed = true;
     for (const howl of Object.values(this.howls)) {
       if (howl) howl.unload();
