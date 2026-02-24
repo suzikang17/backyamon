@@ -177,6 +177,10 @@ export class GameController {
     return this.inputHandler?.hasSelection() ?? false;
   }
 
+  hasTargetHighlighted(): boolean {
+    return this.inputHandler?.hasTargetHighlighted() ?? false;
+  }
+
   /**
    * Undo the last move made during the current turn.
    */

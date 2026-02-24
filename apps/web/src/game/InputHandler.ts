@@ -517,6 +517,13 @@ export class InputHandler {
     return this.selectedFrom !== null;
   }
 
+  /**
+   * Check if the user has explicitly cycled to a target with arrow keys.
+   */
+  hasTargetHighlighted(): boolean {
+    return this.selectedFrom !== null && this.highlightedTargetIdx >= 0;
+  }
+
   destroy(): void {
     this.disable();
     this.hitAreaContainer.destroy({ children: true });
