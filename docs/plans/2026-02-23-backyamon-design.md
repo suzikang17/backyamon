@@ -136,25 +136,73 @@ AI runs client-side with artificial 0.5-2s thinking delay.
 
 ## Audio & Soundtrack
 
-### Reactive Layered Music
+### Global Jukebox
 
-Music is built from stems that layer in/out based on game state:
+The music system is a **shared global jukebox** - everyone playing online hears the same music at the same time, like a community radio station.
 
-- **Base layer** (always playing): chill dub/reggae rhythm (kick, snare, hi-hat)
-- **Melodic layer** (normal play): skank guitar, keys
-- **Bass layer** (competitive moments): intensifies when pieces on bar, racing to bear off
-- **Dub FX layer** (key moments): echo/reverb hits on captures, doubles
-- **Victory riddim**: full track kicks in on win
+**Track Library:**
+- Curated set of royalty-free reggae/dub tracks (~20-50 songs) that ship with the game
+- Future: streaming integration (Spotify/SoundCloud) for real tracks
 
-### State-Driven Transitions
+**Queuing System:**
+- Any player can queue the next track (first come first served)
+- If multiple tracks are queued, players can **upvote** to bump favorites higher
+- "Now Playing" display visible on all screens (track name, who queued it)
+- Auto-plays from library when queue is empty
 
-- Chill / even game -> base + melodic (laid back)
-- Opponent on the bar -> bass layer kicks in
-- Bear-off race -> percussion intensifies
-- Doubling offered -> dramatic dub siren / air horn stab
-- Game over -> full victory riddim or somber fade-out
+**UI:**
+- Persistent jukebox widget in the corner of all online screens
+- Shows: current track, queue (next 3-5), upvote buttons
+- Skip voting (majority of online players can vote to skip)
 
-### Sound Effects
+### Sound Station (Loop Mixer + Trigger Pads)
+
+A two-part communal music tool that keeps listenable music playing at all times while letting players express themselves.
+
+**Part 1: Loop Mixer (Incredibox-style)**
+
+The foundation - always sounds good, zero musical skill required:
+
+- 6-8 channel strips, each with a pre-made loop (all same key/BPM)
+- Toggle channels on/off to build a track:
+  - **Drums A:** roots reggae one-drop pattern
+  - **Drums B:** dub steppers rhythm
+  - **Bass:** deep reggae bass line
+  - **Guitar:** skank/chop rhythm guitar
+  - **Keys:** organ bubble / piano stabs
+  - **Melodica:** melodic lead line
+  - **Percussion:** shaker, tambourine, bongos
+  - **Dub FX:** echo, reverb, filter sweeps
+- Any combination sounds listenable because everything is pre-quantized and harmonized
+- Multiple loop "sets" (different songs/vibes) that players can vote to switch between
+- Layers on top of jukebox tracks, or stands alone when no track is queued
+
+**Part 2: Trigger Pads (unquantized one-shots)**
+
+The expressive layer - raw, immediate, human:
+
+- 8 pads for instant-trigger sounds (NOT quantized - fire the moment you tap):
+  - Air horn, dub siren, vocal chops ("Ya Mon!", "Boomshot!"), percussion hits, scratch FX
+- Play over the loop mixer and/or jukebox
+- React to game moments: someone gets hit, slam the air horn
+
+**Modes:**
+- **Dub Session (default):** loops + pads layer on top of jukebox track
+- **Freestyle:** no jukebox track, just the loop mixer and pads
+
+**Multiplayer:**
+- Everyone online hears loops and pad triggers in real-time (via Socket.io)
+- Loop toggles and pad hits broadcast to all connected clients
+- Visual feedback: channel strips glow when active, pads flash in Rasta colors when triggered
+- Shows who toggled/triggered what
+- Rate limiting on trigger pads: ~4 hits/sec max per player to prevent spam
+- Loop toggles: anyone can toggle, last toggle wins (or majority vote for contested channels)
+
+**Future: streaming integration (Spotify/SoundCloud) for real jukebox tracks**
+
+### Game Sound Effects
+
+Sound effects remain per-game (not global), layered on top of jukebox/sampler:
 
 - Dice roll -> snare drum hit
 - Piece placed -> bass note (pitch varies by board position)
@@ -166,15 +214,18 @@ Music is built from stems that layer in/out based on game state:
 
 ### Implementation
 
-- Howler.js manages audio sprites and stem layering
-- Stems are pre-produced audio loops synced to same BPM/key
-- `SoundManager` class watches game state and crossfades layers
-- Volume/mute controls in settings
+- **Howler.js** manages all audio: jukebox playback, sampler triggers, game SFX
+- **JukeboxManager** class: track queue, playback, sync state with server
+- **SamplerManager** class: pad triggers, rate limiting, real-time broadcast
+- **SFXManager** class: game sound effects (local only)
+- Server broadcasts jukebox state and sampler triggers to all connected clients
+- Volume controls: separate sliders for jukebox, sampler, and game SFX
 
 ### Audio Assets Needed
 
-- ~4-5 music stems (royalty-free reggae loops or custom)
-- ~15 sound effects
+- ~20-50 reggae/dub tracks (royalty-free, for jukebox)
+- ~16 sampler one-shots (drums, bass, melodic, FX, vocal)
+- ~10 game sound effects
 - ~5 voice clips
 
 ## Multiplayer & Infrastructure
@@ -230,24 +281,32 @@ Music is built from stems that layer in/out based on game state:
 
 ### v1.1 - "Sound System"
 
-- Local pass-and-play
-- User accounts with profiles
-- Match history
-- 2-3 additional piece sets & 1 alternate board skin
+- Global jukebox (curated track library, queue + upvote)
+- Sound station: loop mixer (6-8 toggleable channels)
+- Sound station: trigger pads (8 unquantized one-shots)
 - Preset chat phrases
 - Mobile-optimized layout
 
 ### v1.2 - "Selector's Choice"
 
+- Local pass-and-play
+- User accounts with profiles
+- Match history
 - Ranked matchmaking with ELO
 - Leaderboards
-- XP progression system
-- More unlockable cosmetics (boards, pieces, riddims)
-- Additional music stems
+- 2-3 additional piece sets & 1 alternate board skin
 
-### v1.3 - "Road to Zion" (stretch)
+### v1.3 - "Big Yard" (community)
+
+- XP progression system
+- More unlockable cosmetics (boards, pieces, loop sets)
+- Additional loop mixer sets
+- Friend lists
+- Streaming integration (Spotify/SoundCloud) for jukebox
+
+### v1.4 - "Road to Zion" (stretch)
 
 - Story mode - journey through themed opponents
-- Friend lists
 - Spectator mode
 - Tournament brackets
+- ML-trained AI tier ("Jah" - legendary)
