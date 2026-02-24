@@ -204,8 +204,16 @@ export class MoveLineRenderer {
     // Perpendicular direction
     const nx = -dy / dist;
     const ny = dx / dist;
-    const cpX = midX + nx * arcHeight;
-    const cpY = midY + ny * arcHeight;
+    let cpX = midX + nx * arcHeight;
+    let cpY = midY + ny * arcHeight;
+
+    // Always curve toward board center (inward)
+    const bounds = this.boardRenderer.getPlayAreaBounds();
+    const boardCenterY = bounds.y + bounds.height / 2;
+    if (Math.abs(cpY - boardCenterY) > Math.abs(midY - boardCenterY)) {
+      cpX = midX - nx * arcHeight;
+      cpY = midY - ny * arcHeight;
+    }
 
     // Draw the arc
     const g = new Graphics();

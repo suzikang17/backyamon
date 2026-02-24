@@ -537,6 +537,7 @@ export class SoundManager {
   startMusic(): void {
     this.resumeContext();
     this.music.start();
+    this.startAmbience();
   }
 
   setMusicStyle(style: MusicStyle): void {
@@ -545,6 +546,7 @@ export class SoundManager {
 
   stopMusic(): void {
     this.music.stop();
+    this.stopAmbience();
   }
 
   updateMood(state: GameState): void {
@@ -562,6 +564,95 @@ export class SoundManager {
 
   isMusicPlaying(): boolean {
     return this.music.isPlaying();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Ambient sounds (ocean waves + distant bar chatter)
+  // ---------------------------------------------------------------------------
+
+  private ambientNodes: { source: AudioBufferSourceNode; gain: GainNode }[] = [];
+  private ambientRunning = false;
+
+  startAmbience(): void {
+    if (this.ambientRunning) return;
+    this.ambientRunning = true;
+
+    const ctx = this.getAudioCtx();
+    const vol = this.effectiveVolume() * 0.12;
+
+    // Ocean waves — filtered brown noise with slow LFO modulation
+    const oceanLen = 4; // 4 seconds of noise, looped
+    const oceanBuf = ctx.createBuffer(1, ctx.sampleRate * oceanLen, ctx.sampleRate);
+    const oceanData = oceanBuf.getChannelData(0);
+    let lastOut = 0;
+    for (let i = 0; i < oceanData.length; i++) {
+      const white = Math.random() * 2 - 1;
+      lastOut = 0.99 * lastOut + 0.01 * white; // Brown noise
+      oceanData[i] = lastOut * 3;
+    }
+
+    const oceanSrc = ctx.createBufferSource();
+    oceanSrc.buffer = oceanBuf;
+    oceanSrc.loop = true;
+
+    // Bandpass for ocean character
+    const oceanFilter = ctx.createBiquadFilter();
+    oceanFilter.type = "lowpass";
+    oceanFilter.frequency.value = 400;
+    oceanFilter.Q.value = 0.7;
+
+    // Slow volume LFO for wave swells
+    const oceanGain = ctx.createGain();
+    oceanGain.gain.value = vol;
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = 0.08; // Very slow
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = vol * 0.4;
+    lfo.connect(lfoGain);
+    lfoGain.connect(oceanGain.gain);
+    lfo.start();
+
+    oceanSrc.connect(oceanFilter);
+    oceanFilter.connect(oceanGain);
+    oceanGain.connect(ctx.destination);
+    oceanSrc.start();
+
+    this.ambientNodes.push({ source: oceanSrc, gain: oceanGain });
+
+    // Bar chatter — higher-frequency filtered noise, very quiet
+    const chatterLen = 3;
+    const chatterBuf = ctx.createBuffer(1, ctx.sampleRate * chatterLen, ctx.sampleRate);
+    const chatterData = chatterBuf.getChannelData(0);
+    for (let i = 0; i < chatterData.length; i++) {
+      chatterData[i] = (Math.random() * 2 - 1) * 0.3;
+    }
+
+    const chatterSrc = ctx.createBufferSource();
+    chatterSrc.buffer = chatterBuf;
+    chatterSrc.loop = true;
+
+    const chatterBp = ctx.createBiquadFilter();
+    chatterBp.type = "bandpass";
+    chatterBp.frequency.value = 800;
+    chatterBp.Q.value = 2;
+
+    const chatterGain = ctx.createGain();
+    chatterGain.gain.value = vol * 0.3;
+
+    chatterSrc.connect(chatterBp);
+    chatterBp.connect(chatterGain);
+    chatterGain.connect(ctx.destination);
+    chatterSrc.start();
+
+    this.ambientNodes.push({ source: chatterSrc, gain: chatterGain });
+  }
+
+  stopAmbience(): void {
+    for (const n of this.ambientNodes) {
+      try { n.source.stop(); } catch { /* already stopped */ }
+    }
+    this.ambientNodes = [];
+    this.ambientRunning = false;
   }
 
   private deriveMood(state: GameState): MusicMood {

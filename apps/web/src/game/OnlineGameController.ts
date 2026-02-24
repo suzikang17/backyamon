@@ -13,6 +13,7 @@ import { PieceRenderer } from "./PieceRenderer";
 import { DiceRenderer } from "./DiceRenderer";
 import { InputHandler } from "./InputHandler";
 import { MoveLineRenderer } from "./MoveLineRenderer";
+import { AmbienceLayer } from "./AmbienceLayer";
 import { SocketClient } from "@/multiplayer/SocketClient";
 import { SoundManager } from "@/audio/SoundManager";
 
@@ -21,6 +22,7 @@ export class OnlineGameController {
   private boardRenderer!: BoardRenderer;
   private pieceRenderer!: PieceRenderer;
   private moveLineRenderer!: MoveLineRenderer;
+  private ambienceLayer!: AmbienceLayer;
   private diceRenderer!: DiceRenderer;
   private inputHandler!: InputHandler;
   private socketClient: SocketClient;
@@ -63,6 +65,7 @@ export class OnlineGameController {
     const h = this.app.screen.height;
 
     this.boardRenderer = new BoardRenderer(this.app, w, h);
+    this.ambienceLayer = new AmbienceLayer(this.app, w, h);
     this.pieceRenderer = new PieceRenderer(this.app, this.boardRenderer);
     this.diceRenderer = new DiceRenderer(this.app, this.boardRenderer);
     this.moveLineRenderer = new MoveLineRenderer(this.app, this.boardRenderer);
@@ -284,6 +287,7 @@ export class OnlineGameController {
     // Animate the move
     await this.pieceRenderer.animateMove(move, movingPlayer);
     if (this.destroyed) return;
+    this.spawnLandingDust(move, movingPlayer);
 
     // Re-render to show correct state
     this.pieceRenderer.render(this.state);
@@ -421,6 +425,19 @@ export class OnlineGameController {
 
   // ── Utilities ────────────────────────────────────────────────────────
 
+  private spawnLandingDust(move: Move, player: Player): void {
+    if (!this.ambienceLayer) return;
+    let pos: { x: number; y: number } | null = null;
+    if (move.to === "off") {
+      pos = this.boardRenderer.getBearOffPosition(player);
+    } else if (typeof move.to === "number") {
+      pos = this.boardRenderer.getPiecePosition(move.to, 0);
+    }
+    if (pos) {
+      this.ambienceLayer.spawnDustBurst(pos.x, pos.y);
+    }
+  }
+
   private emitStateChange(): void {
     this.sound.updateMood(this.state);
     this.onStateChange?.(this.state);
@@ -433,6 +450,7 @@ export class OnlineGameController {
     this.inputHandler?.destroy();
     this.diceRenderer?.destroy();
     this.pieceRenderer?.destroy();
+    this.ambienceLayer?.destroy();
     this.boardRenderer?.destroy();
   }
 }

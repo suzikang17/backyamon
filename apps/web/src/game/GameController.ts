@@ -24,6 +24,7 @@ import { PieceRenderer, type PieceSet } from "./PieceRenderer";
 import { DiceRenderer } from "./DiceRenderer";
 import { InputHandler } from "./InputHandler";
 import { MoveLineRenderer } from "./MoveLineRenderer";
+import { AmbienceLayer } from "./AmbienceLayer";
 import { SoundManager } from "@/audio/SoundManager";
 import type { MusicStyle } from "@/audio/MusicEngine";
 
@@ -53,6 +54,7 @@ export class GameController {
   private pieceRenderer!: PieceRenderer;
   private diceRenderer!: DiceRenderer;
   private moveLineRenderer!: MoveLineRenderer;
+  private ambienceLayer!: AmbienceLayer;
   private inputHandler!: InputHandler;
   private ai: AIPlayer;
   private state!: GameState;
@@ -97,6 +99,7 @@ export class GameController {
     };
 
     this.boardRenderer = new BoardRenderer(this.app, w, h);
+    this.ambienceLayer = new AmbienceLayer(this.app, w, h);
     this.pieceRenderer = new PieceRenderer(this.app, this.boardRenderer, pieceSetMap[this.difficulty]);
     this.diceRenderer = new DiceRenderer(this.app, this.boardRenderer);
     this.moveLineRenderer = new MoveLineRenderer(this.app, this.boardRenderer);
@@ -341,6 +344,7 @@ export class GameController {
       // Animate the move
       await this.pieceRenderer.animateMove(move, Player.Gold);
       if (this.destroyed) return;
+      this.spawnLandingDust(move, Player.Gold);
 
       // Re-render pieces to show correct state
       this.pieceRenderer.render(this.state);
@@ -419,6 +423,7 @@ export class GameController {
       // Animate
       await this.pieceRenderer.animateMove(move, Player.Red);
       if (this.destroyed) return;
+      this.spawnLandingDust(move, Player.Red);
 
       this.pieceRenderer.render(this.state);
 
@@ -495,6 +500,19 @@ export class GameController {
     this.sound.playSFX("piece-move");
   }
 
+  private spawnLandingDust(move: Move, player: Player): void {
+    if (!this.ambienceLayer) return;
+    let pos: { x: number; y: number } | null = null;
+    if (move.to === "off") {
+      pos = this.boardRenderer.getBearOffPosition(player);
+    } else if (typeof move.to === "number") {
+      pos = this.boardRenderer.getPiecePosition(move.to, 0);
+    }
+    if (pos) {
+      this.ambienceLayer.spawnDustBurst(pos.x, pos.y);
+    }
+  }
+
   private emitStateChange(): void {
     this.sound.updateMood(this.state);
     this.onStateChange?.(this.state);
@@ -511,6 +529,7 @@ export class GameController {
     this.moveLineRenderer?.destroy();
     this.diceRenderer?.destroy();
     this.pieceRenderer?.destroy();
+    this.ambienceLayer?.destroy();
     this.boardRenderer?.destroy();
   }
 }
