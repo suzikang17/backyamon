@@ -228,13 +228,7 @@ export class InputHandler {
       return;
     }
 
-    // Auto-move: if there's exactly one legal move from here, execute it immediately
-    if (movesFromHere.length === 1) {
-      this.executeMove(movesFromHere[0]);
-      return;
-    }
-
-    // Select this piece
+    // Select this piece and show its arcs
     this.selectPiece(pointIndex, e);
   }
 
@@ -250,12 +244,6 @@ export class InputHandler {
     const movesFromBar = this.legalMoves.filter((m) => m.from === "bar");
     if (movesFromBar.length === 0) {
       this.deselect();
-      return;
-    }
-
-    // Auto-move: if there's exactly one legal move from bar, execute it immediately
-    if (movesFromBar.length === 1) {
-      this.executeMove(movesFromBar[0]);
       return;
     }
 

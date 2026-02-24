@@ -2,8 +2,8 @@ import { Application, Container, Graphics, Text } from "pixi.js";
 import { Player, type GameState, type Move } from "@backyamon/engine";
 import { BoardRenderer } from "./BoardRenderer";
 
-const FADE_ALPHA = 0.15;
-const ACTIVE_ALPHA = 0.55;
+const FADE_ALPHA = 0.25;
+const ACTIVE_ALPHA = 0.7;
 const LINE_WIDTH_FADE = 2;
 const LINE_WIDTH_ACTIVE = 3.5;
 
@@ -295,13 +295,12 @@ export class MoveLineRenderer {
   }
 
   private getLineColor(
-    lineData: MoveLineData,
-    player: Player | null,
+    _lineData: MoveLineData,
+    _player: Player | null,
     active: boolean
   ): number {
-    // Default to gold, will be overridden in practice
-    if (player === Player.Red) return active ? 0xff4466 : 0xce1126;
-    return active ? 0xffee66 : 0xffd700;
+    // Use high-contrast colors that stand out against the board
+    return active ? 0x00ffcc : 0x88ddbb;
   }
 }
 
