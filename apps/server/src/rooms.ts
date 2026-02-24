@@ -17,22 +17,50 @@ export interface GameRoom {
 
 const rooms = new Map<string, GameRoom>();
 
-const ROOM_CODE_LENGTH = 6;
-const ROOM_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Avoid ambiguous chars (I, O, 0, 1)
+// Rasta / reggae / Caribbean themed word lists for room names
+const ADJECTIVES = [
+  "IRIE", "ZION", "DREAD", "ROOTS", "NATTY", "MYSTIC", "GOLDEN", "RASTA",
+  "DUB", "JAH", "REBEL", "LION", "ROYAL", "BLESSED", "TROPICAL", "ISLAND",
+  "REGGAE", "COOL", "EASY", "MELLOW", "MASSIVE", "BIG", "YARD", "WICKED",
+  "SWEET", "HEAVY", "DEEP", "HIGH", "ONE", "BASS",
+];
 
-function generateRoomCode(): string {
-  let code: string;
-  do {
-    code = "";
-    for (let i = 0; i < ROOM_CODE_LENGTH; i++) {
-      code += ROOM_CODE_CHARS[Math.floor(Math.random() * ROOM_CODE_CHARS.length)];
-    }
-  } while (rooms.has(code)); // Ensure uniqueness
-  return code;
+const NOUNS = [
+  "VIBES", "RIDDIM", "YARD", "WAVES", "SOUND", "FIRE", "CHALICE", "ROOTS",
+  "BEACH", "BREEZE", "SUNSET", "GROOVE", "ECHO", "LION", "THUNDER", "SESSION",
+  "SHACK", "BOUNCE", "STEPPA", "JUNGLE", "DROP", "FLAME", "GANJA", "RIVER",
+  "SKANK", "DUBPLATE", "SIREN", "PALM", "REEF", "DRUM",
+];
+
+function pick<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
-export function createRoom(player: PlayerConnection): GameRoom {
-  const id = generateRoomCode();
+function generateRoomName(): string {
+  let name: string;
+  do {
+    name = `${pick(ADJECTIVES)}-${pick(NOUNS)}`;
+  } while (rooms.has(name)); // Ensure uniqueness
+  return name;
+}
+
+function normalizeRoomId(id: string): string {
+  return id.trim().toUpperCase().replace(/\s+/g, "-");
+}
+
+export function createRoom(player: PlayerConnection, customName?: string): GameRoom {
+  let id: string;
+  if (customName) {
+    id = normalizeRoomId(customName);
+    if (id.length < 2 || id.length > 30) {
+      throw new Error("Room name must be 2-30 characters.");
+    }
+    if (rooms.has(id)) {
+      throw new Error("Room name already taken. Try another!");
+    }
+  } else {
+    id = generateRoomName();
+  }
   const room: GameRoom = {
     id,
     gold: player,
@@ -49,7 +77,7 @@ export function joinRoom(
   roomId: string,
   player: PlayerConnection,
 ): GameRoom | null {
-  const room = rooms.get(roomId.toUpperCase());
+  const room = rooms.get(normalizeRoomId(roomId));
   if (!room) return null;
   if (room.red !== null) return null; // Room is full
   if (room.gold && room.gold.playerId === player.playerId) return null; // Can't join your own room
@@ -58,15 +86,16 @@ export function joinRoom(
 }
 
 export function getRoom(roomId: string): GameRoom | undefined {
-  return rooms.get(roomId.toUpperCase());
+  return rooms.get(normalizeRoomId(roomId));
 }
 
 export function removeRoom(roomId: string): void {
-  const room = rooms.get(roomId.toUpperCase());
+  const normalized = normalizeRoomId(roomId);
+  const room = rooms.get(normalized);
   if (room?.disconnectTimer) {
     clearTimeout(room.disconnectTimer);
   }
-  rooms.delete(roomId.toUpperCase());
+  rooms.delete(normalized);
 }
 
 export function findRoomBySocketId(socketId: string): GameRoom | undefined {

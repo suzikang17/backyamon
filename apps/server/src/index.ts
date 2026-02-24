@@ -216,7 +216,7 @@ io.on("connection", (socket) => {
 
   // ── Room Creation ─────────────────────────────────────────────────────
 
-  socket.on("create-room", () => {
+  socket.on("create-room", (data?: { roomName?: string }) => {
     const playerInfo = socketToPlayer.get(socket.id);
     if (!playerInfo) {
       socket.emit("error", { message: "Not registered. Call register first." });
@@ -229,9 +229,15 @@ io.on("connection", (socket) => {
       displayName: playerInfo.displayName,
     };
 
-    const room = createRoom(conn);
-    socket.join(room.id);
-    socket.emit("room-created", { roomId: room.id });
+    try {
+      const room = createRoom(conn, data?.roomName);
+      socket.join(room.id);
+      socket.emit("room-created", { roomId: room.id });
+    } catch (err) {
+      socket.emit("error", {
+        message: err instanceof Error ? err.message : "Failed to create room.",
+      });
+    }
   });
 
   // ── Join Room ─────────────────────────────────────────────────────────

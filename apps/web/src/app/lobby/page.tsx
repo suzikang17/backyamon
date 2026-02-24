@@ -23,6 +23,7 @@ export default function LobbyPage() {
   const [claimingUsername, setClaimingUsername] = useState(false);
   const [roomCode, setRoomCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
+  const [customRoomName, setCustomRoomName] = useState("");
   const [error, setError] = useState("");
   const [connecting, setConnecting] = useState(true);
 
@@ -113,8 +114,10 @@ export default function LobbyPage() {
     setError("");
 
     try {
-      const code = await client.createRoom();
+      const name = customRoomName.trim() || undefined;
+      const code = await client.createRoom(name);
       setRoomCode(code);
+      setCustomRoomName("");
 
       // Wait for opponent to join; room-joined means game starts
       const onRoomJoined = () => {
@@ -273,13 +276,26 @@ export default function LobbyPage() {
               Quick Match
             </button>
 
-            <button
-              onClick={handleCreateRoom}
-              disabled={!connected || connecting}
-              className="rounded-xl bg-[#D4A857] px-6 py-4 text-xl font-bold text-[#1A1A0E] shadow-lg transition-all duration-200 hover:brightness-110 hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading"
-            >
-              Create Private Room
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={handleCreateRoom}
+                disabled={!connected || connecting}
+                className="rounded-xl bg-[#D4A857] px-6 py-4 text-xl font-bold text-[#1A1A0E] shadow-lg transition-all duration-200 hover:brightness-110 hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading"
+              >
+                Create Private Room
+              </button>
+              <input
+                type="text"
+                value={customRoomName}
+                onChange={(e) => setCustomRoomName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && connected && !connecting) handleCreateRoom();
+                }}
+                placeholder="Custom name (or leave blank for random)"
+                maxLength={30}
+                className="rounded-lg bg-[#1A1A0E] border border-[#8B4513] px-3 py-2 text-[#FFD700] font-heading text-sm text-center placeholder:text-[#D4A857]/40 focus:outline-none focus:border-[#D4A857]"
+              />
+            </div>
 
             {/* Divider */}
             <div className="flex items-center gap-3 my-2">
@@ -297,9 +313,9 @@ export default function LobbyPage() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleJoinRoom();
                 }}
-                placeholder="Room Code"
-                maxLength={6}
-                className="flex-1 rounded-xl bg-[#1A1A0E] border-2 border-[#8B4513] px-4 py-3 text-[#FFD700] font-heading text-lg text-center tracking-[0.3em] placeholder:text-[#D4A857]/40 placeholder:tracking-normal focus:outline-none focus:border-[#FFD700]"
+                placeholder="Room Name"
+                maxLength={30}
+                className="flex-1 rounded-xl bg-[#1A1A0E] border-2 border-[#8B4513] px-4 py-3 text-[#FFD700] font-heading text-lg text-center placeholder:text-[#D4A857]/40 focus:outline-none focus:border-[#FFD700]"
               />
               <button
                 onClick={handleJoinRoom}
@@ -341,10 +357,10 @@ export default function LobbyPage() {
           <div className="flex flex-col items-center gap-6">
             <p className="text-[#D4A857] text-sm">Share this code with your friend:</p>
 
-            {/* Room code display */}
-            <div className="bg-[#1A1A0E] border-2 border-[#FFD700] rounded-2xl px-8 py-4">
-              <p className="text-[#FFD700] font-heading text-4xl tracking-[0.4em] select-all">
-                {roomCode || "------"}
+            {/* Room name display */}
+            <div className="bg-[#1A1A0E] border-2 border-[#FFD700] rounded-2xl px-6 py-4">
+              <p className="text-[#FFD700] font-heading text-2xl sm:text-3xl tracking-wide select-all text-center">
+                {roomCode || "..."}
               </p>
             </div>
 

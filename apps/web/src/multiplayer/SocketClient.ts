@@ -156,7 +156,7 @@ export class SocketClient {
 
   // ── Room Management ─────────────────────────────────────────────────
 
-  createRoom(): Promise<string> {
+  createRoom(roomName?: string): Promise<string> {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error("Create room timed out"));
@@ -172,7 +172,7 @@ export class SocketClient {
         reject(new Error(data.message));
       });
 
-      this.socket.emit("create-room");
+      this.socket.emit("create-room", roomName ? { roomName } : {});
     });
   }
 
