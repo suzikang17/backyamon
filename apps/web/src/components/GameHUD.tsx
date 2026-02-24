@@ -88,7 +88,8 @@ export function GameHUD({
           )}
           {/* Volume toggle */}
           <button
-            onClick={handleToggleMute}
+            onClick={(e) => { (e.target as HTMLElement).blur(); handleToggleMute(); }}
+            tabIndex={-1}
             className="pointer-events-auto bg-[#1A1A0E]/80 hover:bg-[#1A1A0E] rounded-lg p-1.5 border border-[#8B4513] transition-colors cursor-pointer"
             title={muted ? "Unmute" : "Mute"}
           >
@@ -112,7 +113,8 @@ export function GameHUD({
           <PlayerBadge name="You" color={playerColor} />
           {canUndo && onUndo && (
             <button
-              onClick={onUndo}
+              onClick={(e) => { (e.target as HTMLElement).blur(); onUndo(); }}
+              tabIndex={-1}
               className="
                 bg-[#1A1A0E]/80 hover:bg-[#1A1A0E]
                 text-[#D4A857] font-heading text-xs
@@ -130,10 +132,12 @@ export function GameHUD({
         </div>
         {canRoll ? (
           <button
-            onClick={() => {
+            onClick={(e) => {
+              (e.target as HTMLElement).blur();
               soundManager.resumeContext();
               onRollDice();
             }}
+            tabIndex={-1}
             className="
               pointer-events-auto
               bg-gradient-to-b from-[#D4A857] to-[#8B4513]
