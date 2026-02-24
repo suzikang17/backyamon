@@ -210,7 +210,9 @@ export class MoveLineRenderer {
     // Always curve toward board center (inward)
     const bounds = this.boardRenderer.getPlayAreaBounds();
     const boardCenterY = bounds.y + bounds.height / 2;
-    if (Math.abs(cpY - boardCenterY) > Math.abs(midY - boardCenterY)) {
+    const wantBelow = midY < boardCenterY; // top half → push arc down
+    const cpIsBelow = cpY > midY;
+    if (wantBelow !== cpIsBelow) {
       cpX = midX - nx * arcHeight;
       cpY = midY - ny * arcHeight;
     }

@@ -7,6 +7,20 @@ function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+// ── Game start greeting ─────────────────────────────────────────────────
+
+const GREETINGS = [
+  "Wah gwaan! Let's play!",
+  "Irie! Time fi roll!",
+  "One love, bredda. Let's go!",
+  "Bless up! Game time!",
+  "Weh yuh ah seh? Let's play!",
+];
+
+export function greetingMessage(): string {
+  return pick(GREETINGS);
+}
+
 // ── Greetings / turn start ──────────────────────────────────────────────
 
 const TURN_START = [

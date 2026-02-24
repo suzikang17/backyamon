@@ -185,7 +185,7 @@ export class PieceRenderer {
     const lightShade = player === Player.Gold ? 0xffee88 : 0xe84858;
 
     // Drop shadow
-    g.circle(1.5, 3, radius).fill({ color: 0x000000, alpha: 0.35 });
+    g.circle(1, 2, radius).fill({ color: 0x000000, alpha: 0.3 });
 
     // Mane base (outer circle)
     g.circle(0, 0, radius).fill({ color });
@@ -263,7 +263,7 @@ export class PieceRenderer {
     const border = player === Player.Gold ? GOLD_BORDER : RED_BORDER;
 
     // Drop shadow
-    g.circle(1.5, 3, radius).fill({ color: 0x000000, alpha: 0.35 });
+    g.circle(1, 2, radius).fill({ color: 0x000000, alpha: 0.3 });
 
     // Outer shell
     g.circle(0, 0, radius).fill({ color: shellColor });
@@ -320,7 +320,7 @@ export class PieceRenderer {
     const border = player === Player.Gold ? GOLD_BORDER : RED_BORDER;
 
     // Drop shadow
-    g.circle(1.5, 3, radius).fill({ color: 0x000000, alpha: 0.35 });
+    g.circle(1, 2, radius).fill({ color: 0x000000, alpha: 0.3 });
 
     // Vinyl disc
     g.circle(0, 0, radius).fill({ color: vinylColor });

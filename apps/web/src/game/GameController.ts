@@ -28,6 +28,7 @@ import { AmbienceLayer } from "./AmbienceLayer";
 import { SoundManager } from "@/audio/SoundManager";
 import type { MusicStyle } from "@/audio/MusicEngine";
 import {
+  greetingMessage,
   turnStartMessage,
   aiThinkingMessage,
   aiNoMovesMessage,
@@ -126,6 +127,10 @@ export class GameController {
     this.sound.startMusic();
     this.sound.updateMood(this.state);
 
+    // Spoken greeting
+    const greeting = greetingMessage();
+    this.sound.speak(greeting);
+
     // Render initial board
     this.pieceRenderer.render(this.state);
     this.emitStateChange();
@@ -162,7 +167,9 @@ export class GameController {
     this.emitStateChange();
 
     // AI always accepts for now (simple AI behavior)
-    this.onMessage?.(doubleConsiderMessage(this.ai.name));
+    const considerMsg = doubleConsiderMessage(this.ai.name);
+    this.onMessage?.(considerMsg);
+    this.sound.speak(considerMsg);
     this.delay(1200).then(() => {
       if (this.destroyed) return;
 
@@ -173,7 +180,9 @@ export class GameController {
       if (shouldAccept) {
         this.state = acceptDouble(this.state);
         this.emitStateChange();
-        this.onMessage?.(doubleAcceptedMessage(this.ai.name));
+        const acceptMsg = doubleAcceptedMessage(this.ai.name);
+        this.onMessage?.(acceptMsg);
+        this.sound.speak(acceptMsg);
         this.delay(800).then(() => {
           if (this.destroyed) return;
           // Continue with the human's rolling phase
@@ -182,7 +191,9 @@ export class GameController {
       } else {
         this.state = declineDouble(this.state);
         this.emitStateChange();
-        this.onMessage?.(doubleDeclinedMessage(this.ai.name));
+        const declineMsg = doubleDeclinedMessage(this.ai.name);
+        this.onMessage?.(declineMsg);
+        this.sound.speak(declineMsg);
         this.sound.playSFX("victory");
         this.onGameOver?.(Player.Gold, "ya_mon");
       }
@@ -380,7 +391,9 @@ export class GameController {
   private async startAITurn(): Promise<void> {
     if (this.destroyed) return;
 
-    this.onMessage?.(aiThinkingMessage(this.ai.name));
+    const thinkMsg = aiThinkingMessage(this.ai.name);
+    this.onMessage?.(thinkMsg);
+    this.sound.speak(thinkMsg, 1.0);
 
     // Brief pause before AI acts
     await this.delay(500);
@@ -470,11 +483,11 @@ export class GameController {
       } else {
         this.sound.playSFX("defeat");
       }
-      this.onMessage?.(
-        this.state.winner === Player.Gold
-          ? victoryMessage()
-          : defeatMessage()
-      );
+      const endMsg = this.state.winner === Player.Gold
+        ? victoryMessage()
+        : defeatMessage();
+      this.onMessage?.(endMsg);
+      this.sound.speak(endMsg);
       this.onGameOver?.(this.state.winner, winType);
       return;
     }

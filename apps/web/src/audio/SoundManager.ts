@@ -43,10 +43,14 @@ export class SoundManager {
   private _muted = false;
   private destroyed = false;
 
+  private speechVoice: SpeechSynthesisVoice | null = null;
+  private speechReady = false;
+
   private constructor() {
     this.music = new MusicEngine();
     this.initHowls();
     this.initSynthetic();
+    this.initSpeech();
   }
 
   static getInstance(): SoundManager {
@@ -104,6 +108,54 @@ export class SoundManager {
     if (ctx && ctx.state === "suspended") {
       ctx.resume();
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Speech (Web Speech API — Jamaican English)
+  // ---------------------------------------------------------------------------
+
+  private initSpeech(): void {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+
+    const pickVoice = () => {
+      const voices = speechSynthesis.getVoices();
+      // Prefer Jamaican English, fall back to any English
+      this.speechVoice =
+        voices.find((v) => v.lang === "en-JM") ??
+        voices.find((v) => v.lang.startsWith("en") && /male/i.test(v.name)) ??
+        voices.find((v) => v.lang.startsWith("en")) ??
+        null;
+      this.speechReady = true;
+    };
+
+    // Voices load async in some browsers
+    if (speechSynthesis.getVoices().length > 0) {
+      pickVoice();
+    } else {
+      speechSynthesis.addEventListener("voiceschanged", pickVoice, { once: true });
+    }
+  }
+
+  /**
+   * Speak a phrase using Web Speech API with Jamaican English voice.
+   * Non-blocking, fire-and-forget. Respects mute state.
+   */
+  speak(text: string, rate = 0.9): void {
+    if (this._muted || !this.speechReady || typeof window === "undefined") return;
+    if (!window.speechSynthesis) return;
+
+    // Cancel any ongoing speech to avoid overlap
+    speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = rate;
+    utterance.pitch = 0.95;
+    utterance.volume = Math.min(this._volume * 1.2, 1);
+    if (this.speechVoice) {
+      utterance.voice = this.speechVoice;
+    }
+    utterance.lang = "en-JM";
+    speechSynthesis.speak(utterance);
   }
 
   private initSynthetic(): void {
