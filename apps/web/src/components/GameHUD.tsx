@@ -30,6 +30,7 @@ export function GameHUD({
   soundManager,
 }: GameHUDProps) {
   const [muted, setMuted] = useState(soundManager.isMuted());
+  const [musicPlaying, setMusicPlaying] = useState(false);
 
   const handleToggleMute = useCallback(() => {
     soundManager.resumeContext();
@@ -40,6 +41,14 @@ export function GameHUD({
   // Keep muted state in sync
   useEffect(() => {
     setMuted(soundManager.isMuted());
+  }, [soundManager]);
+
+  // Keep musicPlaying state in sync
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMusicPlaying(soundManager.isMusicPlaying());
+    }, 500);
+    return () => clearInterval(interval);
   }, [soundManager]);
 
   if (!state) return null;
@@ -94,6 +103,24 @@ export function GameHUD({
             title={muted ? "Unmute" : "Mute"}
           >
             {muted ? <SpeakerMutedIcon /> : <SpeakerIcon />}
+          </button>
+          {/* Music toggle */}
+          <button
+            onClick={(e) => {
+              (e.target as HTMLElement).blur();
+              soundManager.resumeContext();
+              if (soundManager.isMusicPlaying()) {
+                soundManager.stopMusic();
+              } else {
+                soundManager.startMusic();
+              }
+              setMusicPlaying(!musicPlaying);
+            }}
+            tabIndex={-1}
+            className="pointer-events-auto bg-[#1A1A0E]/80 hover:bg-[#1A1A0E] rounded-lg p-1.5 border border-[#8B4513] transition-colors cursor-pointer"
+            title={musicPlaying ? "Stop Music" : "Start Music"}
+          >
+            {musicPlaying ? <MusicOnIcon /> : <MusicOffIcon />}
           </button>
         </div>
       </div>
@@ -275,6 +302,27 @@ function SpeakerMutedIcon() {
       <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
       <line x1="23" y1="9" x2="17" y2="15" />
       <line x1="17" y1="9" x2="23" y2="15" />
+    </svg>
+  );
+}
+
+function MusicOnIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4A857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18V5l12-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="18" cy="16" r="3" />
+    </svg>
+  );
+}
+
+function MusicOffIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8B4513" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18V5l12-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="18" cy="16" r="3" />
+      <line x1="1" y1="1" x2="23" y2="23" />
     </svg>
   );
 }
