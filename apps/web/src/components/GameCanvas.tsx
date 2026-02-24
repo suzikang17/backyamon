@@ -66,7 +66,7 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
           if (waitingForRoll) {
             soundManager.resumeContext();
             ctrl.rollForHuman();
-          } else if (ctrl.hasTargetHighlighted()) {
+          } else if (ctrl.hasSelection()) {
             ctrl.confirmMove();
           }
           break;

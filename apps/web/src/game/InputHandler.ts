@@ -502,10 +502,17 @@ export class InputHandler {
     const movesFromHere = this.legalMoves.filter((m) => m.from === this.selectedFrom);
     if (movesFromHere.length === 0) return;
 
-    const idx = this.highlightedTargetIdx >= 0 && this.highlightedTargetIdx < movesFromHere.length
-      ? this.highlightedTargetIdx
-      : 0;
+    // If only one target, confirm immediately
+    if (movesFromHere.length === 1) {
+      this.highlightedTargetIdx = -1;
+      this.executeMove(movesFromHere[0]);
+      return;
+    }
 
+    // Multiple targets: require explicit arrow key selection
+    if (this.highlightedTargetIdx < 0 || this.highlightedTargetIdx >= movesFromHere.length) return;
+
+    const idx = this.highlightedTargetIdx;
     this.highlightedTargetIdx = -1;
     this.executeMove(movesFromHere[idx]);
   }
