@@ -5,29 +5,31 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { SocketClient } from "@/multiplayer/SocketClient";
 
-type LobbyView =
-  | "menu"
-  | "quick-match"
-  | "create-room"
-  | "join-room";
+interface WaitingRoom {
+  id: string;
+  hostName: string;
+  createdAt: string;
+}
+
+type LobbyView = "lobby" | "quick-match" | "waiting";
 
 export default function LobbyPage() {
   const router = useRouter();
   const socketRef = useRef<SocketClient | null>(null);
-  const [view, setView] = useState<LobbyView>("menu");
+  const [view, setView] = useState<LobbyView>("lobby");
   const [connected, setConnected] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState<string | null>(null);
   const [usernameInput, setUsernameInput] = useState("");
   const [usernameError, setUsernameError] = useState("");
   const [claimingUsername, setClaimingUsername] = useState(false);
+  const [rooms, setRooms] = useState<WaitingRoom[]>([]);
   const [roomCode, setRoomCode] = useState("");
-  const [joinCode, setJoinCode] = useState("");
   const [customRoomName, setCustomRoomName] = useState("");
   const [error, setError] = useState("");
   const [connecting, setConnecting] = useState(true);
 
-  // Connect and register on mount
+  // Connect, register, and listen for room updates
   useEffect(() => {
     const client = new SocketClient();
     socketRef.current = client;
@@ -45,6 +47,9 @@ export default function LobbyPage() {
         setDisplayName(identity.displayName);
         setUsername(identity.username);
         setConnecting(false);
+
+        // Request initial room list
+        client.listRooms();
       } catch (err) {
         if (destroyed) return;
         setError(
@@ -54,13 +59,23 @@ export default function LobbyPage() {
       }
     };
 
-    // Listen for disconnect/reconnect
     client.on("disconnect", () => {
       if (!destroyed) setConnected(false);
     });
 
     client.on("connect", () => {
-      if (!destroyed) setConnected(true);
+      if (!destroyed) {
+        setConnected(true);
+        client.listRooms();
+      }
+    });
+
+    // Listen for room list updates (broadcast by server)
+    client.on("room-list", (data: unknown) => {
+      if (!destroyed) {
+        const { rooms: roomList } = data as { rooms: WaitingRoom[] };
+        setRooms(roomList);
+      }
     });
 
     setup();
@@ -80,7 +95,6 @@ export default function LobbyPage() {
     setView("quick-match");
     setError("");
 
-    // Listen for match-found then redirect to the game
     const onMatchFound = (data: unknown) => {
       const { roomId } = data as { roomId: string };
       router.push(`/play?mode=online&roomId=${roomId}`);
@@ -89,7 +103,7 @@ export default function LobbyPage() {
     const onError = (data: unknown) => {
       const { message } = data as { message: string };
       setError(message);
-      setView("menu");
+      setView("lobby");
       client.off("match-found", onMatchFound);
       client.off("error", onError);
     };
@@ -101,7 +115,7 @@ export default function LobbyPage() {
       await client.quickMatch();
     } catch {
       setError("Failed to join matchmaking queue");
-      setView("menu");
+      setView("lobby");
     }
   }, [router]);
 
@@ -110,7 +124,6 @@ export default function LobbyPage() {
     const client = socketRef.current;
     if (!client) return;
 
-    setView("create-room");
     setError("");
 
     try {
@@ -118,8 +131,8 @@ export default function LobbyPage() {
       const code = await client.createRoom(name);
       setRoomCode(code);
       setCustomRoomName("");
+      setView("waiting");
 
-      // Wait for opponent to join; room-joined means game starts
       const onRoomJoined = () => {
         router.push(`/play?mode=online&roomId=${code}`);
       };
@@ -129,42 +142,36 @@ export default function LobbyPage() {
       setError(
         err instanceof Error ? err.message : "Failed to create room"
       );
-      setView("menu");
     }
-  }, [router]);
+  }, [router, customRoomName]);
 
-  // Handle Join Room
-  const handleJoinRoom = useCallback(async () => {
+  // Handle Join Room (from list)
+  const handleJoinRoom = useCallback(async (roomId: string) => {
     const client = socketRef.current;
     if (!client) return;
-
-    if (!joinCode.trim()) {
-      setError("Please enter a room code");
-      return;
-    }
 
     setError("");
 
     try {
-      await client.joinRoom(joinCode.trim());
-      router.push(`/play?mode=online&roomId=${joinCode.trim().toUpperCase()}`);
+      await client.joinRoom(roomId);
+      router.push(`/play?mode=online&roomId=${roomId}`);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to join room"
       );
     }
-  }, [joinCode, router]);
+  }, [router]);
 
   // Cancel quick match
   const handleCancelSearch = useCallback(() => {
     const client = socketRef.current;
     if (client) client.leaveQueue();
-    setView("menu");
+    setView("lobby");
   }, []);
 
-  // Cancel create room
+  // Cancel waiting room
   const handleCancelRoom = useCallback(() => {
-    setView("menu");
+    setView("lobby");
     setRoomCode("");
   }, []);
 
@@ -265,25 +272,22 @@ export default function LobbyPage() {
       )}
 
       {/* Main lobby content */}
-      <div className="rounded-2xl bg-[#2a2a1e] border-2 border-[#8B4513] px-8 sm:px-12 py-10 shadow-lg w-full max-w-md">
-        {view === "menu" && (
-          <div className="flex flex-col gap-4">
-            <button
-              onClick={handleQuickMatch}
-              disabled={!connected || connecting}
-              className="rounded-xl bg-[#006B3F] px-6 py-4 text-xl font-bold text-[#FFD700] shadow-lg transition-all duration-200 hover:brightness-110 hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading"
-            >
-              Quick Match
-            </button>
-
-            <div className="flex flex-col gap-2">
+      <div className="rounded-2xl bg-[#2a2a1e] border-2 border-[#8B4513] px-8 sm:px-12 py-8 shadow-lg w-full max-w-lg">
+        {view === "lobby" && (
+          <div className="flex flex-col gap-5">
+            {/* Action buttons */}
+            <div className="flex gap-3">
               <button
-                onClick={handleCreateRoom}
+                onClick={handleQuickMatch}
                 disabled={!connected || connecting}
-                className="rounded-xl bg-[#D4A857] px-6 py-4 text-xl font-bold text-[#1A1A0E] shadow-lg transition-all duration-200 hover:brightness-110 hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading"
+                className="flex-1 rounded-xl bg-[#006B3F] px-4 py-3 text-lg font-bold text-[#FFD700] shadow-lg transition-all duration-200 hover:brightness-110 hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading"
               >
-                Create Private Room
+                Quick Match
               </button>
+            </div>
+
+            {/* Create room */}
+            <div className="flex gap-2">
               <input
                 type="text"
                 value={customRoomName}
@@ -291,39 +295,54 @@ export default function LobbyPage() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && connected && !connecting) handleCreateRoom();
                 }}
-                placeholder="Custom name (or leave blank for random)"
+                placeholder="Room name (or blank for random)"
                 maxLength={30}
-                className="rounded-lg bg-[#1A1A0E] border border-[#8B4513] px-3 py-2 text-[#FFD700] font-heading text-sm text-center placeholder:text-[#D4A857]/40 focus:outline-none focus:border-[#D4A857]"
+                className="flex-1 rounded-xl bg-[#1A1A0E] border-2 border-[#8B4513] px-4 py-3 text-[#FFD700] font-heading text-base text-center placeholder:text-[#D4A857]/40 focus:outline-none focus:border-[#D4A857]"
               />
+              <button
+                onClick={handleCreateRoom}
+                disabled={!connected || connecting}
+                className="rounded-xl bg-[#D4A857] px-5 py-3 text-base font-bold text-[#1A1A0E] shadow-lg transition-all duration-200 hover:brightness-110 hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading whitespace-nowrap"
+              >
+                Create Room
+              </button>
             </div>
 
             {/* Divider */}
-            <div className="flex items-center gap-3 my-2">
+            <div className="flex items-center gap-3">
               <div className="flex-1 h-px bg-[#8B4513]/50" />
-              <span className="text-[#D4A857] text-sm">or join a room</span>
+              <span className="text-[#D4A857] text-sm">open rooms</span>
               <div className="flex-1 h-px bg-[#8B4513]/50" />
             </div>
 
-            {/* Join room section */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleJoinRoom();
-                }}
-                placeholder="Room Name"
-                maxLength={30}
-                className="flex-1 rounded-xl bg-[#1A1A0E] border-2 border-[#8B4513] px-4 py-3 text-[#FFD700] font-heading text-lg text-center placeholder:text-[#D4A857]/40 focus:outline-none focus:border-[#FFD700]"
-              />
-              <button
-                onClick={handleJoinRoom}
-                disabled={!connected || connecting || !joinCode.trim()}
-                className="rounded-xl bg-[#006B3F] px-6 py-3 text-lg font-bold text-[#FFD700] shadow-lg transition-all duration-200 hover:brightness-110 hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading"
-              >
-                Join
-              </button>
+            {/* Room list */}
+            <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
+              {rooms.length === 0 ? (
+                <p className="text-[#D4A857]/60 text-sm text-center py-4">
+                  No rooms yet — create one or quick match!
+                </p>
+              ) : (
+                rooms.map((room) => (
+                  <button
+                    key={room.id}
+                    onClick={() => handleJoinRoom(room.id)}
+                    disabled={!connected}
+                    className="flex items-center justify-between rounded-xl bg-[#1A1A0E] border border-[#8B4513] px-4 py-3 transition-all duration-200 hover:border-[#FFD700] hover:bg-[#1A1A0E]/80 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group"
+                  >
+                    <div className="flex flex-col items-start">
+                      <span className="text-[#FFD700] font-heading text-base group-hover:text-[#FFD700]">
+                        {room.id}
+                      </span>
+                      <span className="text-[#D4A857] text-xs">
+                        hosted by {room.hostName}
+                      </span>
+                    </div>
+                    <span className="text-[#006B3F] font-heading text-sm group-hover:text-[#FFD700] transition-colors">
+                      Join
+                    </span>
+                  </button>
+                ))
+              )}
             </div>
           </div>
         )}
@@ -353,9 +372,9 @@ export default function LobbyPage() {
           </div>
         )}
 
-        {view === "create-room" && (
+        {view === "waiting" && (
           <div className="flex flex-col items-center gap-6">
-            <p className="text-[#D4A857] text-sm">Share this code with your friend:</p>
+            <p className="text-[#D4A857] text-sm">Your room is open — waiting for someone to join:</p>
 
             {/* Room name display */}
             <div className="bg-[#1A1A0E] border-2 border-[#FFD700] rounded-2xl px-6 py-4">
@@ -372,7 +391,7 @@ export default function LobbyPage() {
                 <div className="w-2 h-2 rounded-full bg-[#FFD700] animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
               <p className="text-[#D4A857] text-sm">
-                Waiting for opponent to join...
+                Waiting for opponent...
               </p>
             </div>
 

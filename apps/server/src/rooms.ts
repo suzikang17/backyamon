@@ -134,3 +134,23 @@ export function getPlayerRole(
 export function getAllRooms(): Map<string, GameRoom> {
   return rooms;
 }
+
+export interface WaitingRoom {
+  id: string;
+  hostName: string;
+  createdAt: string;
+}
+
+export function getWaitingRooms(): WaitingRoom[] {
+  const waiting: WaitingRoom[] = [];
+  for (const room of rooms.values()) {
+    if (room.gold && room.red === null) {
+      waiting.push({
+        id: room.id,
+        hostName: room.gold.displayName,
+        createdAt: room.createdAt.toISOString(),
+      });
+    }
+  }
+  return waiting;
+}

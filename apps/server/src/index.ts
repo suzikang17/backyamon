@@ -26,6 +26,7 @@ import {
   removeRoom,
   findRoomBySocketId,
   getPlayerRole,
+  getWaitingRooms,
   type GameRoom,
   type PlayerConnection,
 } from "./rooms.js";
@@ -64,6 +65,10 @@ function getOpponentSocket(room: GameRoom, mySocketId: string): string | null {
 function broadcastToRoom(room: GameRoom, event: string, data: unknown): void {
   if (room.gold) io.to(room.gold.socketId).emit(event, data);
   if (room.red) io.to(room.red.socketId).emit(event, data);
+}
+
+function broadcastRoomList(): void {
+  io.emit("room-list", { rooms: getWaitingRooms() });
 }
 
 function movesEqual(a: Move, b: Move): boolean {
@@ -214,6 +219,12 @@ io.on("connection", (socket) => {
     socket.emit("username-claimed", { username: trimmed });
   });
 
+  // ── Room Listing ─────────────────────────────────────────────────────
+
+  socket.on("list-rooms", () => {
+    socket.emit("room-list", { rooms: getWaitingRooms() });
+  });
+
   // ── Room Creation ─────────────────────────────────────────────────────
 
   socket.on("create-room", (data?: { roomName?: string }) => {
@@ -233,6 +244,7 @@ io.on("connection", (socket) => {
       const room = createRoom(conn, data?.roomName);
       socket.join(room.id);
       socket.emit("room-created", { roomId: room.id });
+      broadcastRoomList();
     } catch (err) {
       socket.emit("error", {
         message: err instanceof Error ? err.message : "Failed to create room.",
@@ -292,6 +304,7 @@ io.on("connection", (socket) => {
 
     // Game starts now
     broadcastToRoom(room, "game-start", { state: room.state });
+    broadcastRoomList();
   });
 
   // ── Quick Match (Matchmaking) ─────────────────────────────────────────

@@ -213,6 +213,10 @@ export class SocketClient {
     this.socket.emit("leave-queue");
   }
 
+  listRooms(): void {
+    this.socket.emit("list-rooms");
+  }
+
   // ── Game Actions ─────────────────────────────────────────────────────
 
   rollDice(): void {

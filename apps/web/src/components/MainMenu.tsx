@@ -47,7 +47,7 @@ export default function MainMenu() {
           onClick={() => setShowDifficulty(true)}
           className="animate-fade-in-up animate-delay-200 w-full rounded-2xl wood-btn wood-btn-green px-8 py-4 text-xl font-bold text-[#FFD700] shadow-lg interactive-btn cursor-pointer hover:shadow-[0_0_20px_rgba(0,107,63,0.4)]"
         >
-          Play vs AI
+          Single Player
         </button>
 
         <Link
