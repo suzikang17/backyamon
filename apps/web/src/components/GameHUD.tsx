@@ -93,30 +93,33 @@ export function GameHUD({
         </div>
       </div>
 
-      {/* Center area: doubling cube + turn indicator */}
-      <div className="absolute left-3 top-1/2 -translate-y-1/2 flex flex-col items-center gap-3">
-        {/* Doubling cube */}
-        <DoublingCube
-          value={cubeValue}
-          canDouble={showDoubleButton}
-          onDouble={onOfferDouble}
-        />
-      </div>
+      {/* Doubling cube - small passive indicator, only visible when value > 1 */}
+      {cubeValue > 1 && (
+        <div className="absolute left-3 top-1/2 -translate-y-1/2">
+          <div className="w-8 h-8 rounded bg-[#1A1A0E]/80 border border-[#8B4513] flex items-center justify-center">
+            <span className="font-heading text-xs text-[#D4A857]">{cubeValue}x</span>
+          </div>
+        </div>
+      )}
 
-      {/* Center: roll button when waiting */}
-      {canRoll && (
-        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 pointer-events-auto">
+      {/* Bottom bar: player info + turn indicator (doubles as roll button) */}
+      <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between px-3 pb-2">
+        <div className="pointer-events-auto">
+          <PlayerBadge name="You" color={playerColor} />
+        </div>
+        {canRoll ? (
           <button
             onClick={() => {
               soundManager.resumeContext();
               onRollDice();
             }}
             className="
+              pointer-events-auto
               bg-gradient-to-b from-[#D4A857] to-[#8B4513]
-              text-[#1A1A0E] font-heading text-base sm:text-lg
-              px-4 sm:px-5 py-2 sm:py-3 rounded-xl
-              border-2 border-[#FFD700]
-              shadow-lg shadow-[#FFD700]/20
+              text-[#1A1A0E] font-heading text-sm
+              px-5 py-1.5 rounded-lg
+              border border-[#FFD700]
+              shadow-md shadow-[#FFD700]/15
               hover:brightness-110 active:scale-95
               transition-all duration-150
               animate-pulse
@@ -125,19 +128,13 @@ export function GameHUD({
           >
             Roll Dice
           </button>
-        </div>
-      )}
-
-      {/* Bottom bar: player info + turn indicator */}
-      <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between px-3 pb-2">
-        <div className="pointer-events-auto">
-          <PlayerBadge name="You" color={playerColor} />
-        </div>
-        <div className="bg-[#1A1A0E]/80 rounded-lg px-4 py-1.5 border border-[#8B4513]">
-          <span className="font-heading text-sm text-[#D4A857]">
-            {turnText}
-          </span>
-        </div>
+        ) : (
+          <div className="bg-[#1A1A0E]/80 rounded-lg px-4 py-1.5 border border-[#8B4513]">
+            <span className="font-heading text-sm text-[#D4A857]">
+              {turnText}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
