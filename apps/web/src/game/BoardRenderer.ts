@@ -17,18 +17,21 @@ import { Player } from "@backyamon/engine";
  *   Gold home = 19-24 (bottom right), Red home = 1-6 (top right)
  */
 
-// Board colors
-const BOARD_FILL = 0x2a2a1e;
-const BOARD_BORDER = 0x8b4513;
+// Board colors — warm wood palette
+const FRAME_WOOD = 0x7a4a2a; // Rich medium-brown frame
+const FRAME_BORDER = 0x5c3317; // Darker border edge
+const FELT_COLOR = 0x1e3a2a; // Dark green felt playing surface
 const GREEN_POINT = 0x006b3f;
-const GOLD_POINT = 0xffd700;
-const BAR_COLOR = 0x1a1a0e;
-const ZION_COLOR = 0x1a1a0e;
+const GOLD_POINT = 0xd4a020;
+const BAR_COLOR = 0x2a1a0e;
+const ZION_COLOR = 0x2a1a0e;
 const LABEL_COLOR = 0xd4a857;
 
-// Wood grain overlay colors
-const WOOD_LIGHT = 0x9b5523;
-const WOOD_DARK = 0x6b3510;
+// Wood grain palette
+const GRAIN_LIGHT = 0xa06830;
+const GRAIN_MED = 0x8b5522;
+const GRAIN_DARK = 0x5a3412;
+const GRAIN_KNOT = 0x4a2810;
 
 export class BoardRenderer {
   private app: Application;
@@ -93,57 +96,98 @@ export class BoardRenderer {
     // Outer shadow for depth
     const outerShadow = new Graphics();
     outerShadow
-      .roundRect(3, 4, this.boardWidth, this.boardHeight, 14)
-      .fill({ color: 0x000000, alpha: 0.4 });
+      .roundRect(4, 5, this.boardWidth, this.boardHeight, 14)
+      .fill({ color: 0x000000, alpha: 0.5 });
     this.container.addChild(outerShadow);
 
-    // Outer frame
+    // Wooden frame (full board area)
     const frame = new Graphics();
     frame
-      .roundRect(0, 0, this.boardWidth, this.boardHeight, 12)
-      .fill({ color: BOARD_FILL })
-      .roundRect(0, 0, this.boardWidth, this.boardHeight, 12)
-      .stroke({ color: BOARD_BORDER, width: 3 });
+      .roundRect(0, 0, this.boardWidth, this.boardHeight, 10)
+      .fill({ color: FRAME_WOOD });
     this.container.addChild(frame);
 
-    // Wood grain texture overlay on the frame border area
+    // Wood grain across the entire frame
     this.drawWoodGrain();
 
-    // Inner shadow/depth at the board edges (inset shadow effect)
-    const innerShadow = new Graphics();
-    // Top edge shadow
-    innerShadow
-      .rect(this.playAreaX, this.playAreaY, this.playAreaW + this.zionWidth, 3)
+    // Frame bevel — top/left highlight, bottom/right shadow
+    const bevel = new Graphics();
+    // Top edge highlight
+    bevel
+      .rect(2, 0, this.boardWidth - 4, 3)
+      .fill({ color: 0xffffff, alpha: 0.12 });
+    // Left edge highlight
+    bevel
+      .rect(0, 2, 3, this.boardHeight - 4)
+      .fill({ color: 0xffffff, alpha: 0.08 });
+    // Bottom edge shadow
+    bevel
+      .rect(2, this.boardHeight - 3, this.boardWidth - 4, 3)
       .fill({ color: 0x000000, alpha: 0.2 });
-    // Left edge shadow
-    innerShadow
-      .rect(this.playAreaX, this.playAreaY, 3, this.playAreaH)
+    // Right edge shadow
+    bevel
+      .rect(this.boardWidth - 3, 2, 3, this.boardHeight - 4)
       .fill({ color: 0x000000, alpha: 0.15 });
-    // Bottom highlight
-    innerShadow
-      .rect(
-        this.playAreaX,
-        this.playAreaY + this.playAreaH - 2,
-        this.playAreaW + this.zionWidth,
-        2
-      )
-      .fill({ color: 0xffffff, alpha: 0.05 });
-    // Right highlight
-    innerShadow
-      .rect(
-        this.zionX + this.zionWidth - 2,
-        this.playAreaY,
-        2,
-        this.playAreaH
-      )
-      .fill({ color: 0xffffff, alpha: 0.04 });
-    this.container.addChild(innerShadow);
+    this.container.addChild(bevel);
 
-    // Draw bar (Babylon zone)
+    // Outer border stroke
+    const borderStroke = new Graphics();
+    borderStroke
+      .roundRect(0, 0, this.boardWidth, this.boardHeight, 10)
+      .stroke({ color: FRAME_BORDER, width: 3 });
+    this.container.addChild(borderStroke);
+
+    // Felt playing surface (inset from frame)
+    const felt = new Graphics();
+    felt
+      .rect(this.playAreaX, this.playAreaY, this.playAreaW, this.playAreaH)
+      .fill({ color: FELT_COLOR });
+    this.container.addChild(felt);
+
+    // Subtle felt texture (very faint noise-like dots)
+    const feltTex = new Graphics();
+    const rng = this.seededRng(42);
+    for (let i = 0; i < 200; i++) {
+      const fx = this.playAreaX + rng() * this.playAreaW;
+      const fy = this.playAreaY + rng() * this.playAreaH;
+      feltTex
+        .circle(fx, fy, 0.8 + rng() * 0.6)
+        .fill({ color: rng() > 0.5 ? 0x2a5a3a : 0x142a1a, alpha: 0.15 + rng() * 0.1 });
+    }
+    this.container.addChild(feltTex);
+
+    // Inset shadow around felt edge (recessed look)
+    const inset = new Graphics();
+    // Top inset shadow
+    inset
+      .rect(this.playAreaX, this.playAreaY, this.playAreaW, 4)
+      .fill({ color: 0x000000, alpha: 0.3 });
+    // Left inset shadow
+    inset
+      .rect(this.playAreaX, this.playAreaY, 4, this.playAreaH)
+      .fill({ color: 0x000000, alpha: 0.25 });
+    // Bottom inset highlight
+    inset
+      .rect(this.playAreaX, this.playAreaY + this.playAreaH - 2, this.playAreaW, 2)
+      .fill({ color: 0xffffff, alpha: 0.06 });
+    // Right inset highlight
+    inset
+      .rect(this.playAreaX + this.playAreaW - 2, this.playAreaY, 2, this.playAreaH)
+      .fill({ color: 0xffffff, alpha: 0.04 });
+    this.container.addChild(inset);
+
+    // Draw bar (Babylon zone) — darker wood inset
     const bar = new Graphics();
     bar
       .rect(this.barX, this.playAreaY, this.barWidth, this.playAreaH)
       .fill({ color: BAR_COLOR });
+    // Bar inset shadow
+    bar
+      .rect(this.barX, this.playAreaY, 2, this.playAreaH)
+      .fill({ color: 0x000000, alpha: 0.3 });
+    bar
+      .rect(this.barX + this.barWidth - 2, this.playAreaY, 2, this.playAreaH)
+      .fill({ color: 0x000000, alpha: 0.3 });
     this.container.addChild(bar);
 
     // "BABYLON" label on the bar
@@ -151,8 +195,8 @@ export class BoardRenderer {
       text: "BABYLON",
       style: {
         fontSize: Math.max(8, Math.floor(this.barWidth * 0.3)),
-        fill: 0x8b4513,
-        fontFamily: "Inter, sans-serif",
+        fill: 0x6b3510,
+        fontFamily: "'Reggae One', cursive",
         fontWeight: "bold",
         letterSpacing: 2,
       },
@@ -161,36 +205,40 @@ export class BoardRenderer {
     babylonLabel.rotation = -Math.PI / 2;
     babylonLabel.x = this.barX + this.barWidth / 2;
     babylonLabel.y = this.playAreaY + this.playAreaH / 2;
+    babylonLabel.alpha = 0.6;
     this.container.addChild(babylonLabel);
 
-    // Draw Zion tray with subtle golden tint
+    // Zion tray — darker inset with golden tint
     const zion = new Graphics();
     zion
       .rect(this.zionX, this.playAreaY, this.zionWidth, this.playAreaH)
       .fill({ color: ZION_COLOR });
-    // Golden gradient overlay for Zion
-    const zionGlow = new Graphics();
-    zionGlow
-      .rect(this.zionX, this.playAreaY, this.zionWidth, this.playAreaH)
-      .fill({ color: 0xffd700, alpha: 0.04 });
+    // Golden tint
     zion
       .rect(this.zionX, this.playAreaY, this.zionWidth, this.playAreaH)
-      .stroke({ color: BOARD_BORDER, width: 2 });
-    // Divider line in Zion between Gold and Red halves
+      .fill({ color: 0xffd700, alpha: 0.03 });
+    // Inset shadow
+    zion
+      .rect(this.zionX, this.playAreaY, 2, this.playAreaH)
+      .fill({ color: 0x000000, alpha: 0.3 });
+    // Border
+    zion
+      .rect(this.zionX, this.playAreaY, this.zionWidth, this.playAreaH)
+      .stroke({ color: FRAME_BORDER, width: 2 });
+    // Divider line between Gold and Red halves
     zion
       .moveTo(this.zionX + 4, this.playAreaY + this.playAreaH / 2)
       .lineTo(this.zionX + this.zionWidth - 4, this.playAreaY + this.playAreaH / 2)
-      .stroke({ color: BOARD_BORDER, width: 1, alpha: 0.5 });
+      .stroke({ color: FRAME_BORDER, width: 1, alpha: 0.5 });
     this.container.addChild(zion);
-    this.container.addChild(zionGlow);
 
-    // "ZION" label on the tray
+    // "ZION" label
     const zionLabel = new Text({
       text: "ZION",
       style: {
         fontSize: Math.max(8, Math.floor(this.zionWidth * 0.35)),
         fill: 0xffd700,
-        fontFamily: "Inter, sans-serif",
+        fontFamily: "'Reggae One', cursive",
         fontWeight: "bold",
         letterSpacing: 2,
       },
@@ -207,38 +255,87 @@ export class BoardRenderer {
   }
 
   /**
-   * Draw subtle wood grain lines on the frame border area.
-   * Uses overlapping semi-transparent lines to simulate a wood texture.
+   * Draw visible wood grain across the frame area using layered lines
+   * with wavy offsets, varying thickness, and knot patterns.
    */
   private drawWoodGrain(): void {
-    const grain = new Graphics();
     const bw = this.boardWidth;
     const bh = this.boardHeight;
-    const pad = this.padding;
+    const rng = this.seededRng(7);
 
-    // Horizontal grain lines across the full board background
-    const lineSpacing = 6;
-    for (let y = 0; y < bh; y += lineSpacing) {
-      // Vary the alpha and offset for a natural look
-      const alpha = 0.02 + (Math.sin(y * 0.7) * 0.01);
-      const offset = Math.sin(y * 0.3) * 2;
-      const color = y % (lineSpacing * 2) === 0 ? WOOD_LIGHT : WOOD_DARK;
-
-      grain
-        .moveTo(offset, y)
-        .lineTo(bw + offset, y)
-        .stroke({ color, width: 1, alpha });
+    // Layer 1: broad grain bands
+    const bands = new Graphics();
+    for (let y = 0; y < bh; y += 3) {
+      const wave = Math.sin(y * 0.15 + rng() * 0.5) * 3 + Math.sin(y * 0.04) * 6;
+      const alpha = 0.04 + Math.sin(y * 0.08) * 0.03;
+      const color = y % 6 < 3 ? GRAIN_LIGHT : GRAIN_MED;
+      bands
+        .moveTo(wave, y)
+        .lineTo(bw + wave, y)
+        .stroke({ color, width: 1.5, alpha });
     }
+    this.container.addChild(bands);
 
-    // A few knot-like ellipses for variety
-    grain
-      .ellipse(bw * 0.2, bh * 0.15, 8, 3)
-      .stroke({ color: WOOD_DARK, width: 1, alpha: 0.03 });
-    grain
-      .ellipse(bw * 0.7, bh * 0.85, 6, 2.5)
-      .stroke({ color: WOOD_DARK, width: 1, alpha: 0.025 });
+    // Layer 2: fine grain detail
+    const fine = new Graphics();
+    for (let y = 0; y < bh; y += 2) {
+      const wave = Math.sin(y * 0.2 + 1.5) * 2 + Math.cos(y * 0.07) * 4;
+      const alpha = 0.02 + rng() * 0.02;
+      fine
+        .moveTo(wave - 5, y)
+        .lineTo(bw + wave + 5, y)
+        .stroke({ color: GRAIN_DARK, width: 0.8, alpha });
+    }
+    this.container.addChild(fine);
 
-    this.container.addChild(grain);
+    // Layer 3: darker accent streaks (irregular spacing)
+    const streaks = new Graphics();
+    for (let i = 0; i < 12; i++) {
+      const y0 = rng() * bh;
+      const thickness = 1 + rng() * 2;
+      const alpha = 0.05 + rng() * 0.04;
+      const waveFreq = 0.03 + rng() * 0.05;
+
+      streaks.moveTo(0, y0);
+      for (let x = 0; x <= bw; x += 8) {
+        const yOff = Math.sin(x * waveFreq + i) * 3;
+        streaks.lineTo(x, y0 + yOff);
+      }
+      streaks.stroke({ color: GRAIN_DARK, width: thickness, alpha });
+    }
+    this.container.addChild(streaks);
+
+    // Layer 4: knots (oval rings)
+    const knots = new Graphics();
+    const knotPositions = [
+      { x: bw * 0.12, y: bh * 0.18 },
+      { x: bw * 0.85, y: bh * 0.82 },
+      { x: bw * 0.45, y: bh * 0.08 },
+      { x: bw * 0.68, y: bh * 0.92 },
+    ];
+    for (const k of knotPositions) {
+      const rx = 4 + rng() * 6;
+      const ry = 2 + rng() * 3;
+      for (let ring = 0; ring < 3; ring++) {
+        knots
+          .ellipse(k.x, k.y, rx + ring * 3, ry + ring * 1.5)
+          .stroke({ color: GRAIN_KNOT, width: 1, alpha: 0.06 - ring * 0.015 });
+      }
+      // Dark center
+      knots.circle(k.x, k.y, 1.5).fill({ color: GRAIN_KNOT, alpha: 0.08 });
+    }
+    this.container.addChild(knots);
+  }
+
+  /**
+   * Simple seeded pseudo-random for deterministic grain patterns.
+   */
+  private seededRng(seed: number): () => number {
+    let s = seed;
+    return () => {
+      s = (s * 16807 + 0) % 2147483647;
+      return (s - 1) / 2147483646;
+    };
   }
 
   private drawPoints(): void {
@@ -258,7 +355,7 @@ export class BoardRenderer {
         style: {
           fontSize: Math.max(7, Math.floor(this._pointWidth * 0.32)),
           fill: LABEL_COLOR,
-          fontFamily: "Inter, sans-serif",
+          fontFamily: "'Reggae One', cursive",
         },
       });
       label.anchor.set(0.5, dir === "up" ? 0 : 1);
@@ -277,15 +374,42 @@ export class BoardRenderer {
     direction: "up" | "down",
     color: number
   ): void {
-    const g = new Graphics();
     const halfW = width / 2;
     const tipY = direction === "up" ? baseY - height : baseY + height;
 
+    // Base fill
+    const g = new Graphics();
     g.moveTo(cx - halfW, baseY)
       .lineTo(cx + halfW, baseY)
       .lineTo(cx, tipY)
       .closePath()
       .fill({ color });
+
+    // Subtle inner highlight (left edge catch-light)
+    const highlight = new Graphics();
+    highlight
+      .moveTo(cx - halfW + 1, baseY)
+      .lineTo(cx, tipY)
+      .stroke({ color: 0xffffff, width: 1, alpha: 0.08 });
+    g.addChild(highlight);
+
+    // Subtle shadow on the right edge
+    const shadow = new Graphics();
+    shadow
+      .moveTo(cx + halfW - 1, baseY)
+      .lineTo(cx, tipY)
+      .stroke({ color: 0x000000, width: 1, alpha: 0.12 });
+    g.addChild(shadow);
+
+    // Thin outline for inlay look
+    const outline = new Graphics();
+    outline
+      .moveTo(cx - halfW, baseY)
+      .lineTo(cx + halfW, baseY)
+      .lineTo(cx, tipY)
+      .closePath()
+      .stroke({ color: 0x000000, width: 0.8, alpha: 0.2 });
+    g.addChild(outline);
 
     this.container.addChild(g);
   }

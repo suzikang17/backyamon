@@ -12,18 +12,52 @@
 // ---------------------------------------------------------------------------
 
 export type MusicMood = "chill" | "moving" | "tension" | "climax";
+export type MusicStyle = "roots" | "dub" | "dancehall";
 
 // ---------------------------------------------------------------------------
-// Constants
+// Style presets — different vibes per difficulty
 // ---------------------------------------------------------------------------
 
-const BPM = 75;
-const BEAT_SEC = 60 / BPM; // 0.8 s
-const SIXTEENTH = BEAT_SEC / 4; // 0.2 s
-const BAR_SEC = BEAT_SEC * 4; // 3.2 s
+interface StylePreset {
+  bpm: number;
+  bassRoots: readonly number[];  // 4-bar chord progression as bass frequencies
+  skankBrightness: number;       // bandpass center for skank (higher = brighter)
+  organTremRate: number;         // tremolo LFO speed
+  kickPunch: number;             // kick start frequency (higher = punchier)
+}
 
-/** Am - Dm - G - C expressed as bass root frequencies (Hz). */
-const BASS_ROOTS: readonly number[] = [220, 146.83, 196, 261.63];
+const STYLE_PRESETS: Record<MusicStyle, StylePreset> = {
+  // Easy / Beach Bum — slow, major key, laid back
+  roots: {
+    bpm: 70,
+    bassRoots: [130.81, 174.61, 196, 130.81],   // C3 - F3 - G3 - C3 (major)
+    skankBrightness: 1000,
+    organTremRate: 4,
+    kickPunch: 130,
+  },
+  // Medium / Selector — classic roots reggae
+  dub: {
+    bpm: 75,
+    bassRoots: [220, 146.83, 196, 261.63],       // Am - Dm - G - C
+    skankBrightness: 1200,
+    organTremRate: 5.5,
+    kickPunch: 150,
+  },
+  // Hard / King Tubby — faster steppers, minor key, heavy
+  dancehall: {
+    bpm: 82,
+    bassRoots: [220, 164.81, 146.83, 329.63],    // Am - E3 - Dm - E4 (dark minor)
+    skankBrightness: 1500,
+    organTremRate: 7,
+    kickPunch: 180,
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Constants (derived from style)
+// ---------------------------------------------------------------------------
+
+const DEFAULT_STYLE: MusicStyle = "dub";
 
 /** Stem gain levels per mood. Order: kick, snare, hat, bass, skank, organ. */
 const MOOD_GAINS: Record<MusicMood, readonly number[]> = {
@@ -33,11 +67,8 @@ const MOOD_GAINS: Record<MusicMood, readonly number[]> = {
   climax: [1.0, 0.8, 0.7, 1.0, 0.8, 0.7],
 };
 
-/** How far ahead (seconds) the scheduler looks. */
 const SCHEDULE_AHEAD = 0.1;
-/** How often (ms) the scheduler fires. */
 const SCHEDULE_INTERVAL = 25;
-/** Fade time (seconds) when applying mood changes to stem gains. */
 const FADE_TIME = 0.4;
 
 // ---------------------------------------------------------------------------
@@ -54,6 +85,11 @@ export class MusicEngine {
   private bassGain: GainNode | null = null;
   private skankGain: GainNode | null = null;
   private organGain: GainNode | null = null;
+
+  // --- Style & timing -------------------------------------------------------
+  private preset: StylePreset = STYLE_PRESETS[DEFAULT_STYLE];
+  private sixteenth = 60 / STYLE_PRESETS[DEFAULT_STYLE].bpm / 4;
+  private barSec = (60 / STYLE_PRESETS[DEFAULT_STYLE].bpm) * 4;
 
   // --- Scheduler state ------------------------------------------------------
   private schedulerTimer: ReturnType<typeof setInterval> | null = null;
@@ -105,6 +141,12 @@ export class MusicEngine {
     }
 
     this._playing = false;
+  }
+
+  setStyle(style: MusicStyle): void {
+    this.preset = STYLE_PRESETS[style];
+    this.sixteenth = 60 / this.preset.bpm / 4;
+    this.barSec = (60 / this.preset.bpm) * 4;
   }
 
   setMood(mood: MusicMood): void {
@@ -235,7 +277,7 @@ export class MusicEngine {
     if (!this.ctx || !this._playing) return;
     while (this.nextNoteTime < this.ctx.currentTime + SCHEDULE_AHEAD) {
       this.scheduleStep(this.currentStep, this.nextNoteTime);
-      this.nextNoteTime += SIXTEENTH;
+      this.nextNoteTime += this.sixteenth;
       this.currentStep = (this.currentStep + 1) % 64;
     }
   }
@@ -243,7 +285,7 @@ export class MusicEngine {
   private scheduleStep(step: number, time: number): void {
     const barIndex = Math.floor(step / 16);
     const localStep = step % 16; // 0-15 within the current bar
-    const rootFreq = BASS_ROOTS[barIndex];
+    const rootFreq = this.preset.bassRoots[barIndex];
 
     // --- Kick: one-drop on beats 2 & 4 (steps 4, 12) ----------------------
     if (localStep === 4 || localStep === 12) {
@@ -285,7 +327,7 @@ export class MusicEngine {
 
     // --- Organ: sustained pad from step 0 of each bar ---------------------
     if (localStep === 0) {
-      this.playOrgan(time, rootFreq, BAR_SEC * 0.9);
+      this.playOrgan(time, rootFreq, this.barSec * 0.9);
     }
   }
 
@@ -300,7 +342,7 @@ export class MusicEngine {
 
     const osc = ctx.createOscillator();
     osc.type = "sine";
-    osc.frequency.setValueAtTime(150, time);
+    osc.frequency.setValueAtTime(this.preset.kickPunch, time);
     osc.frequency.exponentialRampToValueAtTime(40, time + 0.12);
 
     const gain = ctx.createGain();
@@ -417,7 +459,7 @@ export class MusicEngine {
 
     const bp = ctx.createBiquadFilter();
     bp.type = "bandpass";
-    bp.frequency.value = 1200;
+    bp.frequency.value = this.preset.skankBrightness;
     bp.Q.value = 2;
 
     const gain = ctx.createGain();
@@ -456,7 +498,7 @@ export class MusicEngine {
     // Tremolo LFO
     const lfo = ctx.createOscillator();
     lfo.type = "sine";
-    lfo.frequency.value = 5.5;
+    lfo.frequency.value = this.preset.organTremRate;
     const lfoGain = ctx.createGain();
     lfoGain.gain.value = 0.15; // tremolo depth
     lfo.connect(lfoGain).connect(gain.gain);

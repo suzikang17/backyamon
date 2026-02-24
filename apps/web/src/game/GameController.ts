@@ -25,8 +25,15 @@ import { DiceRenderer } from "./DiceRenderer";
 import { InputHandler } from "./InputHandler";
 import { MoveLineRenderer } from "./MoveLineRenderer";
 import { SoundManager } from "@/audio/SoundManager";
+import type { MusicStyle } from "@/audio/MusicEngine";
 
 type Difficulty = "easy" | "medium" | "hard";
+
+const DIFFICULTY_MUSIC: Record<Difficulty, MusicStyle> = {
+  easy: "roots",
+  medium: "dub",
+  hard: "dancehall",
+};
 
 function createAI(difficulty: Difficulty): AIPlayer {
   switch (difficulty) {
@@ -101,6 +108,7 @@ export class GameController {
     );
 
     this.state = createInitialState();
+    this.sound.setMusicStyle(DIFFICULTY_MUSIC[this.difficulty]);
     this.sound.startMusic();
     this.sound.updateMood(this.state);
 

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Bangers } from "next/font/google";
+import { Inter, Reggae_One, Bungee, Bungee_Spice } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -7,10 +7,22 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-const bangers = Bangers({
+const reggaeOne = Reggae_One({
   weight: "400",
   subsets: ["latin"],
-  variable: "--font-bangers",
+  variable: "--font-reggae",
+});
+
+const bungee = Bungee({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-bungee",
+});
+
+const bungeeSpice = Bungee_Spice({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-bungee-spice",
 });
 
 export const metadata: Metadata = {
@@ -35,7 +47,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${bangers.variable} font-sans bg-[#1A1A0E] text-[#F4E1C1] min-h-screen antialiased`}
+        className={`${inter.variable} ${reggaeOne.variable} ${bungee.variable} ${bungeeSpice.variable} font-sans bg-[#1A1A0E] text-[#F4E1C1] min-h-screen antialiased`}
       >
         <div className="animate-fade-in">{children}</div>
       </body>

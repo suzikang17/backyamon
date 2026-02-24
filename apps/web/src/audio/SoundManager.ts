@@ -1,5 +1,5 @@
 import { Howl, Howler } from "howler";
-import { MusicEngine, type MusicMood } from "./MusicEngine";
+import { MusicEngine, type MusicMood, type MusicStyle } from "./MusicEngine";
 import { Player, type GameState } from "@backyamon/engine";
 
 export type SFXName =
@@ -537,6 +537,10 @@ export class SoundManager {
   startMusic(): void {
     this.resumeContext();
     this.music.start();
+  }
+
+  setMusicStyle(style: MusicStyle): void {
+    this.music.setStyle(style);
   }
 
   stopMusic(): void {

@@ -2,7 +2,9 @@
 
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-bangers), cursive;
+  --font-heading: var(--font-reggae), cursive;
+  --font-display: var(--font-bungee), cursive;
+  --font-spice: var(--font-bungee-spice), cursive;
 }
 
 /* ========== Background animation for main menu ========== */

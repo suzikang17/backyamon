@@ -45,7 +45,7 @@ export default function DifficultySelect({ onBack }: DifficultySelectProps) {
         <div className="rasta-segment flex-1 bg-[#CE1126] origin-top" />
       </div>
 
-      <h2 className="animate-fade-in-up font-heading text-4xl sm:text-5xl text-[#FFD700] mb-2 tracking-wide title-glow">
+      <h2 className="animate-fade-in-up font-display text-4xl sm:text-5xl text-[#FFD700] mb-2 tracking-wide title-glow">
         Choose Your Opponent
       </h2>
       <p className="animate-fade-in animate-delay-100 text-[#D4A857] text-lg mb-10">

@@ -199,7 +199,7 @@ export default function LobbyPage() {
       </div>
 
       {/* Title */}
-      <h1 className="title-glow font-heading text-5xl sm:text-6xl text-[#FFD700] mb-2 tracking-wide">
+      <h1 className="title-glow font-display text-5xl sm:text-6xl text-[#FFD700] mb-2 tracking-wide">
         Online Lobby
       </h1>
 

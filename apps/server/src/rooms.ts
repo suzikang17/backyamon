@@ -17,18 +17,21 @@ export interface GameRoom {
 
 const rooms = new Map<string, GameRoom>();
 
-// Rasta / reggae / Caribbean themed room names — single words
+// Reggae legends + iconic words — single words used as room names
 const ROOM_NAMES = [
-  "IRIE", "ZION", "RIDDIM", "VIBES", "ROOTS", "NATTY", "MYSTIC", "DUB",
-  "JAH", "REBEL", "LION", "BLESSED", "REGGAE", "MELLOW", "MASSIVE", "WICKED",
-  "CHALICE", "BREEZE", "SUNSET", "GROOVE", "THUNDER", "STEPPA", "JUNGLE",
-  "FLAME", "SIREN", "DUBPLATE", "SKANK", "REEF", "PALM", "DRUM",
-  "BURNIN", "EXODUS", "UPRISING", "KAYA", "BABYLON", "RASTA", "NYABINGHI",
-  "BOOMSHOT", "SOUNDBOY", "SELECTOR", "BASHMENT", "DANCEHALL", "ROCKSTEADY",
-  "CALYPSO", "TIDAL", "COCONUT", "MANGO", "PAPAYA", "HIBISCUS", "BAMBOO",
-  "VOLCANO", "LAGOON", "CORAL", "MARLEY", "TUBBY", "SCRATCH", "STUDIO",
-  "VINYL", "BASSLINE", "OFFBEAT", "ECHO", "REVERB", "DREAD", "EMPRESS",
-  "KINGSTON", "TRENCHTOWN", "MONTEGO", "NEGRIL", "OCHO", "PORTMORE",
+  // Legendary artists
+  "MARLEY", "TOSH", "PERRY", "CLIFF", "TUBBY", "SHAGGY", "SHABBA",
+  "BANTON", "SIZZLA", "CAPLETON", "ELEPHANT", "BEENIE", "BOUNTY",
+  "YELLOWMAN", "BARRINGTON", "HORACE", "TOOTS", "ALTON", "DESMOND",
+  "BURNING", "ISAACS", "COCOA", "SCRATCH", "SCIENTIST", "SKATALITES",
+  "ABYSSINIANS", "GLADIATORS", "CONGOS", "WAILING", "UPSETTERS",
+  "MAYTALS", "HEPTONES", "PARAGONS", "MELODIANS", "ETHIOPIANS",
+  "CHRONIXX", "PROTOJE", "KOFFEE", "POPCAAN", "ALKALINE",
+  "SEAN", "DAMIAN", "ZIGGY", "STEPHEN", "CEDELLA",
+  // Iconic reggae words
+  "RIDDIM", "ZION", "EXODUS", "KAYA", "UPRISING", "BURNIN",
+  "KINGSTON", "TRENCHTOWN", "ROCKSTEADY", "DANCEHALL", "DUBPLATE",
+  "IRIE", "ROOTS", "DUB", "BASHMENT", "STEPPA",
 ];
 
 function pick<T>(arr: T[]): T {
