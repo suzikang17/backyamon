@@ -142,14 +142,14 @@ export function OnlineGameCanvas({
         style={{ cursor: waitingForRoll ? "pointer" : "default" }}
       />
 
-      {/* Message overlay */}
-      {message && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none">
-          <div className="bg-[#1A1A0E]/90 text-[#FFD700] font-heading text-lg px-6 py-2 rounded-xl border border-[#8B4513] whitespace-nowrap">
+      {/* Message bar — below the canvas, not overlapping the board */}
+      <div className="h-8 flex items-center justify-center">
+        {message && (
+          <p className="text-[#D4A857] font-heading text-xs sm:text-sm whitespace-nowrap">
             {message}
-          </div>
-        </div>
-      )}
+          </p>
+        )}
+      </div>
 
       {/* Roll prompt */}
       {waitingForRoll && (

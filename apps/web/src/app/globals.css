@@ -2,9 +2,20 @@
 
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-reggae), cursive;
-  --font-display: var(--font-bungee), cursive;
-  --font-spice: var(--font-bungee-spice), cursive;
+}
+
+/* Custom font utilities — reference next/font CSS variables directly
+   so they resolve on elements inside <body> where the variables are set */
+@layer utilities {
+  .font-heading {
+    font-family: var(--font-reggae), cursive;
+  }
+  .font-display {
+    font-family: var(--font-bungee), cursive;
+  }
+  .font-spice {
+    font-family: var(--font-bungee-spice), cursive;
+  }
 }
 
 /* ========== Background animation for main menu ========== */

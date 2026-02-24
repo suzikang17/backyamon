@@ -28,8 +28,10 @@ export class MoveLineRenderer {
   // Currently highlighted piece
   private highlightedFrom: number | "bar" | null = null;
 
-  // Callback when a line/label is clicked
+  // Callback when an active line/label is clicked (execute move)
   onMoveClicked: ((move: Move) => void) | null = null;
+  // Callback when a faded line is clicked (highlight source piece)
+  onSourceClicked: ((from: number | "bar") => void) | null = null;
 
   constructor(app: Application, boardRenderer: BoardRenderer) {
     this.app = app;
@@ -223,6 +225,20 @@ export class MoveLineRenderer {
     g.quadraticCurveTo(cpX, cpY, lineData.endX, lineData.endY);
     g.stroke({ color, width: lineWidth, alpha });
     container.addChild(g);
+
+    // Faded arcs: click to highlight the source piece
+    if (!active) {
+      const fadeHitG = new Graphics();
+      fadeHitG.moveTo(lineData.startX, lineData.startY);
+      fadeHitG.quadraticCurveTo(cpX, cpY, lineData.endX, lineData.endY);
+      fadeHitG.stroke({ color: 0xffffff, width: radius * 1.0, alpha: 0.001 });
+      fadeHitG.eventMode = "static";
+      fadeHitG.cursor = "pointer";
+      fadeHitG.on("pointerdown", () => {
+        this.onSourceClicked?.(lineData.move.from);
+      });
+      container.addChild(fadeHitG);
+    }
 
     // Tangent direction at the end point (for arrowhead orientation)
     const tangentX = lineData.endX - cpX;

@@ -128,6 +128,10 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
           }
           ctrl.undoMove();
           break;
+        case "m":
+          e.preventDefault();
+          soundManager.toggleMute();
+          break;
         case "1":
         case "2":
         case "3":
@@ -265,14 +269,14 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
         soundManager={soundManager}
       />
 
-      {/* Message overlay */}
-      {message && (
-        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 pointer-events-none z-20">
-          <div className="bg-[#1A1A0E]/85 text-[#D4A857] font-heading text-xs sm:text-sm px-3 sm:px-5 py-1 sm:py-1.5 rounded-lg border border-[#8B4513]/60 whitespace-nowrap backdrop-blur-sm">
+      {/* Message bar — below the canvas, not overlapping the board */}
+      <div className="h-8 flex items-center justify-center">
+        {message && (
+          <p className="text-[#D4A857] font-heading text-xs sm:text-sm whitespace-nowrap">
             {message}
-          </div>
-        </div>
-      )}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

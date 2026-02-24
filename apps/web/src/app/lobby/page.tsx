@@ -253,58 +253,54 @@ export default function LobbyPage() {
       )}
 
       {/* Main content */}
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-3xl">
         {view === "lobby" && (
-          <div className="flex flex-col gap-4">
-            {/* Action buttons — same style as main menu */}
-            <button
-              onClick={handleQuickMatch}
-              disabled={!connected || connecting}
-              className="w-full rounded-2xl wood-btn wood-btn-green px-8 py-4 text-xl font-bold text-[#FFD700] shadow-lg interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading hover:shadow-[0_0_20px_rgba(0,107,63,0.4)]"
-            >
-              Quick Match
-            </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left column — actions */}
+            <div className="flex flex-col gap-4">
+              <button
+                onClick={handleQuickMatch}
+                disabled={!connected || connecting}
+                className="w-full rounded-2xl wood-btn wood-btn-green px-8 py-4 text-xl font-bold text-[#FFD700] shadow-lg interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading hover:shadow-[0_0_20px_rgba(0,107,63,0.4)]"
+              >
+                Quick Match
+              </button>
 
-            <button
-              onClick={handleCreateRoom}
-              disabled={!connected || connecting}
-              className="w-full rounded-2xl wood-btn wood-btn-bamboo px-8 py-4 text-xl font-bold text-[#1A1A0E] shadow-lg interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading hover:shadow-[0_0_20px_rgba(212,168,87,0.4)]"
-            >
-              Create Room
-            </button>
+              <button
+                onClick={handleCreateRoom}
+                disabled={!connected || connecting}
+                className="w-full rounded-2xl wood-btn wood-btn-bamboo px-8 py-4 text-xl font-bold text-[#1A1A0E] shadow-lg interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading hover:shadow-[0_0_20px_rgba(212,168,87,0.4)]"
+              >
+                Create Room
+              </button>
 
-            {/* Optional custom name — subtle, below create */}
-            <input
-              type="text"
-              value={customRoomName}
-              onChange={(e) => setCustomRoomName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && connected && !connecting) handleCreateRoom();
-              }}
-              placeholder="custom room name (optional)"
-              maxLength={30}
-              className="w-full rounded-xl bg-[#1A1A0E]/60 border border-[#8B4513]/50 px-4 py-2 text-[#FFD700] font-heading text-sm text-center placeholder:text-[#D4A857]/30 focus:outline-none focus:border-[#D4A857] -mt-2"
-            />
-
-            {/* Rasta divider */}
-            <div className="flex items-center gap-3 mt-2">
-              <div className="flex-1 h-px bg-[#006B3F]/40" />
-              <div className="flex-1 h-px bg-[#FFD700]/40" />
-              <div className="flex-1 h-px bg-[#CE1126]/40" />
+              <input
+                type="text"
+                value={customRoomName}
+                onChange={(e) => setCustomRoomName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && connected && !connecting) handleCreateRoom();
+                }}
+                placeholder="custom room name (optional)"
+                maxLength={30}
+                className="w-full rounded-xl bg-[#1A1A0E]/60 border border-[#8B4513]/50 px-4 py-2 text-[#FFD700] font-heading text-sm text-center placeholder:text-[#D4A857]/30 focus:outline-none focus:border-[#D4A857] -mt-2"
+              />
             </div>
 
-            {/* Open rooms list */}
+            {/* Right column — open rooms */}
             <div className="flex flex-col gap-2">
-              <p className="text-[#D4A857] text-xs font-heading text-center tracking-wider uppercase">
+              <p className="text-[#D4A857] text-xs font-heading text-center md:text-left tracking-wider uppercase">
                 Open Rooms
               </p>
 
               {rooms.length === 0 ? (
-                <p className="text-[#D4A857]/40 text-sm text-center py-6 font-heading">
-                  No rooms yet — small up yuhself and create one!
-                </p>
+                <div className="flex-1 flex items-center justify-center rounded-xl border border-[#8B4513]/30 bg-[#1A1A0E]/40 min-h-[140px]">
+                  <p className="text-[#D4A857]/40 text-sm text-center px-4 font-heading">
+                    No rooms yet — small up yuhself and create one!
+                  </p>
+                </div>
               ) : (
-                <div className="flex flex-col gap-2 max-h-52 overflow-y-auto">
+                <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
                   {rooms.map((room) => (
                     <button
                       key={room.id}

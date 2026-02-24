@@ -46,10 +46,19 @@ export class InputHandler {
     this.hitAreaContainer.zIndex = 900;
     app.stage.addChild(this.hitAreaContainer);
 
-    // Wire up line click handler
+    // Wire up line click handler (active arcs → execute move)
     this.moveLineRenderer.onMoveClicked = (move: Move) => {
       if (!this.enabled) return;
       this.executeMove(move);
+    };
+
+    // Wire up faded arc click handler (faded arcs → highlight source piece)
+    this.moveLineRenderer.onSourceClicked = (from: number | "bar") => {
+      if (!this.enabled) return;
+      const movesFromHere = this.legalMoves.filter((m) => m.from === from);
+      if (movesFromHere.length > 0) {
+        this.selectPiece(from);
+      }
     };
 
     this.setupHitAreas();
