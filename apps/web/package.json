@@ -1,0 +1,27 @@
+{
+  "name": "@backyamon/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "^15",
+    "react": "^19",
+    "react-dom": "^19",
+    "pixi.js": "^8",
+    "howler": "^2.2",
+    "socket.io-client": "^4",
+    "@backyamon/engine": "*"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/howler": "^2",
+    "tailwindcss": "^4",
+    "@tailwindcss/postcss": "^4",
+    "postcss": "^8"
+  }
+}

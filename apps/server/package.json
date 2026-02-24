@@ -1,0 +1,21 @@
+{
+  "name": "@backyamon/server",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "socket.io": "^4",
+    "drizzle-orm": "^0.38",
+    "better-sqlite3": "^11",
+    "@backyamon/engine": "*"
+  },
+  "devDependencies": {
+    "tsx": "^4",
+    "drizzle-kit": "^0.30",
+    "@types/better-sqlite3": "^7"
+  }
+}

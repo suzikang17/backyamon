@@ -1,0 +1,16 @@
+{
+  "name": "backyamon",
+  "private": true,
+  "packageManager": "npm@10.9.4",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "test": "turbo test",
+    "lint": "turbo lint"
+  },
+  "devDependencies": {
+    "turbo": "^2",
+    "typescript": "^5.5"
+  }
+}
