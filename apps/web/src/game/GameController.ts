@@ -237,7 +237,7 @@ export class GameController {
     this.state = { ...this.state, dice, phase: "MOVING" };
     this.currentDiceValues = dice.values[0] === dice.values[1]
       ? [dice.values[0], dice.values[0], dice.values[0], dice.values[0]]
-      : [dice.values[0], dice.values[1]];
+      : [dice.values[0], dice.values[1]];  // originalValues tracks all uses (4 for doubles) for dimming logic
     this.emitStateChange();
 
     // Show dice animation
@@ -341,7 +341,7 @@ export class GameController {
     this.state = { ...this.state, dice, phase: "MOVING" };
     this.currentDiceValues = dice.values[0] === dice.values[1]
       ? [dice.values[0], dice.values[0], dice.values[0], dice.values[0]]
-      : [dice.values[0], dice.values[1]];
+      : [dice.values[0], dice.values[1]];  // originalValues tracks all uses (4 for doubles) for dimming logic
     this.emitStateChange();
 
     // Show dice animation

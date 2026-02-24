@@ -66,21 +66,13 @@ export class DiceRenderer {
 
     const center = this.boardRenderer.getDiceCenterPosition();
     const gap = this.dieSize * 0.3;
-    const isDoubles = dice.values[0] === dice.values[1];
-    const diceCount = isDoubles ? 4 : 2;
 
-    // Position dice around center
-    const totalWidth =
-      diceCount * this.dieSize + (diceCount - 1) * gap;
+    // Always show exactly 2 dice
+    const totalWidth = 2 * this.dieSize + gap;
     const startX = center.x - totalWidth / 2 + this.dieSize / 2;
 
-    // Create die containers
-    const values = isDoubles
-      ? [dice.values[0], dice.values[0], dice.values[0], dice.values[0]]
-      : [dice.values[0], dice.values[1]];
-
-    for (let i = 0; i < diceCount; i++) {
-      const die = this.createDie(values[i]);
+    for (let i = 0; i < 2; i++) {
+      const die = this.createDie(dice.values[i]);
       die.x = startX + i * (this.dieSize + gap);
       die.y = center.y;
       this.container.addChild(die);
@@ -185,35 +177,29 @@ export class DiceRenderer {
 
   /**
    * Update which dice appear used based on remaining values.
+   * For doubles, each visual die represents 2 uses (4 total across 2 dice).
    */
   updateUsedDice(originalValues: number[], remaining: number[]): void {
-    // Create a count of remaining values
-    const remainCount = new Map<number, number>();
-    for (const v of remaining) {
-      remainCount.set(v, (remainCount.get(v) ?? 0) + 1);
-    }
+    const isDoubles = originalValues.length === 4;
+    const remainingCount = remaining.length;
 
-    // Mark dice as used if their value is no longer in remaining
-    const valueCount = new Map<number, number>();
-    for (const v of originalValues) {
-      valueCount.set(v, (valueCount.get(v) ?? 0) + 1);
-    }
-
-    // Track how many of each value we've assigned as "still available"
-    const assigned = new Map<number, number>();
-
-    for (let i = 0; i < this.dieContainers.length; i++) {
-      // The value of this die container corresponds to originalValues[i]
-      // For doubles, all 4 have the same value
-      const val = originalValues[i];
-      const alreadyAssigned = assigned.get(val) ?? 0;
-      const stillRemaining = remainCount.get(val) ?? 0;
-
-      if (alreadyAssigned < stillRemaining) {
-        this.dieContainers[i].alpha = 1;
-        assigned.set(val, alreadyAssigned + 1);
-      } else {
-        this.dieContainers[i].alpha = USED_ALPHA;
+    if (isDoubles) {
+      // 2 visual dice, each covers 2 uses
+      // 4 remaining = both lit, 3 = both lit, 2 = one dim, 1 = one dim, 0 = both dim
+      this.dieContainers[0].alpha = remainingCount > 2 ? 1 : USED_ALPHA;
+      this.dieContainers[1].alpha = remainingCount > 0 ? 1 : USED_ALPHA;
+    } else {
+      // Normal roll: match each die to whether its value is still remaining
+      const remainSet = [...remaining];
+      for (let i = 0; i < this.dieContainers.length; i++) {
+        const val = originalValues[i];
+        const idx = remainSet.indexOf(val);
+        if (idx !== -1) {
+          this.dieContainers[i].alpha = 1;
+          remainSet.splice(idx, 1);
+        } else {
+          this.dieContainers[i].alpha = USED_ALPHA;
+        }
       }
     }
   }
