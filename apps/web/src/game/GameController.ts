@@ -101,6 +101,8 @@ export class GameController {
     );
 
     this.state = createInitialState();
+    this.sound.startMusic();
+    this.sound.updateMood(this.state);
 
     // Render initial board
     this.pieceRenderer.render(this.state);
@@ -486,6 +488,7 @@ export class GameController {
   }
 
   private emitStateChange(): void {
+    this.sound.updateMood(this.state);
     this.onStateChange?.(this.state);
   }
 
@@ -494,6 +497,7 @@ export class GameController {
   }
 
   destroy(): void {
+    this.sound.stopMusic();
     this.destroyed = true;
     this.inputHandler?.destroy();
     this.moveLineRenderer?.destroy();
