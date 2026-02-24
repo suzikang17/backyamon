@@ -26,12 +26,9 @@ export default function MainMenu() {
 
       {/* Title section */}
       <div className="text-center mb-12 animate-fade-in-up">
-        <h1 className="title-glow font-spice text-7xl sm:text-8xl md:text-9xl text-[#FFD700] tracking-wide">
-          BACKYAMON
+        <h1 className="title-glow font-spice text-6xl sm:text-7xl md:text-8xl text-[#FFD700] tracking-wide">
+          Back Ya&apos;Mon!
         </h1>
-        <p className="mt-2 text-3xl sm:text-4xl font-heading text-[#006B3F] tracking-wider">
-          Ya Mon!
-        </p>
       </div>
 
       {/* Rasta divider */}
