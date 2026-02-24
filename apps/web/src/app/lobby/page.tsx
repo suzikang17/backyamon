@@ -301,7 +301,7 @@ export default function LobbyPage() {
 
               {rooms.length === 0 ? (
                 <p className="text-[#D4A857]/40 text-sm text-center py-6 font-heading">
-                  No open rooms yet
+                  No rooms yet — small up yuhself and create one!
                 </p>
               ) : (
                 <div className="flex flex-col gap-2 max-h-52 overflow-y-auto">
@@ -349,7 +349,7 @@ export default function LobbyPage() {
             </div>
 
             <p className="text-[#FFD700] font-heading text-2xl">
-              Searching for opponent...
+              Mi soon come... searching!
             </p>
 
             <button
@@ -380,7 +380,7 @@ export default function LobbyPage() {
                 <div className="w-2 h-2 rounded-full bg-[#FFD700] animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
               <p className="text-[#D4A857]/60 text-sm">
-                Waiting for opponent...
+                Mi deh yah, yuh know...
               </p>
             </div>
 

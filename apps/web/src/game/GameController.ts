@@ -27,6 +27,17 @@ import { MoveLineRenderer } from "./MoveLineRenderer";
 import { AmbienceLayer } from "./AmbienceLayer";
 import { SoundManager } from "@/audio/SoundManager";
 import type { MusicStyle } from "@/audio/MusicEngine";
+import {
+  turnStartMessage,
+  aiThinkingMessage,
+  aiNoMovesMessage,
+  victoryMessage,
+  defeatMessage,
+  noMovesMessage,
+  doubleConsiderMessage,
+  doubleAcceptedMessage,
+  doubleDeclinedMessage,
+} from "./patois";
 
 type Difficulty = "easy" | "medium" | "hard";
 
@@ -151,7 +162,7 @@ export class GameController {
     this.emitStateChange();
 
     // AI always accepts for now (simple AI behavior)
-    this.onMessage?.(`${this.ai.name} considers the double...`);
+    this.onMessage?.(doubleConsiderMessage(this.ai.name));
     this.delay(1200).then(() => {
       if (this.destroyed) return;
 
@@ -162,7 +173,7 @@ export class GameController {
       if (shouldAccept) {
         this.state = acceptDouble(this.state);
         this.emitStateChange();
-        this.onMessage?.(`${this.ai.name} accepts the double!`);
+        this.onMessage?.(doubleAcceptedMessage(this.ai.name));
         this.delay(800).then(() => {
           if (this.destroyed) return;
           // Continue with the human's rolling phase
@@ -171,7 +182,7 @@ export class GameController {
       } else {
         this.state = declineDouble(this.state);
         this.emitStateChange();
-        this.onMessage?.(`${this.ai.name} declines! You win!`);
+        this.onMessage?.(doubleDeclinedMessage(this.ai.name));
         this.sound.playSFX("victory");
         this.onGameOver?.(Player.Gold, "ya_mon");
       }
@@ -258,7 +269,7 @@ export class GameController {
 
     // Signal that we're waiting for a roll
     this.onWaitingForRoll?.(true);
-    this.onMessage?.("Click to roll the dice!");
+    this.onMessage?.(turnStartMessage());
   }
 
   private async doHumanRoll(): Promise<void> {
@@ -287,7 +298,7 @@ export class GameController {
     const legalMoves = getLegalMoves(this.state);
 
     if (legalMoves.length === 0) {
-      this.onMessage?.("No legal moves! Turn passes...");
+      this.onMessage?.(noMovesMessage());
       await this.delay(1200);
       if (this.destroyed) return;
       this.diceRenderer.hide();
@@ -369,7 +380,7 @@ export class GameController {
   private async startAITurn(): Promise<void> {
     if (this.destroyed) return;
 
-    this.onMessage?.(`${this.ai.name} is thinking...`);
+    this.onMessage?.(aiThinkingMessage(this.ai.name));
 
     // Brief pause before AI acts
     await this.delay(500);
@@ -392,7 +403,7 @@ export class GameController {
     const moves = this.ai.selectMoves(this.state);
 
     if (moves.length === 0) {
-      this.onMessage?.(`${this.ai.name}: No moves!`);
+      this.onMessage?.(aiNoMovesMessage(this.ai.name));
       await this.delay(800);
       if (this.destroyed) return;
       this.diceRenderer.hide();
@@ -461,8 +472,8 @@ export class GameController {
       }
       this.onMessage?.(
         this.state.winner === Player.Gold
-          ? "Ya Mon! You win!"
-          : `${this.ai.name} wins!`
+          ? victoryMessage()
+          : defeatMessage()
       );
       this.onGameOver?.(this.state.winner, winType);
       return;
