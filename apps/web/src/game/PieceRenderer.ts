@@ -327,35 +327,53 @@ export class PieceRenderer {
 
     const radius = this.boardRenderer.getPieceRadius();
     const glowColor = player === Player.Gold ? 0xffd700 : 0xce1126;
+    const brightColor = player === Player.Gold ? 0xffee66 : 0xff4466;
 
     for (const from of moveableFroms) {
       const piece = this.getPieceAt(from, player);
       if (!piece) continue;
 
       const g = new Graphics();
-      // Outer glow circle drawn at the piece's position
-      g.circle(piece.x, piece.y, radius * 1.35).fill({
+
+      // Wide soft outer halo
+      g.circle(piece.x, piece.y, radius * 1.8).fill({
         color: glowColor,
-        alpha: 0.25,
+        alpha: 0.12,
       });
-      g.circle(piece.x, piece.y, radius * 1.15).fill({
+      // Mid glow ring
+      g.circle(piece.x, piece.y, radius * 1.5).fill({
         color: glowColor,
-        alpha: 0.15,
+        alpha: 0.2,
+      });
+      // Bright inner ring
+      g.circle(piece.x, piece.y, radius * 1.25).fill({
+        color: brightColor,
+        alpha: 0.35,
+      });
+      // Hot core ring (stroke only for crisp edge)
+      g.circle(piece.x, piece.y, radius * 1.1).stroke({
+        color: brightColor,
+        width: 2,
+        alpha: 0.6,
       });
 
       this.glowContainer.addChild(g);
       this.glowGraphics.push(g);
     }
 
-    // Start pulsing animation
+    // Animated pulse: alpha + scale breathing
     if (this.glowGraphics.length > 0 && !this.glowAnimTicker) {
       const startTime = performance.now();
       this.glowAnimTicker = () => {
         const elapsed = performance.now() - startTime;
-        // Pulse between 0.4 and 1.0, period ~1000ms
-        const pulse = 0.7 + Math.sin(elapsed * 0.006) * 0.3;
+        const sin = Math.sin(elapsed * 0.005);
+        // Alpha pulses between 0.5 and 1.0
+        const pulse = 0.75 + sin * 0.25;
+        // Scale breathes between 0.95 and 1.05
+        const scale = 1 + sin * 0.05;
         for (const g of this.glowGraphics) {
           g.alpha = pulse;
+          g.scale.set(scale);
         }
       };
       this.app.ticker.add(this.glowAnimTicker);
