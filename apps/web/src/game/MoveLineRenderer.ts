@@ -231,7 +231,7 @@ export class MoveLineRenderer {
       const fadeHitG = new Graphics();
       fadeHitG.moveTo(lineData.startX, lineData.startY);
       fadeHitG.quadraticCurveTo(cpX, cpY, lineData.endX, lineData.endY);
-      fadeHitG.stroke({ color: 0xffffff, width: radius * 1.0, alpha: 0.001 });
+      fadeHitG.stroke({ color: 0xffffff, width: Math.max(radius * 1.2, 16), alpha: 0.001 });
       fadeHitG.eventMode = "static";
       fadeHitG.cursor = "pointer";
       fadeHitG.on("pointerdown", () => {
@@ -271,7 +271,7 @@ export class MoveLineRenderer {
       const hitG = new Graphics();
       hitG.moveTo(lineData.startX, lineData.startY);
       hitG.quadraticCurveTo(cpX, cpY, lineData.endX, lineData.endY);
-      hitG.stroke({ color: 0xffffff, width: radius * 1.2, alpha: 0.001 });
+      hitG.stroke({ color: 0xffffff, width: Math.max(radius * 1.4, 18), alpha: 0.001 });
       hitG.eventMode = "static";
       hitG.cursor = "pointer";
       hitG.on("pointerdown", () => {

@@ -66,6 +66,8 @@ export class InputHandler {
 
   private setupHitAreas(): void {
     const pw = this.boardRenderer.getPointWidth();
+    // Ensure hit areas are wide enough for touch (min 32px)
+    const hitW = Math.max(pw, 32);
 
     // Create invisible hit areas for each point
     for (let i = 0; i < 24; i++) {
@@ -75,9 +77,9 @@ export class InputHandler {
 
       const hitArea = new Graphics();
       hitArea.rect(
-        pos.x - pw / 2,
+        pos.x - hitW / 2,
         dir === "up" ? pos.y - area.height * 0.45 : pos.y,
-        pw,
+        hitW,
         area.height * 0.45
       ).fill({ color: 0xffffff, alpha: 0.001 }); // Nearly invisible
 
@@ -364,7 +366,7 @@ export class InputHandler {
       (m) => m.from === this.selectedFrom
     );
     const pw = this.boardRenderer.getPointWidth();
-    const snapDist = pw * 1.2;
+    const snapDist = Math.max(pw * 1.2, 36);
 
     // Check point targets
     for (const move of movesFromHere) {

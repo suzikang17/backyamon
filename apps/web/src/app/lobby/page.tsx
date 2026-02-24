@@ -199,7 +199,7 @@ export default function LobbyPage() {
       </div>
 
       {/* Title */}
-      <h1 className="title-glow font-display text-5xl sm:text-6xl text-[#FFD700] mb-2 tracking-wide">
+      <h1 className="title-glow font-display text-3xl sm:text-5xl md:text-6xl text-[#FFD700] mb-2 tracking-wide">
         Online Lobby
       </h1>
 
@@ -261,7 +261,7 @@ export default function LobbyPage() {
               <button
                 onClick={handleQuickMatch}
                 disabled={!connected || connecting}
-                className="w-full rounded-2xl wood-btn wood-btn-green px-8 py-4 text-xl font-bold text-[#FFD700] shadow-lg interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading hover:shadow-[0_0_20px_rgba(0,107,63,0.4)]"
+                className="w-full rounded-2xl wood-btn wood-btn-green px-6 sm:px-8 py-3 sm:py-4 text-lg sm:text-xl font-bold text-[#FFD700] shadow-lg interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading hover:shadow-[0_0_20px_rgba(0,107,63,0.4)]"
               >
                 Quick Match
               </button>
@@ -269,7 +269,7 @@ export default function LobbyPage() {
               <button
                 onClick={handleCreateRoom}
                 disabled={!connected || connecting}
-                className="w-full rounded-2xl wood-btn wood-btn-bamboo px-8 py-4 text-xl font-bold text-[#1A1A0E] shadow-lg interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading hover:shadow-[0_0_20px_rgba(212,168,87,0.4)]"
+                className="w-full rounded-2xl wood-btn wood-btn-bamboo px-6 sm:px-8 py-3 sm:py-4 text-lg sm:text-xl font-bold text-[#1A1A0E] shadow-lg interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading hover:shadow-[0_0_20px_rgba(212,168,87,0.4)]"
               >
                 Create Room
               </button>

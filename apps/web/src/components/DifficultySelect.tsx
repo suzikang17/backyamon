@@ -45,14 +45,14 @@ export default function DifficultySelect({ onBack }: DifficultySelectProps) {
         <div className="rasta-segment flex-1 bg-[#CE1126] origin-top" />
       </div>
 
-      <h2 className="animate-fade-in-up font-display text-4xl sm:text-5xl text-[#FFD700] mb-2 tracking-wide title-glow">
+      <h2 className="animate-fade-in-up font-display text-3xl sm:text-4xl md:text-5xl text-[#FFD700] mb-2 tracking-wide title-glow">
         Choose Your Opponent
       </h2>
       <p className="animate-fade-in animate-delay-100 text-[#D4A857] text-lg mb-10 font-heading">
         Who you wan fi challenge?
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-xs sm:max-w-3xl">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 w-full max-w-xs sm:max-w-3xl">
         {opponents.map((opp, index) => (
           <button
             key={opp.difficulty}

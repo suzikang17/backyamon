@@ -101,9 +101,9 @@ function GameOverOverlay({
       {isPlayerWin && winType === "big_ya_mon" && <BigYaMonEffect />}
       {isPlayerWin && winType === "massive_ya_mon" && <MassiveYaMonEffect />}
 
-      <div className="text-center px-6 sm:px-8 py-6 relative z-10">
+      <div className="text-center px-4 sm:px-6 md:px-8 py-6 relative z-10">
         <h2
-          className={`font-heading text-3xl sm:text-4xl md:text-5xl mb-2 tracking-wide ${
+          className={`font-heading text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-2 tracking-wide ${
             isPlayerWin ? "title-glow" : ""
           }`}
           style={{
@@ -117,13 +117,13 @@ function GameOverOverlay({
         </p>
 
         {/* Rasta divider */}
-        <div className="flex w-48 mx-auto mb-6 rounded overflow-hidden">
+        <div className="flex w-36 sm:w-48 mx-auto mb-6 rounded overflow-hidden">
           <div className="h-1 flex-1 bg-[#006B3F]" />
           <div className="h-1 flex-1 bg-[#FFD700]" />
           <div className="h-1 flex-1 bg-[#CE1126]" />
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center w-full sm:w-auto">
           {onPlayAgain && (
             <button
               onClick={onPlayAgain}

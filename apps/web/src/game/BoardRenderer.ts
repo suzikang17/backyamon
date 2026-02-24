@@ -65,10 +65,10 @@ export class BoardRenderer {
     app.stage.addChild(this.container);
     app.stage.addChild(this.highlightContainer);
 
-    // Calculate layout
-    this.padding = Math.floor(width * 0.01);
-    this.zionWidth = Math.floor(width * 0.065);
-    this.barWidth = Math.floor(width * 0.04);
+    // Calculate layout (with minimums for small screens)
+    this.padding = Math.max(Math.floor(width * 0.01), 4);
+    this.zionWidth = Math.max(Math.floor(width * 0.065), 24);
+    this.barWidth = Math.max(Math.floor(width * 0.04), 16);
 
     // Play area = total - border padding - zion tray
     const innerWidth = width - this.padding * 2;
@@ -87,7 +87,7 @@ export class BoardRenderer {
     // Each quadrant has 6 points
     this._pointWidth = Math.floor(halfBoardW / 6);
     this.pointHeight = Math.floor(this.playAreaH * 0.42);
-    this._pieceRadius = Math.floor(this._pointWidth * 0.42);
+    this._pieceRadius = Math.max(Math.floor(this._pointWidth * 0.42), 10);
 
     this.drawBoard();
   }

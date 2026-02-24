@@ -139,7 +139,7 @@ export function OnlineGameCanvas({
         ref={containerRef}
         className="w-full aspect-[8/5] rounded-2xl border-2 border-[#8B4513] overflow-hidden shadow-lg"
         onClick={handleRollClick}
-        style={{ cursor: waitingForRoll ? "pointer" : "default" }}
+        style={{ cursor: waitingForRoll ? "pointer" : "default", touchAction: "manipulation" }}
       />
 
       {/* Message bar — below the canvas, not overlapping the board */}
@@ -155,7 +155,7 @@ export function OnlineGameCanvas({
       {waitingForRoll && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div
-            className="bg-[#1A1A0E]/80 text-[#FFD700] font-heading text-2xl px-8 py-4 rounded-2xl border-2 border-[#D4A857] animate-pulse pointer-events-auto cursor-pointer"
+            className="bg-[#1A1A0E]/80 text-[#FFD700] font-heading text-lg sm:text-2xl px-6 sm:px-8 py-3 sm:py-4 rounded-2xl border-2 border-[#D4A857] animate-pulse pointer-events-auto cursor-pointer min-h-[44px]"
             onClick={handleRollClick}
           >
             Roll Dice

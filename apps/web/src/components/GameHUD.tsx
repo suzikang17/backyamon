@@ -99,7 +99,7 @@ export function GameHUD({
           <button
             onClick={(e) => { (e.target as HTMLElement).blur(); handleToggleMute(); }}
             tabIndex={-1}
-            className="pointer-events-auto bg-[#1A1A0E]/80 hover:bg-[#1A1A0E] rounded-lg p-1.5 border border-[#8B4513] transition-colors cursor-pointer"
+            className="pointer-events-auto bg-[#1A1A0E]/80 hover:bg-[#1A1A0E] rounded-lg p-2 sm:p-1.5 border border-[#8B4513] transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
             title={muted ? "Unmute" : "Mute"}
           >
             {muted ? <SpeakerMutedIcon /> : <SpeakerIcon />}
@@ -117,7 +117,7 @@ export function GameHUD({
               setMusicPlaying(!musicPlaying);
             }}
             tabIndex={-1}
-            className="pointer-events-auto bg-[#1A1A0E]/80 hover:bg-[#1A1A0E] rounded-lg p-1.5 border border-[#8B4513] transition-colors cursor-pointer"
+            className="pointer-events-auto bg-[#1A1A0E]/80 hover:bg-[#1A1A0E] rounded-lg p-2 sm:p-1.5 border border-[#8B4513] transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
             title={musicPlaying ? "Stop Music" : "Start Music"}
           >
             {musicPlaying ? <MusicOnIcon /> : <MusicOffIcon />}
@@ -145,7 +145,7 @@ export function GameHUD({
               className="
                 bg-[#1A1A0E]/80 hover:bg-[#1A1A0E]
                 text-[#D4A857] font-heading text-xs
-                px-3 py-1.5 rounded-lg
+                px-4 py-2 rounded-lg min-h-[44px]
                 border border-[#8B4513]
                 hover:border-[#D4A857]
                 transition-all duration-150
@@ -169,7 +169,7 @@ export function GameHUD({
               pointer-events-auto
               bg-gradient-to-b from-[#D4A857] to-[#8B4513]
               text-[#1A1A0E] font-heading text-sm
-              px-5 py-1.5 rounded-lg
+              px-6 py-2 rounded-lg min-h-[44px]
               border border-[#FFD700]
               shadow-md shadow-[#FFD700]/15
               hover:brightness-110 active:scale-95

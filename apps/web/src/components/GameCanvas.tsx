@@ -252,7 +252,7 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
         ref={containerRef}
         className="w-full aspect-[8/5] rounded-2xl border-2 border-[#8B4513] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
         onClick={handleRollClick}
-        style={{ cursor: waitingForRoll ? "pointer" : "default" }}
+        style={{ cursor: waitingForRoll ? "pointer" : "default", touchAction: "manipulation" }}
       />
 
       {/* HUD overlay */}
