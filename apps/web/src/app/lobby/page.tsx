@@ -48,7 +48,6 @@ export default function LobbyPage() {
         setUsername(identity.username);
         setConnecting(false);
 
-        // Request initial room list
         client.listRooms();
       } catch (err) {
         if (destroyed) return;
@@ -70,7 +69,6 @@ export default function LobbyPage() {
       }
     });
 
-    // Listen for room list updates (broadcast by server)
     client.on("room-list", (data: unknown) => {
       if (!destroyed) {
         const { rooms: roomList } = data as { rooms: WaitingRoom[] };
@@ -87,7 +85,6 @@ export default function LobbyPage() {
     };
   }, []);
 
-  // Handle Quick Match
   const handleQuickMatch = useCallback(async () => {
     const client = socketRef.current;
     if (!client) return;
@@ -119,7 +116,6 @@ export default function LobbyPage() {
     }
   }, [router]);
 
-  // Handle Create Room
   const handleCreateRoom = useCallback(async () => {
     const client = socketRef.current;
     if (!client) return;
@@ -145,7 +141,6 @@ export default function LobbyPage() {
     }
   }, [router, customRoomName]);
 
-  // Handle Join Room (from list)
   const handleJoinRoom = useCallback(async (roomId: string) => {
     const client = socketRef.current;
     if (!client) return;
@@ -162,20 +157,17 @@ export default function LobbyPage() {
     }
   }, [router]);
 
-  // Cancel quick match
   const handleCancelSearch = useCallback(() => {
     const client = socketRef.current;
     if (client) client.leaveQueue();
     setView("lobby");
   }, []);
 
-  // Cancel waiting room
   const handleCancelRoom = useCallback(() => {
     setView("lobby");
     setRoomCode("");
   }, []);
 
-  // Claim username
   const handleClaimUsername = useCallback(async () => {
     const client = socketRef.current;
     if (!client || !usernameInput.trim()) return;
@@ -198,158 +190,158 @@ export default function LobbyPage() {
   }, [usernameInput]);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center px-4">
+    <div className="animated-bg flex min-h-screen flex-col items-center justify-center px-4">
       {/* Rasta stripe decoration */}
-      <div className="fixed top-0 left-0 right-0 flex h-2 z-50">
-        <div className="flex-1 bg-[#006B3F]" />
-        <div className="flex-1 bg-[#FFD700]" />
-        <div className="flex-1 bg-[#CE1126]" />
+      <div className="rasta-stripe-bar fixed top-0 left-0 right-0 flex h-2 z-50">
+        <div className="rasta-segment flex-1 bg-[#006B3F]" />
+        <div className="rasta-segment flex-1 bg-[#FFD700]" />
+        <div className="rasta-segment flex-1 bg-[#CE1126]" />
       </div>
 
-      <h1 className="font-heading text-5xl sm:text-6xl text-[#FFD700] mb-4 tracking-wide">
+      {/* Title */}
+      <h1 className="title-glow font-heading text-5xl sm:text-6xl text-[#FFD700] mb-2 tracking-wide">
         Online Lobby
       </h1>
 
-      {/* Connection status + username */}
-      <div className="flex flex-col items-center gap-2 mb-6">
-        <div className="flex items-center gap-2">
-          <div
-            className={`w-3 h-3 rounded-full ${
-              connected ? "bg-[#006B3F]" : "bg-[#CE1126]"
-            }`}
-          />
-          <span className="text-[#D4A857] text-sm">
-            {connecting
-              ? "Connecting..."
-              : connected
-              ? "Connected"
-              : "Disconnected"}
+      {/* Connection + identity */}
+      <div className="flex items-center gap-2 mb-6">
+        <div
+          className={`w-2.5 h-2.5 rounded-full ${
+            connected ? "bg-[#006B3F]" : "bg-[#CE1126]"
+          }`}
+        />
+        <span className="text-[#D4A857] text-sm font-heading">
+          {connecting ? "Connecting..." : connected ? "Connected" : "Disconnected"}
+        </span>
+        {displayName && (
+          <span className="text-[#F4E1C1] text-sm ml-1">
+            as <span className="text-[#FFD700] font-bold">{displayName}</span>
           </span>
-          {displayName && (
-            <span className="text-[#F4E1C1] text-sm ml-2">
-              Playing as{" "}
-              <span className="text-[#FFD700] font-bold">{displayName}</span>
-            </span>
-          )}
-        </div>
-
-        {/* Username claim section */}
-        {!connecting && connected && !username && (
-          <div className="flex flex-col items-center gap-2 mt-2">
-            <p className="text-[#D4A857] text-xs">Claim a username:</p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={usernameInput}
-                onChange={(e) => setUsernameInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleClaimUsername();
-                }}
-                placeholder="Username"
-                maxLength={20}
-                className="rounded-lg bg-[#1A1A0E] border border-[#8B4513] px-3 py-1.5 text-[#FFD700] font-heading text-sm text-center placeholder:text-[#D4A857]/40 focus:outline-none focus:border-[#FFD700] w-40"
-              />
-              <button
-                onClick={handleClaimUsername}
-                disabled={claimingUsername || !usernameInput.trim()}
-                className="rounded-lg bg-[#006B3F] px-4 py-1.5 text-sm font-bold text-[#FFD700] transition-all duration-200 hover:brightness-110 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-heading"
-              >
-                {claimingUsername ? "..." : "Claim"}
-              </button>
-            </div>
-            {usernameError && (
-              <p className="text-[#CE1126] text-xs">{usernameError}</p>
-            )}
-          </div>
         )}
       </div>
 
-      {/* Error message */}
+      {/* Username claim — compact inline */}
+      {!connecting && connected && !username && (
+        <div className="flex items-center gap-2 mb-6">
+          <input
+            type="text"
+            value={usernameInput}
+            onChange={(e) => setUsernameInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleClaimUsername(); }}
+            placeholder="Claim a username"
+            maxLength={20}
+            className="rounded-xl bg-[#1A1A0E] border border-[#8B4513] px-3 py-1.5 text-[#FFD700] font-heading text-sm text-center placeholder:text-[#D4A857]/40 focus:outline-none focus:border-[#FFD700] w-40"
+          />
+          <button
+            onClick={handleClaimUsername}
+            disabled={claimingUsername || !usernameInput.trim()}
+            className="rounded-xl wood-btn wood-btn-green px-4 py-1.5 text-sm font-bold text-[#FFD700] interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-heading"
+          >
+            {claimingUsername ? "..." : "Claim"}
+          </button>
+          {usernameError && (
+            <span className="text-[#CE1126] text-xs">{usernameError}</span>
+          )}
+        </div>
+      )}
+
+      {/* Error */}
       {error && (
-        <div className="bg-[#CE1126]/20 border border-[#CE1126] rounded-xl px-6 py-3 mb-6 max-w-md text-center">
+        <div className="bg-[#CE1126]/20 border border-[#CE1126] rounded-xl px-6 py-2 mb-4 max-w-md text-center">
           <p className="text-[#CE1126] text-sm">{error}</p>
         </div>
       )}
 
-      {/* Main lobby content */}
-      <div className="rounded-2xl bg-[#2a2a1e] border-2 border-[#8B4513] px-8 sm:px-12 py-8 shadow-lg w-full max-w-lg">
+      {/* Main content */}
+      <div className="w-full max-w-md">
         {view === "lobby" && (
-          <div className="flex flex-col gap-5">
-            {/* Action buttons */}
-            <div className="flex gap-3">
-              <button
-                onClick={handleQuickMatch}
-                disabled={!connected || connecting}
-                className="flex-1 rounded-xl bg-[#006B3F] px-4 py-3 text-lg font-bold text-[#FFD700] shadow-lg transition-all duration-200 hover:brightness-110 hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading"
-              >
-                Quick Match
-              </button>
+          <div className="flex flex-col gap-4">
+            {/* Action buttons — same style as main menu */}
+            <button
+              onClick={handleQuickMatch}
+              disabled={!connected || connecting}
+              className="w-full rounded-2xl wood-btn wood-btn-green px-8 py-4 text-xl font-bold text-[#FFD700] shadow-lg interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading hover:shadow-[0_0_20px_rgba(0,107,63,0.4)]"
+            >
+              Quick Match
+            </button>
+
+            <button
+              onClick={handleCreateRoom}
+              disabled={!connected || connecting}
+              className="w-full rounded-2xl wood-btn wood-btn-bamboo px-8 py-4 text-xl font-bold text-[#1A1A0E] shadow-lg interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading hover:shadow-[0_0_20px_rgba(212,168,87,0.4)]"
+            >
+              Create Room
+            </button>
+
+            {/* Optional custom name — subtle, below create */}
+            <input
+              type="text"
+              value={customRoomName}
+              onChange={(e) => setCustomRoomName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && connected && !connecting) handleCreateRoom();
+              }}
+              placeholder="custom room name (optional)"
+              maxLength={30}
+              className="w-full rounded-xl bg-[#1A1A0E]/60 border border-[#8B4513]/50 px-4 py-2 text-[#FFD700] font-heading text-sm text-center placeholder:text-[#D4A857]/30 focus:outline-none focus:border-[#D4A857] -mt-2"
+            />
+
+            {/* Rasta divider */}
+            <div className="flex items-center gap-3 mt-2">
+              <div className="flex-1 h-px bg-[#006B3F]/40" />
+              <div className="flex-1 h-px bg-[#FFD700]/40" />
+              <div className="flex-1 h-px bg-[#CE1126]/40" />
             </div>
 
-            {/* Create room */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={customRoomName}
-                onChange={(e) => setCustomRoomName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && connected && !connecting) handleCreateRoom();
-                }}
-                placeholder="Room name (or blank for random)"
-                maxLength={30}
-                className="flex-1 rounded-xl bg-[#1A1A0E] border-2 border-[#8B4513] px-4 py-3 text-[#FFD700] font-heading text-base text-center placeholder:text-[#D4A857]/40 focus:outline-none focus:border-[#D4A857]"
-              />
-              <button
-                onClick={handleCreateRoom}
-                disabled={!connected || connecting}
-                className="rounded-xl bg-[#D4A857] px-5 py-3 text-base font-bold text-[#1A1A0E] shadow-lg transition-all duration-200 hover:brightness-110 hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading whitespace-nowrap"
-              >
-                Create Room
-              </button>
-            </div>
+            {/* Open rooms list */}
+            <div className="flex flex-col gap-2">
+              <p className="text-[#D4A857] text-xs font-heading text-center tracking-wider uppercase">
+                Open Rooms
+              </p>
 
-            {/* Divider */}
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-[#8B4513]/50" />
-              <span className="text-[#D4A857] text-sm">open rooms</span>
-              <div className="flex-1 h-px bg-[#8B4513]/50" />
-            </div>
-
-            {/* Room list */}
-            <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
               {rooms.length === 0 ? (
-                <p className="text-[#D4A857]/60 text-sm text-center py-4">
-                  No rooms yet — create one or quick match!
+                <p className="text-[#D4A857]/40 text-sm text-center py-6 font-heading">
+                  No open rooms yet
                 </p>
               ) : (
-                rooms.map((room) => (
-                  <button
-                    key={room.id}
-                    onClick={() => handleJoinRoom(room.id)}
-                    disabled={!connected}
-                    className="flex items-center justify-between rounded-xl bg-[#1A1A0E] border border-[#8B4513] px-4 py-3 transition-all duration-200 hover:border-[#FFD700] hover:bg-[#1A1A0E]/80 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group"
-                  >
-                    <div className="flex flex-col items-start">
-                      <span className="text-[#FFD700] font-heading text-base group-hover:text-[#FFD700]">
-                        {room.id}
+                <div className="flex flex-col gap-2 max-h-52 overflow-y-auto">
+                  {rooms.map((room) => (
+                    <button
+                      key={room.id}
+                      onClick={() => handleJoinRoom(room.id)}
+                      disabled={!connected}
+                      className="
+                        flex items-center justify-between
+                        rounded-xl bg-[#1A1A0E]/80 border border-[#8B4513]/60
+                        px-5 py-3
+                        transition-all duration-200
+                        hover:border-[#FFD700] hover:shadow-[0_0_12px_rgba(255,215,0,0.15)]
+                        active:scale-[0.98]
+                        cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed
+                        group
+                      "
+                    >
+                      <div className="flex flex-col items-start gap-0.5">
+                        <span className="text-[#FFD700] font-heading text-base">
+                          {room.id}
+                        </span>
+                        <span className="text-[#D4A857]/60 text-xs">
+                          {room.hostName}
+                        </span>
+                      </div>
+                      <span className="text-[#006B3F] font-heading text-sm group-hover:text-[#FFD700] transition-colors">
+                        Join &rarr;
                       </span>
-                      <span className="text-[#D4A857] text-xs">
-                        hosted by {room.hostName}
-                      </span>
-                    </div>
-                    <span className="text-[#006B3F] font-heading text-sm group-hover:text-[#FFD700] transition-colors">
-                      Join
-                    </span>
-                  </button>
-                ))
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
           </div>
         )}
 
         {view === "quick-match" && (
-          <div className="flex flex-col items-center gap-6">
-            {/* Searching animation */}
+          <div className="flex flex-col items-center gap-6 py-8">
             <div className="flex gap-2">
               <div className="w-3 h-3 rounded-full bg-[#006B3F] animate-bounce" style={{ animationDelay: "0ms" }} />
               <div className="w-3 h-3 rounded-full bg-[#FFD700] animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -359,13 +351,10 @@ export default function LobbyPage() {
             <p className="text-[#FFD700] font-heading text-2xl">
               Searching for opponent...
             </p>
-            <p className="text-[#D4A857] text-sm">
-              Waiting for another player to join
-            </p>
 
             <button
               onClick={handleCancelSearch}
-              className="rounded-xl bg-[#8B4513] px-6 py-3 text-lg font-bold text-[#F4E1C1] shadow-lg transition-all duration-200 hover:brightness-110 hover:scale-105 active:scale-95 cursor-pointer font-heading mt-2"
+              className="rounded-2xl bg-[#3a3a2e] px-8 py-3 text-lg font-bold text-[#D4A857] shadow-lg interactive-btn cursor-pointer font-heading"
             >
               Cancel
             </button>
@@ -373,31 +362,31 @@ export default function LobbyPage() {
         )}
 
         {view === "waiting" && (
-          <div className="flex flex-col items-center gap-6">
-            <p className="text-[#D4A857] text-sm">Your room is open — waiting for someone to join:</p>
+          <div className="flex flex-col items-center gap-6 py-8">
+            <p className="text-[#D4A857] text-sm font-heading">
+              Your room is open
+            </p>
 
-            {/* Room name display */}
-            <div className="bg-[#1A1A0E] border-2 border-[#FFD700] rounded-2xl px-6 py-4">
+            <div className="bg-[#1A1A0E] border-2 border-[#FFD700] rounded-2xl px-8 py-4 shadow-[0_0_20px_rgba(255,215,0,0.15)]">
               <p className="text-[#FFD700] font-heading text-2xl sm:text-3xl tracking-wide select-all text-center">
                 {roomCode || "..."}
               </p>
             </div>
 
-            {/* Waiting animation */}
             <div className="flex items-center gap-3">
               <div className="flex gap-1">
                 <div className="w-2 h-2 rounded-full bg-[#FFD700] animate-bounce" style={{ animationDelay: "0ms" }} />
                 <div className="w-2 h-2 rounded-full bg-[#FFD700] animate-bounce" style={{ animationDelay: "150ms" }} />
                 <div className="w-2 h-2 rounded-full bg-[#FFD700] animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
-              <p className="text-[#D4A857] text-sm">
+              <p className="text-[#D4A857]/60 text-sm">
                 Waiting for opponent...
               </p>
             </div>
 
             <button
               onClick={handleCancelRoom}
-              className="rounded-xl bg-[#8B4513] px-6 py-3 text-lg font-bold text-[#F4E1C1] shadow-lg transition-all duration-200 hover:brightness-110 hover:scale-105 active:scale-95 cursor-pointer font-heading mt-2"
+              className="rounded-2xl bg-[#3a3a2e] px-8 py-3 text-lg font-bold text-[#D4A857] shadow-lg interactive-btn cursor-pointer font-heading"
             >
               Cancel
             </button>
@@ -407,17 +396,17 @@ export default function LobbyPage() {
 
       <Link
         href="/"
-        className="mt-10 text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-lg"
+        className="mt-8 text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-lg font-heading"
       >
         &larr; Back to Menu
       </Link>
 
-      {/* Bottom rasta stripe decoration */}
-      <div className="fixed bottom-0 left-0 right-0 flex h-2 z-50">
-        <div className="flex-1 bg-[#006B3F]" />
-        <div className="flex-1 bg-[#FFD700]" />
-        <div className="flex-1 bg-[#CE1126]" />
+      {/* Bottom rasta stripe */}
+      <div className="rasta-stripe-bar fixed bottom-0 left-0 right-0 flex h-2 z-50">
+        <div className="rasta-segment flex-1 bg-[#006B3F]" />
+        <div className="rasta-segment flex-1 bg-[#FFD700]" />
+        <div className="rasta-segment flex-1 bg-[#CE1126]" />
       </div>
-    </main>
+    </div>
   );
 }
