@@ -37,33 +37,34 @@ export default function DifficultySelect({ onBack }: DifficultySelectProps) {
   const router = useRouter();
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4">
+    <div className="animated-bg flex min-h-screen flex-col items-center justify-center px-4">
       {/* Rasta stripe decoration */}
-      <div className="fixed top-0 left-0 right-0 flex h-2">
-        <div className="flex-1 bg-[#006B3F]" />
-        <div className="flex-1 bg-[#FFD700]" />
-        <div className="flex-1 bg-[#CE1126]" />
+      <div className="rasta-stripe-bar fixed top-0 left-0 right-0 flex h-2 z-50">
+        <div className="rasta-segment flex-1 bg-[#006B3F] origin-top" />
+        <div className="rasta-segment flex-1 bg-[#FFD700] origin-top" />
+        <div className="rasta-segment flex-1 bg-[#CE1126] origin-top" />
       </div>
 
-      <h2 className="font-heading text-4xl sm:text-5xl text-[#FFD700] mb-2 tracking-wide">
+      <h2 className="animate-fade-in-up font-heading text-4xl sm:text-5xl text-[#FFD700] mb-2 tracking-wide title-glow">
         Choose Your Opponent
       </h2>
-      <p className="text-[#D4A857] text-lg mb-10">
+      <p className="animate-fade-in animate-delay-100 text-[#D4A857] text-lg mb-10">
         Who you wan fi challenge?
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-3xl">
-        {opponents.map((opp) => (
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-xs sm:max-w-3xl">
+        {opponents.map((opp, index) => (
           <button
             key={opp.difficulty}
             onClick={() =>
               router.push(`/play?mode=ai&difficulty=${opp.difficulty}`)
             }
-            className="group rounded-2xl bg-[#2a2a1e] p-6 text-left shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+            className={`animate-fade-in-up animate-delay-${(index + 1) * 100} group rounded-2xl bg-[#2a2a1e] p-6 text-left shadow-lg game-card cursor-pointer`}
             style={{
               borderWidth: "2px",
               borderStyle: "solid",
               borderColor: opp.accent,
+              animationDelay: `${(index + 1) * 0.1}s`,
             }}
           >
             <div className="flex items-center justify-between mb-3">
@@ -94,16 +95,16 @@ export default function DifficultySelect({ onBack }: DifficultySelectProps) {
 
       <button
         onClick={onBack}
-        className="mt-10 text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-lg cursor-pointer"
+        className="mt-10 text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-lg cursor-pointer min-h-[44px] flex items-center interactive-btn"
       >
         &larr; Back to Menu
       </button>
 
       {/* Bottom rasta stripe decoration */}
-      <div className="fixed bottom-0 left-0 right-0 flex h-2">
-        <div className="flex-1 bg-[#006B3F]" />
-        <div className="flex-1 bg-[#FFD700]" />
-        <div className="flex-1 bg-[#CE1126]" />
+      <div className="rasta-stripe-bar fixed bottom-0 left-0 right-0 flex h-2 z-50">
+        <div className="rasta-segment flex-1 bg-[#006B3F] origin-bottom" />
+        <div className="rasta-segment flex-1 bg-[#FFD700] origin-bottom" />
+        <div className="rasta-segment flex-1 bg-[#CE1126] origin-bottom" />
       </div>
     </div>
   );

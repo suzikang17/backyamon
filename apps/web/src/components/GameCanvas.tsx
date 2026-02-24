@@ -1,14 +1,22 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Application } from "pixi.js";
-import { Player, type WinType } from "@backyamon/engine";
+import { Player, type GameState, type WinType, canOfferDouble } from "@backyamon/engine";
 import { GameController } from "@/game/GameController";
+import { SoundManager } from "@/audio/SoundManager";
+import { GameHUD } from "./GameHUD";
 
 interface GameCanvasProps {
   difficulty: string;
   onGameOver?: (winner: Player, winType: WinType) => void;
 }
+
+const aiNames: Record<string, string> = {
+  easy: "Beach Bum",
+  medium: "Selector",
+  hard: "King Tubby",
+};
 
 export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -16,12 +24,29 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
   const appRef = useRef<Application | null>(null);
   const [message, setMessage] = useState("");
   const [waitingForRoll, setWaitingForRoll] = useState(false);
+  const [gameState, setGameState] = useState<GameState | null>(null);
+
+  const soundManager = useMemo(() => SoundManager.getInstance(), []);
+
+  const opponentName = aiNames[difficulty] ?? "Beach Bum";
 
   const handleRollClick = useCallback(() => {
     if (waitingForRoll && controllerRef.current) {
+      soundManager.resumeContext();
       controllerRef.current.rollForHuman();
     }
-  }, [waitingForRoll]);
+  }, [waitingForRoll, soundManager]);
+
+  const handleOfferDouble = useCallback(() => {
+    controllerRef.current?.offerDouble();
+  }, []);
+
+  // Determine if doubling is possible from current state
+  const canDouble =
+    gameState !== null &&
+    canOfferDouble(gameState) &&
+    gameState.currentPlayer === Player.Gold &&
+    waitingForRoll;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -80,6 +105,10 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
         if (!destroyed) setWaitingForRoll(waiting);
       };
 
+      controller.onStateChange = (state) => {
+        if (!destroyed) setGameState(state);
+      };
+
       controller.onGameOver = (winner, winType) => {
         if (!destroyed) {
           onGameOver?.(winner, winType);
@@ -110,30 +139,32 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
   }, [difficulty, onGameOver]);
 
   return (
-    <div className="relative w-full max-w-[800px]">
+    <div className="relative w-full max-w-[900px]">
       {/* Canvas container */}
       <div
         ref={containerRef}
-        className="w-full aspect-[8/5] rounded-2xl border-2 border-[#8B4513] overflow-hidden shadow-lg"
+        className="w-full aspect-[8/5] rounded-2xl border-2 border-[#8B4513] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
         onClick={handleRollClick}
         style={{ cursor: waitingForRoll ? "pointer" : "default" }}
       />
 
+      {/* HUD overlay */}
+      <GameHUD
+        state={gameState}
+        playerColor={Player.Gold}
+        opponentName={opponentName}
+        onOfferDouble={handleOfferDouble}
+        onRollDice={handleRollClick}
+        canRoll={waitingForRoll}
+        canDouble={canDouble}
+        soundManager={soundManager}
+      />
+
       {/* Message overlay */}
       {message && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none">
-          <div className="bg-[#1A1A0E]/90 text-[#FFD700] font-heading text-lg px-6 py-2 rounded-xl border border-[#8B4513] whitespace-nowrap">
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-none z-20">
+          <div className="bg-[#1A1A0E]/90 text-[#FFD700] font-heading text-sm sm:text-lg px-4 sm:px-6 py-1.5 sm:py-2 rounded-xl border border-[#8B4513] whitespace-nowrap">
             {message}
-          </div>
-        </div>
-      )}
-
-      {/* Roll prompt */}
-      {waitingForRoll && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-[#1A1A0E]/80 text-[#FFD700] font-heading text-2xl px-8 py-4 rounded-2xl border-2 border-[#D4A857] animate-pulse pointer-events-auto cursor-pointer"
-               onClick={handleRollClick}>
-            Roll Dice
           </div>
         </div>
       )}

@@ -10,6 +10,10 @@ import {
   applyMove,
   endTurn,
   canMove,
+  canOfferDouble,
+  offerDouble,
+  acceptDouble,
+  declineDouble,
   BeachBum,
   Selector,
   KingTubby,
@@ -19,6 +23,7 @@ import { BoardRenderer } from "./BoardRenderer";
 import { PieceRenderer } from "./PieceRenderer";
 import { DiceRenderer } from "./DiceRenderer";
 import { InputHandler } from "./InputHandler";
+import { SoundManager } from "@/audio/SoundManager";
 
 type Difficulty = "easy" | "medium" | "hard";
 
@@ -43,6 +48,7 @@ export class GameController {
   private ai: AIPlayer;
   private state!: GameState;
   private destroyed = false;
+  private sound: SoundManager;
 
   // Track dice values for display
   private currentDiceValues: number[] = [];
@@ -57,6 +63,11 @@ export class GameController {
     this.app = app;
     this.difficulty = difficulty;
     this.ai = createAI(difficulty);
+    this.sound = SoundManager.getInstance();
+  }
+
+  get aiName(): string {
+    return this.ai.name;
   }
 
   /**
@@ -93,11 +104,57 @@ export class GameController {
     if (this.state.phase !== "ROLLING") return;
     if (this.state.currentPlayer !== Player.Gold) return;
 
+    this.sound.resumeContext();
     this.doHumanRoll();
+  }
+
+  /**
+   * Offer a double (called from HUD).
+   */
+  offerDouble(): void {
+    if (this.destroyed) return;
+    if (!canOfferDouble(this.state)) return;
+    if (this.state.currentPlayer !== Player.Gold) return;
+
+    this.sound.resumeContext();
+    this.sound.playSFX("double-offered");
+
+    this.onWaitingForRoll?.(false);
+    this.state = offerDouble(this.state);
+    this.emitStateChange();
+
+    // AI always accepts for now (simple AI behavior)
+    this.onMessage?.(`${this.ai.name} considers the double...`);
+    this.delay(1200).then(() => {
+      if (this.destroyed) return;
+
+      // Simple AI: accept if cube value <= 4, otherwise 50/50
+      const shouldAccept =
+        this.state.doublingCube.value <= 2 || Math.random() > 0.4;
+
+      if (shouldAccept) {
+        this.state = acceptDouble(this.state);
+        this.emitStateChange();
+        this.onMessage?.(`${this.ai.name} accepts the double!`);
+        this.delay(800).then(() => {
+          if (this.destroyed) return;
+          // Continue with the human's rolling phase
+          this.startHumanTurn();
+        });
+      } else {
+        this.state = declineDouble(this.state);
+        this.emitStateChange();
+        this.onMessage?.(`${this.ai.name} declines! You win!`);
+        this.sound.playSFX("victory");
+        this.onGameOver?.(Player.Gold, "ya_mon");
+      }
+    });
   }
 
   private async startHumanTurn(): Promise<void> {
     if (this.destroyed) return;
+
+    this.sound.playSFX("turn-start");
 
     // Signal that we're waiting for a roll
     this.onWaitingForRoll?.(true);
@@ -110,6 +167,7 @@ export class GameController {
     this.onWaitingForRoll?.(false);
 
     // Roll dice
+    this.sound.playSFX("dice-roll");
     const dice = rollDice();
     this.state = { ...this.state, dice, phase: "MOVING" };
     this.currentDiceValues = dice.values[0] === dice.values[1]
@@ -168,6 +226,9 @@ export class GameController {
       if (this.destroyed) return;
       this.inputHandler.disable();
 
+      // Detect move type for audio before applying
+      this.playMoveSFX(move);
+
       // Apply the move
       this.state = applyMove(this.state, move);
       this.emitStateChange();
@@ -206,6 +267,7 @@ export class GameController {
     if (this.destroyed) return;
 
     // Roll dice
+    this.sound.playSFX("dice-roll");
     const dice = rollDice();
     this.state = { ...this.state, dice, phase: "MOVING" };
     this.currentDiceValues = dice.values[0] === dice.values[1]
@@ -234,6 +296,10 @@ export class GameController {
       if (this.destroyed) return;
 
       const move = moves[i];
+
+      // Detect move type for audio before applying
+      this.playMoveSFX(move);
+
       this.state = applyMove(this.state, move);
       this.emitStateChange();
 
@@ -274,6 +340,11 @@ export class GameController {
     // Check for game over
     if (this.state.phase === "GAME_OVER" && this.state.winner) {
       const winType = this.state.winType ?? "ya_mon";
+      if (this.state.winner === Player.Gold) {
+        this.sound.playSFX("victory");
+      } else {
+        this.sound.playSFX("defeat");
+      }
       this.onMessage?.(
         this.state.winner === Player.Gold
           ? "Ya Mon! You win!"
@@ -289,6 +360,30 @@ export class GameController {
     } else {
       this.startAITurn();
     }
+  }
+
+  /**
+   * Play the appropriate SFX for a move, inspecting the current state
+   * before the move is applied.
+   */
+  private playMoveSFX(move: Move): void {
+    if (move.to === "off") {
+      this.sound.playSFX("bear-off");
+      return;
+    }
+
+    // Check for a hit (opponent blot on target)
+    if (typeof move.to === "number") {
+      const target = this.state.points[move.to];
+      const opp =
+        this.state.currentPlayer === Player.Gold ? Player.Red : Player.Gold;
+      if (target && target.player === opp && target.count === 1) {
+        this.sound.playSFX("piece-hit");
+        return;
+      }
+    }
+
+    this.sound.playSFX("piece-move");
   }
 
   private emitStateChange(): void {

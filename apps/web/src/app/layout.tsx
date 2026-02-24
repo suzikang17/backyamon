@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Bangers } from "next/font/google";
 import "./globals.css";
 
@@ -15,7 +15,16 @@ const bangers = Bangers({
 
 export const metadata: Metadata = {
   title: "Backyamon - Ya Mon!",
-  description: "Rastafarian-themed backgammon game",
+  description: "Play backgammon with Rastafarian vibes",
+  openGraph: {
+    title: "Backyamon - Ya Mon!",
+    description: "Play backgammon with Rastafarian vibes",
+    type: "website",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#1A1A0E",
 };
 
 export default function RootLayout({
@@ -28,7 +37,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${bangers.variable} font-sans bg-[#1A1A0E] text-[#F4E1C1] min-h-screen antialiased`}
       >
-        {children}
+        <div className="animate-fade-in">{children}</div>
       </body>
     </html>
   );

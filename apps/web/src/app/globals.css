@@ -4,3 +4,450 @@
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-bangers), cursive;
 }
+
+/* ========== Background animation for main menu ========== */
+@keyframes bg-gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animated-bg {
+  background: linear-gradient(
+    135deg,
+    #1a1a0e 0%,
+    #1f2010 15%,
+    #1a1a0e 30%,
+    #201a10 50%,
+    #1a1a0e 70%,
+    #101a14 85%,
+    #1a1a0e 100%
+  );
+  background-size: 400% 400%;
+  animation: bg-gradient-shift 20s ease infinite;
+}
+
+/* ========== Title glow effect ========== */
+@keyframes title-glow-pulse {
+  0%,
+  100% {
+    text-shadow:
+      0 0 10px rgba(255, 215, 0, 0.4),
+      0 0 30px rgba(255, 215, 0, 0.2),
+      0 4px 8px rgba(255, 215, 0, 0.3);
+  }
+  50% {
+    text-shadow:
+      0 0 20px rgba(255, 215, 0, 0.6),
+      0 0 50px rgba(255, 215, 0, 0.3),
+      0 4px 12px rgba(255, 215, 0, 0.4);
+  }
+}
+
+.title-glow {
+  animation: title-glow-pulse 3s ease-in-out infinite;
+}
+
+/* ========== Wood grain button texture ========== */
+.wood-btn {
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.04) 20%,
+      transparent 40%,
+      rgba(255, 255, 255, 0.03) 60%,
+      transparent 80%,
+      rgba(255, 255, 255, 0.02) 100%
+    ),
+    linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.15) 0%,
+      transparent 20%,
+      transparent 80%,
+      rgba(0, 0, 0, 0.1) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.05) 0%,
+      transparent 50%
+    );
+}
+
+.wood-btn-green {
+  background-color: #006b3f;
+}
+
+.wood-btn-bamboo {
+  background-color: #d4a857;
+}
+
+/* ========== Rasta stripe hover wave ========== */
+@keyframes rasta-wave {
+  0% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(2.5);
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+.rasta-stripe-bar {
+  transition: transform 0.3s ease;
+}
+
+.rasta-stripe-bar:hover .rasta-segment:nth-child(1) {
+  animation: rasta-wave 0.6s ease 0s;
+}
+
+.rasta-stripe-bar:hover .rasta-segment:nth-child(2) {
+  animation: rasta-wave 0.6s ease 0.1s;
+}
+
+.rasta-stripe-bar:hover .rasta-segment:nth-child(3) {
+  animation: rasta-wave 0.6s ease 0.2s;
+}
+
+/* ========== Page transitions ========== */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out both;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out both;
+}
+
+.animate-fade-in-scale {
+  animation: fade-in-scale 0.4s ease-out both;
+}
+
+.animate-delay-100 {
+  animation-delay: 0.1s;
+}
+
+.animate-delay-200 {
+  animation-delay: 0.2s;
+}
+
+.animate-delay-300 {
+  animation-delay: 0.3s;
+}
+
+.animate-delay-400 {
+  animation-delay: 0.4s;
+}
+
+/* ========== Themed loading spinner ========== */
+@keyframes rasta-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rasta-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+.rasta-spinner {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 4px solid #2a2a1e;
+  border-top-color: #006b3f;
+  border-right-color: #ffd700;
+  border-bottom-color: #ce1126;
+  animation: rasta-spin 1s linear infinite;
+}
+
+.rasta-pulse {
+  animation: rasta-pulse 1.5s ease-in-out infinite;
+}
+
+/* ========== Win/Loss celebration effects ========== */
+
+/* Ya Mon (standard win) - gold particles burst */
+@keyframes particle-burst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx), var(--ty)) scale(0);
+  }
+}
+
+.ya-mon-overlay {
+  animation: fade-in-scale 0.5s ease-out both;
+}
+
+.ya-mon-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ya-mon-particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #ffd700;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  animation: particle-burst 1.2s ease-out forwards;
+}
+
+/* Generate 20 particles with different trajectories */
+.ya-mon-particle:nth-child(1) { --tx: -80px; --ty: -120px; animation-delay: 0s; }
+.ya-mon-particle:nth-child(2) { --tx: 90px; --ty: -100px; animation-delay: 0.05s; }
+.ya-mon-particle:nth-child(3) { --tx: -60px; --ty: 110px; animation-delay: 0.1s; }
+.ya-mon-particle:nth-child(4) { --tx: 110px; --ty: 80px; animation-delay: 0.07s; }
+.ya-mon-particle:nth-child(5) { --tx: -120px; --ty: -40px; animation-delay: 0.12s; }
+.ya-mon-particle:nth-child(6) { --tx: 40px; --ty: -130px; animation-delay: 0.03s; }
+.ya-mon-particle:nth-child(7) { --tx: -100px; --ty: 60px; animation-delay: 0.15s; }
+.ya-mon-particle:nth-child(8) { --tx: 130px; --ty: -20px; animation-delay: 0.08s; }
+.ya-mon-particle:nth-child(9) { --tx: -30px; --ty: 140px; animation-delay: 0.02s; }
+.ya-mon-particle:nth-child(10) { --tx: 70px; --ty: 120px; animation-delay: 0.11s; }
+.ya-mon-particle:nth-child(11) { --tx: -140px; --ty: -80px; animation-delay: 0.06s; }
+.ya-mon-particle:nth-child(12) { --tx: 50px; --ty: -140px; animation-delay: 0.13s; }
+.ya-mon-particle:nth-child(13) { --tx: -70px; --ty: -60px; animation-delay: 0.04s; width: 6px; height: 6px; }
+.ya-mon-particle:nth-child(14) { --tx: 100px; --ty: 40px; animation-delay: 0.09s; width: 6px; height: 6px; }
+.ya-mon-particle:nth-child(15) { --tx: -110px; --ty: 100px; animation-delay: 0.14s; width: 6px; height: 6px; }
+.ya-mon-particle:nth-child(16) { --tx: 20px; --ty: -100px; animation-delay: 0.01s; width: 10px; height: 10px; }
+.ya-mon-particle:nth-child(17) { --tx: -50px; --ty: 80px; animation-delay: 0.16s; width: 10px; height: 10px; }
+.ya-mon-particle:nth-child(18) { --tx: 120px; --ty: -60px; animation-delay: 0.07s; width: 5px; height: 5px; }
+.ya-mon-particle:nth-child(19) { --tx: -90px; --ty: -110px; animation-delay: 0.1s; width: 5px; height: 5px; }
+.ya-mon-particle:nth-child(20) { --tx: 60px; --ty: 100px; animation-delay: 0.04s; width: 7px; height: 7px; }
+
+/* Big Ya Mon (gammon) - larger burst + brief gold flash */
+@keyframes gold-flash {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.big-ya-mon-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255, 215, 0, 0.5) 0%, transparent 70%);
+  animation: gold-flash 1s ease-out forwards;
+  pointer-events: none;
+}
+
+.big-ya-mon-particle {
+  width: 12px;
+  height: 12px;
+}
+
+.big-ya-mon-particle:nth-child(1) { --tx: -120px; --ty: -180px; }
+.big-ya-mon-particle:nth-child(2) { --tx: 140px; --ty: -150px; }
+.big-ya-mon-particle:nth-child(3) { --tx: -90px; --ty: 170px; }
+.big-ya-mon-particle:nth-child(4) { --tx: 160px; --ty: 120px; }
+.big-ya-mon-particle:nth-child(5) { --tx: -180px; --ty: -60px; }
+.big-ya-mon-particle:nth-child(6) { --tx: 60px; --ty: -190px; }
+.big-ya-mon-particle:nth-child(7) { --tx: -150px; --ty: 90px; }
+.big-ya-mon-particle:nth-child(8) { --tx: 190px; --ty: -30px; }
+.big-ya-mon-particle:nth-child(9) { --tx: -40px; --ty: 200px; }
+.big-ya-mon-particle:nth-child(10) { --tx: 100px; --ty: 180px; }
+
+/* Massive Ya Mon (backgammon) - dramatic dark flash then gold explosion */
+@keyframes massive-darken {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  40% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes massive-gold-explosion {
+  0% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  30% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+
+@keyframes massive-particle-burst {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1.5);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx), var(--ty)) scale(0);
+  }
+}
+
+.massive-darken {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  animation: massive-darken 1.8s ease-out forwards;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.massive-gold-ring {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255, 215, 0, 0.8) 0%, rgba(255, 215, 0, 0) 50%);
+  animation: massive-gold-explosion 1.8s ease-out forwards;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.massive-particle {
+  width: 14px;
+  height: 14px;
+  animation: massive-particle-burst 2s ease-out forwards;
+  z-index: 3;
+}
+
+.massive-particle:nth-child(1) { --tx: -160px; --ty: -220px; animation-delay: 0.4s; }
+.massive-particle:nth-child(2) { --tx: 180px; --ty: -200px; animation-delay: 0.42s; }
+.massive-particle:nth-child(3) { --tx: -130px; --ty: 210px; animation-delay: 0.45s; }
+.massive-particle:nth-child(4) { --tx: 200px; --ty: 160px; animation-delay: 0.43s; }
+.massive-particle:nth-child(5) { --tx: -220px; --ty: -80px; animation-delay: 0.47s; }
+.massive-particle:nth-child(6) { --tx: 80px; --ty: -230px; animation-delay: 0.41s; }
+.massive-particle:nth-child(7) { --tx: -190px; --ty: 130px; animation-delay: 0.48s; }
+.massive-particle:nth-child(8) { --tx: 230px; --ty: -50px; animation-delay: 0.44s; }
+.massive-particle:nth-child(9) { --tx: -60px; --ty: 240px; animation-delay: 0.46s; }
+.massive-particle:nth-child(10) { --tx: 140px; --ty: 220px; animation-delay: 0.49s; }
+.massive-particle:nth-child(11) { --tx: -200px; --ty: -150px; animation-delay: 0.5s; }
+.massive-particle:nth-child(12) { --tx: 100px; --ty: -180px; animation-delay: 0.52s; }
+
+/* Loss - subdued fade overlay */
+@keyframes loss-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.loss-overlay {
+  animation: loss-fade 0.8s ease-out both;
+}
+
+/* ========== Focus/hover/active states ========== */
+.interactive-btn {
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.interactive-btn:hover {
+  filter: brightness(1.1);
+  transform: scale(1.05);
+}
+
+.interactive-btn:active {
+  transform: scale(0.95);
+}
+
+.interactive-btn:focus-visible {
+  outline: 2px solid #ffd700;
+  outline-offset: 2px;
+}
+
+/* ========== Consistent card style ========== */
+.game-card {
+  border-radius: 1rem;
+  transition: all 0.2s ease;
+}
+
+.game-card:hover {
+  transform: scale(1.03);
+}
+
+.game-card:active {
+  transform: scale(0.97);
+}
+
+.game-card:focus-visible {
+  outline: 2px solid #ffd700;
+  outline-offset: 2px;
+}

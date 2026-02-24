@@ -5,13 +5,13 @@ import { Player } from "@backyamon/engine";
  * BoardRenderer - Draws the backgammon board using PixiJS Graphics API.
  *
  * Layout (all dimensions relative to given width/height):
- *   ┌─────────────────────────────────────────────────┬────────┐
- *   │  13 14 15 16 17 18 │ BAR │ 19 20 21 22 23 24   │  ZION  │
- *   │   (triangles ↓)    │     │   (triangles ↓)      │ (Gold) │
- *   │                    │     │                       │        │
- *   │   (triangles ↑)    │     │   (triangles ↑)       │ (Red)  │
- *   │  12 11 10  9  8  7 │     │   6  5  4  3  2  1   │        │
- *   └─────────────────────────────────────────────────┴────────┘
+ *   +-------------------------------------------------+--------+
+ *   |  13 14 15 16 17 18 | BAR | 19 20 21 22 23 24   |  ZION  |
+ *   |   (triangles down) |     |   (triangles down)   | (Gold) |
+ *   |                    |     |                       |        |
+ *   |   (triangles up)   |     |   (triangles up)      | (Red)  |
+ *   |  12 11 10  9  8  7 |     |   6  5  4  3  2  1   |        |
+ *   +-------------------------------------------------+--------+
  *
  * Point numbering matches standard backgammon:
  *   Gold home = 19-24 (top right), Red home = 1-6 (bottom right)
@@ -25,6 +25,10 @@ const GOLD_POINT = 0xffd700;
 const BAR_COLOR = 0x1a1a0e;
 const ZION_COLOR = 0x1a1a0e;
 const LABEL_COLOR = 0xd4a857;
+
+// Wood grain overlay colors
+const WOOD_LIGHT = 0x9b5523;
+const WOOD_DARK = 0x6b3510;
 
 export class BoardRenderer {
   private app: Application;
@@ -84,6 +88,13 @@ export class BoardRenderer {
   }
 
   private drawBoard(): void {
+    // Outer shadow for depth
+    const outerShadow = new Graphics();
+    outerShadow
+      .roundRect(3, 4, this.boardWidth, this.boardHeight, 14)
+      .fill({ color: 0x000000, alpha: 0.4 });
+    this.container.addChild(outerShadow);
+
     // Outer frame
     const frame = new Graphics();
     frame
@@ -93,6 +104,39 @@ export class BoardRenderer {
       .stroke({ color: BOARD_BORDER, width: 3 });
     this.container.addChild(frame);
 
+    // Wood grain texture overlay on the frame border area
+    this.drawWoodGrain();
+
+    // Inner shadow/depth at the board edges (inset shadow effect)
+    const innerShadow = new Graphics();
+    // Top edge shadow
+    innerShadow
+      .rect(this.playAreaX, this.playAreaY, this.playAreaW + this.zionWidth, 3)
+      .fill({ color: 0x000000, alpha: 0.2 });
+    // Left edge shadow
+    innerShadow
+      .rect(this.playAreaX, this.playAreaY, 3, this.playAreaH)
+      .fill({ color: 0x000000, alpha: 0.15 });
+    // Bottom highlight
+    innerShadow
+      .rect(
+        this.playAreaX,
+        this.playAreaY + this.playAreaH - 2,
+        this.playAreaW + this.zionWidth,
+        2
+      )
+      .fill({ color: 0xffffff, alpha: 0.05 });
+    // Right highlight
+    innerShadow
+      .rect(
+        this.zionX + this.zionWidth - 2,
+        this.playAreaY,
+        2,
+        this.playAreaH
+      )
+      .fill({ color: 0xffffff, alpha: 0.04 });
+    this.container.addChild(innerShadow);
+
     // Draw bar (Babylon zone)
     const bar = new Graphics();
     bar
@@ -100,7 +144,7 @@ export class BoardRenderer {
       .fill({ color: BAR_COLOR });
     this.container.addChild(bar);
 
-    // "Babylon" label on the bar
+    // "BABYLON" label on the bar
     const babylonLabel = new Text({
       text: "BABYLON",
       style: {
@@ -126,7 +170,7 @@ export class BoardRenderer {
       .stroke({ color: BOARD_BORDER, width: 2 });
     this.container.addChild(zion);
 
-    // "Zion" label on the tray
+    // "ZION" label on the tray
     const zionLabel = new Text({
       text: "ZION",
       style: {
@@ -145,6 +189,41 @@ export class BoardRenderer {
 
     // Draw the 24 triangular points
     this.drawPoints();
+  }
+
+  /**
+   * Draw subtle wood grain lines on the frame border area.
+   * Uses overlapping semi-transparent lines to simulate a wood texture.
+   */
+  private drawWoodGrain(): void {
+    const grain = new Graphics();
+    const bw = this.boardWidth;
+    const bh = this.boardHeight;
+    const pad = this.padding;
+
+    // Horizontal grain lines across the full board background
+    const lineSpacing = 6;
+    for (let y = 0; y < bh; y += lineSpacing) {
+      // Vary the alpha and offset for a natural look
+      const alpha = 0.02 + (Math.sin(y * 0.7) * 0.01);
+      const offset = Math.sin(y * 0.3) * 2;
+      const color = y % (lineSpacing * 2) === 0 ? WOOD_LIGHT : WOOD_DARK;
+
+      grain
+        .moveTo(offset, y)
+        .lineTo(bw + offset, y)
+        .stroke({ color, width: 1, alpha });
+    }
+
+    // A few knot-like ellipses for variety
+    grain
+      .ellipse(bw * 0.2, bh * 0.15, 8, 3)
+      .stroke({ color: WOOD_DARK, width: 1, alpha: 0.03 });
+    grain
+      .ellipse(bw * 0.7, bh * 0.85, 6, 2.5)
+      .stroke({ color: WOOD_DARK, width: 1, alpha: 0.025 });
+
+    this.container.addChild(grain);
   }
 
   private drawPoints(): void {
