@@ -309,4 +309,3 @@ Sound effects remain per-game (not global), layered on top of jukebox/sampler:
 - Story mode - journey through themed opponents
 - Spectator mode
 - Tournament brackets
-- ML-trained AI tier ("Jah" - legendary)
