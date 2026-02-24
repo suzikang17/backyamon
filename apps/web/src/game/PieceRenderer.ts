@@ -9,20 +9,24 @@ const RED_BORDER = 0x8a0b1a;
 
 const MAX_VISUAL_STACK = 5;
 
+export type PieceSet = "coconut" | "vinyl" | "lion";
+
 export class PieceRenderer {
   private app: Application;
   private boardRenderer: BoardRenderer;
   private container: Container;
   private pieceContainers: Map<string, Container> = new Map();
+  private pieceSet: PieceSet;
 
   // Glow effect state
   private glowContainer: Container;
   private glowGraphics: Graphics[] = [];
   private glowAnimTicker: ((dt: any) => void) | null = null;
 
-  constructor(app: Application, boardRenderer: BoardRenderer) {
+  constructor(app: Application, boardRenderer: BoardRenderer, pieceSet: PieceSet = "lion") {
     this.app = app;
     this.boardRenderer = boardRenderer;
+    this.pieceSet = pieceSet;
     this.glowContainer = new Container();
     app.stage.addChild(this.glowContainer);
     this.container = new Container();
@@ -157,11 +161,22 @@ export class PieceRenderer {
     }
   }
 
-  /**
-   * Draw a stylized lion head piece - the default Backyamon piece set.
-   * Features a radiating mane, lighter face circle, eyes, and nose.
-   */
   private createPiece(player: Player, radius: number): Container {
+    switch (this.pieceSet) {
+      case "coconut":
+        return this.createCoconutPiece(player, radius);
+      case "vinyl":
+        return this.createVinylPiece(player, radius);
+      case "lion":
+      default:
+        return this.createLionPiece(player, radius);
+    }
+  }
+
+  /**
+   * Lion head piece - radiating mane, face, eyes, and nose.
+   */
+  private createLionPiece(player: Player, radius: number): Container {
     const c = new Container();
     const g = new Graphics();
     const color = player === Player.Gold ? GOLD_COLOR : RED_COLOR;
@@ -225,12 +240,126 @@ export class PieceRenderer {
     g.circle(0, 0, radius).stroke({ color: border, width: 2 });
 
     // Top highlight shine
-    g.ellipse(-radius * 0.1, -radius * 0.38, radius * 0.28, radius * 0.1).fill(
-      {
-        color: 0xffffff,
-        alpha: 0.12,
-      }
-    );
+    g.ellipse(-radius * 0.1, -radius * 0.38, radius * 0.28, radius * 0.1).fill({
+      color: 0xffffff,
+      alpha: 0.12,
+    });
+
+    c.addChild(g);
+    return c;
+  }
+
+  /**
+   * Coconut shell piece - halved coconut with fibrous texture and white flesh ring.
+   */
+  private createCoconutPiece(player: Player, radius: number): Container {
+    const c = new Container();
+    const g = new Graphics();
+
+    const shellColor = player === Player.Gold ? 0x8b6914 : 0x6b2020;
+    const shellDark = player === Player.Gold ? 0x5c4710 : 0x4a1515;
+    const shellLight = player === Player.Gold ? 0xa07828 : 0x8a3030;
+    const fleshColor = player === Player.Gold ? 0xfff8e7 : 0xffe0e0;
+    const border = player === Player.Gold ? GOLD_BORDER : RED_BORDER;
+
+    // Drop shadow
+    g.circle(1.5, 3, radius).fill({ color: 0x000000, alpha: 0.35 });
+
+    // Outer shell
+    g.circle(0, 0, radius).fill({ color: shellColor });
+
+    // Fibrous texture lines (radial scratches)
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2 + 0.2;
+      const innerR = radius * 0.35;
+      const outerR = radius * 0.85;
+      g.moveTo(Math.cos(angle) * innerR, Math.sin(angle) * innerR)
+        .lineTo(Math.cos(angle + 0.15) * outerR, Math.sin(angle + 0.15) * outerR)
+        .stroke({ color: shellDark, width: Math.max(0.8, radius * 0.04), alpha: 0.4 });
+    }
+
+    // White flesh ring (inner circle border)
+    const fleshR = radius * 0.65;
+    g.circle(0, 0, fleshR).fill({ color: fleshColor, alpha: 0.9 });
+
+    // Coconut water center (darker inner)
+    const waterR = radius * 0.45;
+    g.circle(0, 0, waterR).fill({ color: shellLight });
+
+    // Three "eyes" of the coconut
+    const eyeR = Math.max(1.5, radius * 0.08);
+    const eyeDist = radius * 0.2;
+    g.circle(0, -eyeDist, eyeR).fill({ color: shellDark });
+    g.circle(-eyeDist * 0.87, eyeDist * 0.5, eyeR).fill({ color: shellDark });
+    g.circle(eyeDist * 0.87, eyeDist * 0.5, eyeR).fill({ color: shellDark });
+
+    // Outer border
+    g.circle(0, 0, radius).stroke({ color: border, width: 2 });
+
+    // Top highlight
+    g.ellipse(-radius * 0.15, -radius * 0.35, radius * 0.25, radius * 0.1).fill({
+      color: 0xffffff,
+      alpha: 0.15,
+    });
+
+    c.addChild(g);
+    return c;
+  }
+
+  /**
+   * Vinyl record piece - grooves, label center, and spindle hole.
+   */
+  private createVinylPiece(player: Player, radius: number): Container {
+    const c = new Container();
+    const g = new Graphics();
+
+    const vinylColor = player === Player.Gold ? 0x1a1a0e : 0x1a0a0e;
+    const grooveColor = player === Player.Gold ? 0x333320 : 0x331520;
+    const labelColor = player === Player.Gold ? GOLD_COLOR : RED_COLOR;
+    const labelDark = player === Player.Gold ? GOLD_BORDER : RED_BORDER;
+    const border = player === Player.Gold ? GOLD_BORDER : RED_BORDER;
+
+    // Drop shadow
+    g.circle(1.5, 3, radius).fill({ color: 0x000000, alpha: 0.35 });
+
+    // Vinyl disc
+    g.circle(0, 0, radius).fill({ color: vinylColor });
+
+    // Grooves (concentric rings)
+    const grooveCount = 5;
+    for (let i = 1; i <= grooveCount; i++) {
+      const r = radius * (0.4 + (i / grooveCount) * 0.5);
+      g.circle(0, 0, r).stroke({ color: grooveColor, width: Math.max(0.5, radius * 0.02), alpha: 0.6 });
+    }
+
+    // Vinyl sheen (arc highlight)
+    g.arc(0, 0, radius * 0.75, -Math.PI * 0.7, -Math.PI * 0.2)
+      .stroke({ color: 0xffffff, width: Math.max(1, radius * 0.06), alpha: 0.08 });
+
+    // Center label
+    const labelR = radius * 0.38;
+    g.circle(0, 0, labelR).fill({ color: labelColor });
+    g.circle(0, 0, labelR).stroke({ color: labelDark, width: 1.5 });
+
+    // Label text lines (decorative)
+    const lineW = labelR * 0.55;
+    g.moveTo(-lineW, -labelR * 0.15)
+      .lineTo(lineW, -labelR * 0.15)
+      .stroke({ color: labelDark, width: Math.max(0.8, radius * 0.035), alpha: 0.5 });
+    g.moveTo(-lineW * 0.7, labelR * 0.1)
+      .lineTo(lineW * 0.7, labelR * 0.1)
+      .stroke({ color: labelDark, width: Math.max(0.6, radius * 0.025), alpha: 0.4 });
+
+    // Spindle hole
+    const holeR = Math.max(1.5, radius * 0.07);
+    g.circle(0, 0, holeR).fill({ color: vinylColor });
+
+    // Outer border
+    g.circle(0, 0, radius).stroke({ color: border, width: 2 });
+
+    // Subtle edge shine
+    g.arc(0, 0, radius * 0.95, -Math.PI * 0.8, -Math.PI * 0.3)
+      .stroke({ color: 0xffffff, width: Math.max(0.8, radius * 0.03), alpha: 0.1 });
 
     c.addChild(g);
     return c;

@@ -20,7 +20,7 @@ import {
   type AIPlayer,
 } from "@backyamon/engine";
 import { BoardRenderer } from "./BoardRenderer";
-import { PieceRenderer } from "./PieceRenderer";
+import { PieceRenderer, type PieceSet } from "./PieceRenderer";
 import { DiceRenderer } from "./DiceRenderer";
 import { InputHandler } from "./InputHandler";
 import { SoundManager } from "@/audio/SoundManager";
@@ -81,8 +81,14 @@ export class GameController {
     const w = this.app.screen.width;
     const h = this.app.screen.height;
 
+    const pieceSetMap: Record<Difficulty, PieceSet> = {
+      easy: "coconut",
+      medium: "vinyl",
+      hard: "lion",
+    };
+
     this.boardRenderer = new BoardRenderer(this.app, w, h);
-    this.pieceRenderer = new PieceRenderer(this.app, this.boardRenderer);
+    this.pieceRenderer = new PieceRenderer(this.app, this.boardRenderer, pieceSetMap[this.difficulty]);
     this.diceRenderer = new DiceRenderer(this.app, this.boardRenderer);
     this.inputHandler = new InputHandler(
       this.app,
