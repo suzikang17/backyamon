@@ -85,14 +85,22 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
         case "l": // vim: right
         case "j": // vim: down
           e.preventDefault();
-          ctrl.cycleTarget(1);
+          if (ctrl.hasSelection()) {
+            ctrl.cycleTarget(1);
+          } else {
+            ctrl.selectNextPiece();
+          }
           break;
         case "ArrowLeft":
         case "ArrowUp":
         case "h": // vim: left
         case "k": // vim: up
           e.preventDefault();
-          ctrl.cycleTarget(-1);
+          if (ctrl.hasSelection()) {
+            ctrl.cycleTarget(-1);
+          } else {
+            ctrl.selectPrevPiece();
+          }
           break;
         case "u": // vim: undo
           e.preventDefault();

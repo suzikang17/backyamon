@@ -438,11 +438,7 @@ export class InputHandler {
    * If nothing is selected, selects the first moveable piece.
    * If a piece is selected, selects the next one.
    */
-  selectNextMoveable(): void {
-    if (!this.enabled || !this.state) return;
-
-    const player = this.state.currentPlayer;
-    // Collect all unique source points that have legal moves, sorted
+  private getMoveableFroms(): (number | "bar")[] {
     const moveableFroms: (number | "bar")[] = [];
     const seen = new Set<number | string>();
     for (const move of this.legalMoves) {
@@ -452,27 +448,32 @@ export class InputHandler {
         moveableFroms.push(move.from);
       }
     }
-
-    if (moveableFroms.length === 0) return;
-
-    // Sort: "bar" first, then numeric ascending
     moveableFroms.sort((a, b) => {
       if (a === "bar") return -1;
       if (b === "bar") return 1;
       return (a as number) - (b as number);
     });
+    return moveableFroms;
+  }
 
-    // Find current index
-    let currentIdx = -1;
-    if (this.selectedFrom !== null) {
-      currentIdx = moveableFroms.indexOf(this.selectedFrom);
-    }
+  selectNextMoveable(): void {
+    if (!this.enabled || !this.state) return;
+    const moveableFroms = this.getMoveableFroms();
+    if (moveableFroms.length === 0) return;
 
-    // Move to next
+    let currentIdx = this.selectedFrom !== null ? moveableFroms.indexOf(this.selectedFrom) : -1;
     const nextIdx = (currentIdx + 1) % moveableFroms.length;
-    const nextFrom = moveableFroms[nextIdx];
+    this.selectPiece(moveableFroms[nextIdx]);
+  }
 
-    this.selectPiece(nextFrom);
+  selectPrevMoveable(): void {
+    if (!this.enabled || !this.state) return;
+    const moveableFroms = this.getMoveableFroms();
+    if (moveableFroms.length === 0) return;
+
+    let currentIdx = this.selectedFrom !== null ? moveableFroms.indexOf(this.selectedFrom) : 0;
+    const prevIdx = (currentIdx - 1 + moveableFroms.length) % moveableFroms.length;
+    this.selectPiece(moveableFroms[prevIdx]);
   }
 
   /**

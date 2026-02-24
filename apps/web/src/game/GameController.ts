@@ -165,6 +165,10 @@ export class GameController {
     this.inputHandler?.selectNextMoveable();
   }
 
+  selectPrevPiece(): void {
+    this.inputHandler?.selectPrevMoveable();
+  }
+
   cycleTarget(direction: 1 | -1): void {
     this.inputHandler?.cycleTarget(direction);
   }
