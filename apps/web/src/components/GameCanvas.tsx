@@ -94,13 +94,6 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
           e.preventDefault();
           ctrl.cycleTarget(-1);
           break;
-        case "r": // vim-style roll
-          e.preventDefault();
-          if (waitingForRoll) {
-            soundManager.resumeContext();
-            ctrl.rollForHuman();
-          }
-          break;
         case "u": // vim: undo
           e.preventDefault();
           ctrl.undoMove();
