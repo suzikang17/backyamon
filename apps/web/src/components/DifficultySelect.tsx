@@ -16,7 +16,7 @@ const opponents = [
     accentGlow: "rgba(0,107,63,0.3)",
   },
   {
-    name: "Selector",
+    name: "Selecta",
     difficulty: "medium" as const,
     badge: "Medium",
     flavor: "Knows the riddim",
@@ -48,7 +48,7 @@ export default function DifficultySelect({ onBack }: DifficultySelectProps) {
       <h2 className="animate-fade-in-up font-display text-4xl sm:text-5xl text-[#FFD700] mb-2 tracking-wide title-glow">
         Choose Your Opponent
       </h2>
-      <p className="animate-fade-in animate-delay-100 text-[#D4A857] text-lg mb-10">
+      <p className="animate-fade-in animate-delay-100 text-[#D4A857] text-lg mb-10 font-heading">
         Who you wan fi challenge?
       </p>
 
@@ -75,7 +75,7 @@ export default function DifficultySelect({ onBack }: DifficultySelectProps) {
                 {opp.name}
               </h3>
               <span
-                className="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider"
+                className="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider font-heading"
                 style={{
                   backgroundColor: opp.accent,
                   color: opp.accent === "#FFD700" ? "#1A1A0E" : "#F4E1C1",
@@ -84,7 +84,7 @@ export default function DifficultySelect({ onBack }: DifficultySelectProps) {
                 {opp.badge}
               </span>
             </div>
-            <p className="text-[#F4E1C1] text-sm italic">&ldquo;{opp.flavor}&rdquo;</p>
+            <p className="text-[#F4E1C1] text-sm italic font-heading">&ldquo;{opp.flavor}&rdquo;</p>
             <div
               className="mt-4 h-1 rounded-full opacity-60 transition-opacity duration-200 group-hover:opacity-100"
               style={{ backgroundColor: opp.accent }}
@@ -95,7 +95,7 @@ export default function DifficultySelect({ onBack }: DifficultySelectProps) {
 
       <button
         onClick={onBack}
-        className="mt-10 text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-lg cursor-pointer min-h-[44px] flex items-center interactive-btn"
+        className="mt-10 text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-lg cursor-pointer min-h-[44px] flex items-center interactive-btn font-heading"
       >
         &larr; Back to Menu
       </button>

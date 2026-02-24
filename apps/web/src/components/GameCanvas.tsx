@@ -14,7 +14,7 @@ interface GameCanvasProps {
 
 const aiNames: Record<string, string> = {
   easy: "Beach Bum",
-  medium: "Selector",
+  medium: "Selecta",
   hard: "King Tubby",
 };
 

@@ -214,8 +214,8 @@ export default function LobbyPage() {
           {connecting ? "Connecting..." : connected ? "Connected" : "Disconnected"}
         </span>
         {displayName && (
-          <span className="text-[#F4E1C1] text-sm ml-1">
-            as <span className="text-[#FFD700] font-bold">{displayName}</span>
+          <span className="text-[#F4E1C1] text-sm ml-1 font-heading">
+            as <span className="text-[#FFD700] font-bold font-heading">{displayName}</span>
           </span>
         )}
       </div>
@@ -240,7 +240,7 @@ export default function LobbyPage() {
             {claimingUsername ? "..." : "Claim"}
           </button>
           {usernameError && (
-            <span className="text-[#CE1126] text-xs">{usernameError}</span>
+            <span className="text-[#CE1126] text-xs font-heading">{usernameError}</span>
           )}
         </div>
       )}
@@ -248,7 +248,7 @@ export default function LobbyPage() {
       {/* Error */}
       {error && (
         <div className="bg-[#CE1126]/20 border border-[#CE1126] rounded-xl px-6 py-2 mb-4 max-w-md text-center">
-          <p className="text-[#CE1126] text-sm">{error}</p>
+          <p className="text-[#CE1126] text-sm font-heading">{error}</p>
         </div>
       )}
 
@@ -321,7 +321,7 @@ export default function LobbyPage() {
                         <span className="text-[#FFD700] font-heading text-base">
                           {room.id}
                         </span>
-                        <span className="text-[#D4A857]/60 text-xs">
+                        <span className="text-[#D4A857]/60 text-xs font-heading">
                           {room.hostName}
                         </span>
                       </div>
@@ -375,7 +375,7 @@ export default function LobbyPage() {
                 <div className="w-2 h-2 rounded-full bg-[#FFD700] animate-bounce" style={{ animationDelay: "150ms" }} />
                 <div className="w-2 h-2 rounded-full bg-[#FFD700] animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
-              <p className="text-[#D4A857]/60 text-sm">
+              <p className="text-[#D4A857]/60 text-sm font-heading">
                 Mi deh yah, yuh know...
               </p>
             </div>

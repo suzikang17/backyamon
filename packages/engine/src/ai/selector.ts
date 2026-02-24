@@ -23,7 +23,7 @@ import {
  * +3 per pip count advantage
  */
 export class Selector implements AIPlayer {
-  name = "Selector";
+  name = "Selecta";
   difficulty = "medium" as const;
 
   selectMoves(state: GameState): Move[] {

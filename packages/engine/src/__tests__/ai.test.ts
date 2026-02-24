@@ -148,7 +148,7 @@ describe("Selector (medium)", () => {
 
   it("should have correct name and difficulty", () => {
     const ai = new Selector();
-    expect(ai.name).toBe("Selector");
+    expect(ai.name).toBe("Selecta");
     expect(ai.difficulty).toBe("medium");
   });
 });

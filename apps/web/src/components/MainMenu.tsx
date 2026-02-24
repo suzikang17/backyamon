@@ -56,10 +56,10 @@ export default function MainMenu() {
 
         <button
           disabled
-          className="animate-fade-in-up animate-delay-400 w-full rounded-2xl bg-[#3a3a2e] px-8 py-4 text-xl font-bold text-[#8B4513] shadow-lg cursor-not-allowed opacity-60 relative"
+          className="animate-fade-in-up animate-delay-400 w-full rounded-2xl bg-[#3a3a2e] px-8 py-4 text-xl font-bold text-[#8B4513] shadow-lg cursor-not-allowed opacity-60 relative font-heading"
         >
           Local Game
-          <span className="block text-sm font-normal text-[#D4A857] mt-0.5">
+          <span className="block text-sm font-normal text-[#D4A857] mt-0.5 font-heading">
             Coming Soon
           </span>
         </button>

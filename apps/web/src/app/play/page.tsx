@@ -10,7 +10,7 @@ import { SocketClient } from "@/multiplayer/SocketClient";
 
 const aiNames: Record<string, string> = {
   easy: "Beach Bum",
-  medium: "Selector",
+  medium: "Selecta",
   hard: "King Tubby",
 };
 
@@ -127,14 +127,14 @@ function GameOverOverlay({
           {onPlayAgain && (
             <button
               onClick={onPlayAgain}
-              className="rounded-2xl bg-[#006B3F] wood-btn wood-btn-green px-6 py-3 text-lg font-bold text-[#FFD700] shadow-lg interactive-btn cursor-pointer min-h-[44px]"
+              className="rounded-2xl bg-[#006B3F] wood-btn wood-btn-green px-6 py-3 text-lg font-bold text-[#FFD700] shadow-lg interactive-btn cursor-pointer min-h-[44px] font-heading"
             >
               Play Again
             </button>
           )}
           <button
             onClick={onBackAction}
-            className="rounded-2xl bg-[#D4A857] wood-btn wood-btn-bamboo px-6 py-3 text-lg font-bold text-[#1A1A0E] shadow-lg interactive-btn cursor-pointer min-h-[44px]"
+            className="rounded-2xl bg-[#D4A857] wood-btn wood-btn-bamboo px-6 py-3 text-lg font-bold text-[#1A1A0E] shadow-lg interactive-btn cursor-pointer min-h-[44px] font-heading"
           >
             {backLabel}
           </button>
@@ -217,7 +217,7 @@ function AIPlayContent({
 
       <Link
         href="/"
-        className="mt-6 sm:mt-8 text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-base sm:text-lg min-h-[44px] flex items-center interactive-btn"
+        className="mt-6 sm:mt-8 text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-base sm:text-lg min-h-[44px] flex items-center interactive-btn font-heading"
       >
         &larr; Back to Menu
       </Link>
@@ -375,14 +375,14 @@ function OnlinePlayContent({ roomId }: { roomId: string }) {
                 connected ? "bg-[#006B3F]" : "bg-[#CE1126]"
               }`}
             />
-            <span className="text-[#D4A857] text-xs">
+            <span className="text-[#D4A857] text-xs font-heading">
               {connected ? "Connected" : "Reconnecting..."}
             </span>
-            <span className="text-[#F4E1C1]/50 text-xs">|</span>
-            <span className="text-[#D4A857] text-xs">
+            <span className="text-[#F4E1C1]/50 text-xs font-heading">|</span>
+            <span className="text-[#D4A857] text-xs font-heading">
               You are{" "}
               <span
-                className="font-bold"
+                className="font-bold font-heading"
                 style={{
                   color:
                     localPlayer === Player.Gold ? "#FFD700" : "#CE1126",
@@ -406,7 +406,7 @@ function OnlinePlayContent({ roomId }: { roomId: string }) {
               ? "Connecting to server..."
               : "Joining game..."}
           </p>
-          <p className="text-[#D4A857] text-sm">Room: {roomId}</p>
+          <p className="text-[#D4A857] text-sm font-heading">Room: {roomId}</p>
         </div>
       )}
 
@@ -416,10 +416,10 @@ function OnlinePlayContent({ roomId }: { roomId: string }) {
           <p className="text-[#CE1126] font-heading text-xl sm:text-2xl mb-2">
             Connection Error
           </p>
-          <p className="text-[#D4A857] text-sm mb-6">{error}</p>
+          <p className="text-[#D4A857] text-sm mb-6 font-heading">{error}</p>
           <button
             onClick={handleBackToLobby}
-            className="rounded-2xl bg-[#006B3F] wood-btn wood-btn-green px-6 py-3 text-lg font-bold text-[#FFD700] shadow-lg interactive-btn cursor-pointer min-h-[44px]"
+            className="rounded-2xl bg-[#006B3F] wood-btn wood-btn-green px-6 py-3 text-lg font-bold text-[#FFD700] shadow-lg interactive-btn cursor-pointer min-h-[44px] font-heading"
           >
             Back to Lobby
           </button>
@@ -458,7 +458,7 @@ function OnlinePlayContent({ roomId }: { roomId: string }) {
 
       <Link
         href={status === "playing" ? "/lobby" : "/"}
-        className="mt-6 sm:mt-8 text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-base sm:text-lg min-h-[44px] flex items-center interactive-btn"
+        className="mt-6 sm:mt-8 text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-base sm:text-lg min-h-[44px] flex items-center interactive-btn font-heading"
       >
         &larr; {status === "playing" ? "Leave Game" : "Back to Menu"}
       </Link>
