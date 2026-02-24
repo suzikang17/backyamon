@@ -8,7 +8,12 @@ export type PointState = {
   count: number;
 } | null;
 
-export type GamePhase = "ROLLING" | "MOVING" | "CHECKING_WIN" | "GAME_OVER";
+export type GamePhase =
+  | "ROLLING"
+  | "MOVING"
+  | "DOUBLING"
+  | "CHECKING_WIN"
+  | "GAME_OVER";
 
 export type WinType = "ya_mon" | "big_ya_mon" | "massive_ya_mon";
 
