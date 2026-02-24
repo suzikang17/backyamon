@@ -107,8 +107,9 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    // Use capture phase to intercept keys before any focused element swallows them
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
   }, [waitingForRoll, soundManager]);
 
   useEffect(() => {
