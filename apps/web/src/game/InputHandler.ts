@@ -2,11 +2,13 @@ import { Application, Container, Graphics, FederatedPointerEvent } from "pixi.js
 import { Player, type GameState, type Move } from "@backyamon/engine";
 import { BoardRenderer } from "./BoardRenderer";
 import { PieceRenderer } from "./PieceRenderer";
+import { MoveLineRenderer } from "./MoveLineRenderer";
 
 export class InputHandler {
   private app: Application;
   private boardRenderer: BoardRenderer;
   private pieceRenderer: PieceRenderer;
+  private moveLineRenderer: MoveLineRenderer;
   private state: GameState | null = null;
   private legalMoves: Move[] = [];
   private enabled = false;
@@ -33,14 +35,22 @@ export class InputHandler {
   constructor(
     app: Application,
     boardRenderer: BoardRenderer,
-    pieceRenderer: PieceRenderer
+    pieceRenderer: PieceRenderer,
+    moveLineRenderer: MoveLineRenderer
   ) {
     this.app = app;
     this.boardRenderer = boardRenderer;
     this.pieceRenderer = pieceRenderer;
+    this.moveLineRenderer = moveLineRenderer;
     this.hitAreaContainer = new Container();
     this.hitAreaContainer.zIndex = 900;
     app.stage.addChild(this.hitAreaContainer);
+
+    // Wire up line click handler
+    this.moveLineRenderer.onMoveClicked = (move: Move) => {
+      if (!this.enabled) return;
+      this.executeMove(move);
+    };
 
     this.setupHitAreas();
   }
@@ -117,6 +127,9 @@ export class InputHandler {
     // Show glow on all moveable pieces
     this.showMoveableGlow();
 
+    // Show faded move lines for all legal moves
+    this.moveLineRenderer.showMoveLines(state, legalMoves);
+
     // Multi-move: if we have a pending auto-select from a previous move,
     // auto-select the same point if it still has moves
     const autoFrom = this.pendingAutoSelectFrom;
@@ -125,7 +138,6 @@ export class InputHandler {
     if (autoFrom !== null) {
       const movesFromHere = this.legalMoves.filter((m) => m.from === autoFrom);
       if (movesFromHere.length > 0) {
-        // Auto-select this piece (without drag)
         this.selectPiece(autoFrom);
         return;
       }
@@ -139,6 +151,7 @@ export class InputHandler {
     this.enabled = false;
     this.deselect();
     this.pieceRenderer.clearMoveableGlow();
+    this.moveLineRenderer.clear();
     this.updateCursors();
   }
 
@@ -297,6 +310,9 @@ export class InputHandler {
       this.boardRenderer.highlightBearOff(player);
     }
 
+    // Highlight move lines from this piece
+    this.moveLineRenderer.highlightFrom(from);
+
     // Setup drag if event provided
     if (e && this.selectedPiece) {
       this.startDrag(e);
@@ -404,6 +420,7 @@ export class InputHandler {
     this.selectedPiece = null;
     this.isDragging = false;
     this.boardRenderer.clearHighlights();
+    this.moveLineRenderer.clearHighlight();
   }
 
   /**
@@ -626,6 +643,17 @@ export class InputHandler {
    */
   hasTargetHighlighted(): boolean {
     return this.selectedFrom !== null && this.highlightedTargetIdx >= 0;
+  }
+
+  /**
+   * Execute a move by its number label (1-based) on the currently selected piece.
+   */
+  selectMoveByNumber(num: number): void {
+    if (!this.enabled || this.selectedFrom === null) return;
+    const move = this.moveLineRenderer.getMoveByLabel(num);
+    if (move) {
+      this.executeMove(move);
+    }
   }
 
   destroy(): void {

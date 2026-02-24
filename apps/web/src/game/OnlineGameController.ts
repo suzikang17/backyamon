@@ -12,12 +12,14 @@ import { BoardRenderer } from "./BoardRenderer";
 import { PieceRenderer } from "./PieceRenderer";
 import { DiceRenderer } from "./DiceRenderer";
 import { InputHandler } from "./InputHandler";
+import { MoveLineRenderer } from "./MoveLineRenderer";
 import { SocketClient } from "@/multiplayer/SocketClient";
 
 export class OnlineGameController {
   private app: Application;
   private boardRenderer!: BoardRenderer;
   private pieceRenderer!: PieceRenderer;
+  private moveLineRenderer!: MoveLineRenderer;
   private diceRenderer!: DiceRenderer;
   private inputHandler!: InputHandler;
   private socketClient: SocketClient;
@@ -60,10 +62,12 @@ export class OnlineGameController {
     this.boardRenderer = new BoardRenderer(this.app, w, h);
     this.pieceRenderer = new PieceRenderer(this.app, this.boardRenderer);
     this.diceRenderer = new DiceRenderer(this.app, this.boardRenderer);
+    this.moveLineRenderer = new MoveLineRenderer(this.app, this.boardRenderer);
     this.inputHandler = new InputHandler(
       this.app,
       this.boardRenderer,
-      this.pieceRenderer
+      this.pieceRenderer,
+      this.moveLineRenderer
     );
 
     this.state = initialState;

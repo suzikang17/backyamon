@@ -128,6 +128,17 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
           }
           ctrl.undoMove();
           break;
+        case "1":
+        case "2":
+        case "3":
+        case "4":
+        case "5":
+        case "6":
+          if (ctrl.hasSelection()) {
+            e.preventDefault();
+            ctrl.selectMoveByNumber(parseInt(e.key));
+          }
+          break;
       }
     };
 
