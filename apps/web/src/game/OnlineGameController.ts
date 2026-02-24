@@ -14,6 +14,7 @@ import { DiceRenderer } from "./DiceRenderer";
 import { InputHandler } from "./InputHandler";
 import { MoveLineRenderer } from "./MoveLineRenderer";
 import { SocketClient } from "@/multiplayer/SocketClient";
+import { SoundManager } from "@/audio/SoundManager";
 
 export class OnlineGameController {
   private app: Application;
@@ -23,6 +24,7 @@ export class OnlineGameController {
   private diceRenderer!: DiceRenderer;
   private inputHandler!: InputHandler;
   private socketClient: SocketClient;
+  private sound: SoundManager;
 
   private state!: GameState;
   private localPlayer: Player = Player.Gold;
@@ -47,6 +49,7 @@ export class OnlineGameController {
     this.app = app;
     this.socketClient = socketClient;
     this.roomId = roomId;
+    this.sound = SoundManager.getInstance();
   }
 
   /**
@@ -72,6 +75,9 @@ export class OnlineGameController {
 
     this.state = initialState;
     this.localPlayer = localPlayer;
+
+    this.sound.startMusic();
+    this.sound.updateMood(this.state);
 
     // Render initial board
     this.pieceRenderer.render(this.state);
@@ -105,6 +111,7 @@ export class OnlineGameController {
 
   private startLocalTurn(): void {
     if (this.destroyed) return;
+    this.sound.playSFX("turn-start");
     this.onWaitingForRoll?.(true);
     this.onMessage?.("Your turn - click to roll!");
   }
@@ -218,6 +225,7 @@ export class OnlineGameController {
 
   private async handleDiceRolled(data: { dice: Dice }): Promise<void> {
     if (this.destroyed) return;
+    this.sound.playSFX("dice-roll");
 
     const { dice } = data;
     this.state = { ...this.state, dice, phase: "MOVING" };
@@ -253,6 +261,21 @@ export class OnlineGameController {
 
     const { move, state } = data;
     const movingPlayer = this.state.currentPlayer;
+
+    // Play move SFX based on pre-move state
+    if (move.to === "off") {
+      this.sound.playSFX("bear-off");
+    } else if (typeof move.to === "number") {
+      const target = this.state.points[move.to];
+      const opp = this.state.currentPlayer === Player.Gold ? Player.Red : Player.Gold;
+      if (target && target.player === opp && target.count === 1) {
+        this.sound.playSFX("piece-hit");
+      } else {
+        this.sound.playSFX("piece-move");
+      }
+    } else {
+      this.sound.playSFX("piece-move");
+    }
 
     // Update state from server
     this.state = state;
@@ -325,6 +348,12 @@ export class OnlineGameController {
     this.diceRenderer.hide();
     this.inputHandler.disable();
 
+    if (data.winner === this.localPlayer) {
+      this.sound.playSFX("victory");
+    } else {
+      this.sound.playSFX("defeat");
+    }
+
     const isWinner = data.winner === this.localPlayer;
     this.onMessage?.(isWinner ? "Ya Mon! You win!" : "You lose!");
     this.onGameOver?.(data.winner, data.winType, data.pointsWon);
@@ -332,6 +361,7 @@ export class OnlineGameController {
 
   private handleDoubleOffered(data: { currentCubeValue: number }): void {
     if (this.destroyed) return;
+    this.sound.playSFX("double-offered");
 
     // Only the non-offering player (opponent of current player) sees this
     this.onMessage?.(
@@ -392,11 +422,13 @@ export class OnlineGameController {
   // ── Utilities ────────────────────────────────────────────────────────
 
   private emitStateChange(): void {
+    this.sound.updateMood(this.state);
     this.onStateChange?.(this.state);
   }
 
   destroy(): void {
     this.destroyed = true;
+    this.sound.stopMusic();
     this.unbindServerEvents();
     this.inputHandler?.destroy();
     this.diceRenderer?.destroy();
