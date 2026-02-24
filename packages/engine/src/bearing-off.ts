@@ -2,12 +2,12 @@ import {
   Player,
   type GameState,
   type Move,
-} from "./types";
+} from "./types.js";
 import {
   HOME_BOARD_START,
   HOME_BOARD_END,
   POINTS_COUNT,
-} from "./constants";
+} from "./constants.js";
 
 /**
  * Check if a player can bear off pieces.

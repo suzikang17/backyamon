@@ -1,9 +1,9 @@
-import { Player, type GameState, type WinType } from "./types";
+import { Player, type GameState, type WinType } from "./types.js";
 import {
   PIECES_PER_PLAYER,
   HOME_BOARD_START,
   HOME_BOARD_END,
-} from "./constants";
+} from "./constants.js";
 
 /**
  * Check if either player has won (borne off all 15 pieces).

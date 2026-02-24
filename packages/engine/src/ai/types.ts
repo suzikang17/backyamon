@@ -1,4 +1,4 @@
-import type { GameState, Move } from "../types";
+import type { GameState, Move } from "../types.js";
 
 export interface AIPlayer {
   name: string;

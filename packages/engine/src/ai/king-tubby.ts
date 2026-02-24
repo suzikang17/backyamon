@@ -1,10 +1,10 @@
-import { Player, type GameState, type Move } from "../types";
-import type { AIPlayer } from "./types";
-import { getAllLegalTurns } from "./turn-generator";
-import { applyMove, opponent } from "../moves";
-import { evaluateBoard } from "./selector";
-import { rollDice } from "../dice";
-import { endTurn } from "../turn";
+import { Player, type GameState, type Move } from "../types.js";
+import type { AIPlayer } from "./types.js";
+import { getAllLegalTurns } from "./turn-generator.js";
+import { applyMove, opponent } from "../moves.js";
+import { evaluateBoard } from "./selector.js";
+import { rollDice } from "../dice.js";
+import { endTurn } from "../turn.js";
 
 /**
  * King Tubby - Hard AI

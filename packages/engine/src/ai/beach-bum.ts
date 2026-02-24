@@ -1,6 +1,6 @@
-import type { GameState, Move } from "../types";
-import type { AIPlayer } from "./types";
-import { getAllLegalTurns } from "./turn-generator";
+import type { GameState, Move } from "../types.js";
+import type { AIPlayer } from "./types.js";
+import { getAllLegalTurns } from "./turn-generator.js";
 
 /**
  * Beach Bum - Easy AI

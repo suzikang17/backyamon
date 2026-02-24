@@ -1,13 +1,13 @@
-import { Player, type GameState, type Move } from "../types";
-import type { AIPlayer } from "./types";
-import { getAllLegalTurns } from "./turn-generator";
-import { applyMove, opponent } from "../moves";
+import { Player, type GameState, type Move } from "../types.js";
+import type { AIPlayer } from "./types.js";
+import { getAllLegalTurns } from "./turn-generator.js";
+import { applyMove, opponent } from "../moves.js";
 import {
   HOME_BOARD_START,
   HOME_BOARD_END,
   POINTS_COUNT,
   MOVE_DIRECTION,
-} from "../constants";
+} from "../constants.js";
 
 /**
  * Selector - Medium AI

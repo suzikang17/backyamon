@@ -3,6 +3,8 @@ import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 export const guests = sqliteTable("guests", {
   id: text("id").primaryKey(), // UUID
   displayName: text("display_name").notNull(),
+  username: text("username").unique(), // Claimed unique username (nullable)
+  token: text("token").notNull(), // Persistent auth token
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
 });
 

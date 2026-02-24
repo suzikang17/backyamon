@@ -18,7 +18,7 @@ import {
   type Move,
   type WinType,
 } from "@backyamon/engine";
-import { createGuest } from "./auth.js";
+import { createGuest, lookupByToken, claimUsername } from "./auth.js";
 import {
   createRoom,
   joinRoom,
@@ -157,7 +157,29 @@ io.on("connection", (socket) => {
 
   // ── Registration ──────────────────────────────────────────────────────
 
-  socket.on("register", () => {
+  socket.on("register", (data?: { token?: string }) => {
+    const token = data?.token;
+
+    // Try to restore session from token
+    if (token) {
+      const existing = lookupByToken(token);
+      if (existing) {
+        const displayName = existing.username ?? existing.displayName;
+        socketToPlayer.set(socket.id, {
+          playerId: existing.id,
+          displayName,
+        });
+        socket.emit("registered", {
+          playerId: existing.id,
+          displayName,
+          username: existing.username,
+          token: existing.token,
+        });
+        return;
+      }
+    }
+
+    // No valid token: create new guest
     const guest = createGuest();
     socketToPlayer.set(socket.id, {
       playerId: guest.id,
@@ -166,7 +188,30 @@ io.on("connection", (socket) => {
     socket.emit("registered", {
       playerId: guest.id,
       displayName: guest.displayName,
+      username: null,
+      token: guest.token,
     });
+  });
+
+  socket.on("claim-username", ({ username }: { username: string }) => {
+    const playerInfo = socketToPlayer.get(socket.id);
+    if (!playerInfo) {
+      socket.emit("error", { message: "Not registered." });
+      return;
+    }
+
+    const result = claimUsername(playerInfo.playerId, username);
+    if (!result.ok) {
+      socket.emit("username-error", { message: result.error });
+      return;
+    }
+
+    // Update in-memory tracking
+    const trimmed = username.trim();
+    playerInfo.displayName = trimmed;
+    socketToPlayer.set(socket.id, playerInfo);
+
+    socket.emit("username-claimed", { username: trimmed });
   });
 
   // ── Room Creation ─────────────────────────────────────────────────────

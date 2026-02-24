@@ -1,4 +1,4 @@
-import { Player, type PointState } from "./types";
+import { Player, type PointState } from "./types.js";
 
 // Standard backgammon starting positions
 // Index = point number - 1 (0-indexed)

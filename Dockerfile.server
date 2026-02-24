@@ -1,0 +1,42 @@
+FROM node:22-alpine AS build
+
+WORKDIR /app
+
+# Copy workspace root files
+COPY package.json package-lock.json turbo.json ./
+
+# Copy only the packages needed for the server
+COPY packages/engine/package.json packages/engine/
+COPY apps/server/package.json apps/server/
+
+# Install dependencies
+RUN npm ci
+
+# Copy source
+COPY packages/engine/ packages/engine/
+COPY apps/server/ apps/server/
+
+# Build engine then server
+RUN npx turbo build --filter=@backyamon/server
+
+# ── Production image ──────────────────────────────────────────────────
+FROM node:22-alpine
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+COPY packages/engine/package.json packages/engine/
+COPY apps/server/package.json apps/server/
+
+RUN npm ci --omit=dev
+
+# Copy built output
+COPY --from=build /app/packages/engine/dist packages/engine/dist
+COPY --from=build /app/apps/server/dist apps/server/dist
+
+ENV NODE_ENV=production
+ENV PORT=3001
+
+EXPOSE 3001
+
+CMD ["node", "apps/server/dist/index.js"]

@@ -1,4 +1,4 @@
-import type { Dice } from "./types";
+import type { Dice } from "./types.js";
 
 export function rollDice(forced?: [number, number]): Dice {
   const values: [number, number] = forced ?? [

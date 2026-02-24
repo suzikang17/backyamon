@@ -17,6 +17,10 @@ export default function LobbyPage() {
   const [view, setView] = useState<LobbyView>("menu");
   const [connected, setConnected] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [username, setUsername] = useState<string | null>(null);
+  const [usernameInput, setUsernameInput] = useState("");
+  const [usernameError, setUsernameError] = useState("");
+  const [claimingUsername, setClaimingUsername] = useState(false);
   const [roomCode, setRoomCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [error, setError] = useState("");
@@ -38,6 +42,7 @@ export default function LobbyPage() {
         const identity = await client.register();
         if (destroyed) return;
         setDisplayName(identity.displayName);
+        setUsername(identity.username);
         setConnecting(false);
       } catch (err) {
         if (destroyed) return;
@@ -160,6 +165,28 @@ export default function LobbyPage() {
     setRoomCode("");
   }, []);
 
+  // Claim username
+  const handleClaimUsername = useCallback(async () => {
+    const client = socketRef.current;
+    if (!client || !usernameInput.trim()) return;
+
+    setUsernameError("");
+    setClaimingUsername(true);
+
+    try {
+      const claimed = await client.claimUsername(usernameInput.trim());
+      setDisplayName(claimed);
+      setUsername(claimed);
+      setUsernameInput("");
+    } catch (err) {
+      setUsernameError(
+        err instanceof Error ? err.message : "Failed to claim username"
+      );
+    } finally {
+      setClaimingUsername(false);
+    }
+  }, [usernameInput]);
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-4">
       {/* Rasta stripe decoration */}
@@ -173,25 +200,57 @@ export default function LobbyPage() {
         Online Lobby
       </h1>
 
-      {/* Connection status */}
-      <div className="flex items-center gap-2 mb-6">
-        <div
-          className={`w-3 h-3 rounded-full ${
-            connected ? "bg-[#006B3F]" : "bg-[#CE1126]"
-          }`}
-        />
-        <span className="text-[#D4A857] text-sm">
-          {connecting
-            ? "Connecting..."
-            : connected
-            ? "Connected"
-            : "Disconnected"}
-        </span>
-        {displayName && (
-          <span className="text-[#F4E1C1] text-sm ml-2">
-            Playing as{" "}
-            <span className="text-[#FFD700] font-bold">{displayName}</span>
+      {/* Connection status + username */}
+      <div className="flex flex-col items-center gap-2 mb-6">
+        <div className="flex items-center gap-2">
+          <div
+            className={`w-3 h-3 rounded-full ${
+              connected ? "bg-[#006B3F]" : "bg-[#CE1126]"
+            }`}
+          />
+          <span className="text-[#D4A857] text-sm">
+            {connecting
+              ? "Connecting..."
+              : connected
+              ? "Connected"
+              : "Disconnected"}
           </span>
+          {displayName && (
+            <span className="text-[#F4E1C1] text-sm ml-2">
+              Playing as{" "}
+              <span className="text-[#FFD700] font-bold">{displayName}</span>
+            </span>
+          )}
+        </div>
+
+        {/* Username claim section */}
+        {!connecting && connected && !username && (
+          <div className="flex flex-col items-center gap-2 mt-2">
+            <p className="text-[#D4A857] text-xs">Claim a username:</p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={usernameInput}
+                onChange={(e) => setUsernameInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleClaimUsername();
+                }}
+                placeholder="Username"
+                maxLength={20}
+                className="rounded-lg bg-[#1A1A0E] border border-[#8B4513] px-3 py-1.5 text-[#FFD700] font-heading text-sm text-center placeholder:text-[#D4A857]/40 focus:outline-none focus:border-[#FFD700] w-40"
+              />
+              <button
+                onClick={handleClaimUsername}
+                disabled={claimingUsername || !usernameInput.trim()}
+                className="rounded-lg bg-[#006B3F] px-4 py-1.5 text-sm font-bold text-[#FFD700] transition-all duration-200 hover:brightness-110 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-heading"
+              >
+                {claimingUsername ? "..." : "Claim"}
+              </button>
+            </div>
+            {usernameError && (
+              <p className="text-[#CE1126] text-xs">{usernameError}</p>
+            )}
+          </div>
         )}
       </div>
 

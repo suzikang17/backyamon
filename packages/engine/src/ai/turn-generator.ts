@@ -1,5 +1,5 @@
-import type { GameState, Move } from "../types";
-import { getLegalMoves, applyMove } from "../moves";
+import type { GameState, Move } from "../types.js";
+import { getLegalMoves, applyMove } from "../moves.js";
 
 /**
  * Generate all possible complete turns (sequences of moves) for the current

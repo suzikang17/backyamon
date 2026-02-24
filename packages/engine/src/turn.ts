@@ -1,8 +1,8 @@
-import type { GameState } from "./types";
-import { cloneState } from "./state";
-import { getLegalMoves } from "./moves";
-import { checkWinner, getWinType } from "./winner";
-import { opponent } from "./moves";
+import type { GameState } from "./types.js";
+import { cloneState } from "./state.js";
+import { getLegalMoves } from "./moves.js";
+import { checkWinner, getWinType } from "./winner.js";
+import { opponent } from "./moves.js";
 
 /**
  * End the current turn:

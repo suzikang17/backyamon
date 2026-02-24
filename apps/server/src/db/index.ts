@@ -14,6 +14,8 @@ sqlite.exec(`
   CREATE TABLE IF NOT EXISTS guests (
     id TEXT PRIMARY KEY,
     display_name TEXT NOT NULL,
+    username TEXT UNIQUE,
+    token TEXT NOT NULL DEFAULT '',
     created_at INTEGER NOT NULL
   );
 
@@ -28,5 +30,18 @@ sqlite.exec(`
     completed_at INTEGER
   );
 `);
+
+// Migrate: add columns if they don't exist (for existing databases)
+const columns = sqlite
+  .prepare("PRAGMA table_info(guests)")
+  .all() as { name: string }[];
+const columnNames = new Set(columns.map((c) => c.name));
+
+if (!columnNames.has("username")) {
+  sqlite.exec("ALTER TABLE guests ADD COLUMN username TEXT UNIQUE");
+}
+if (!columnNames.has("token")) {
+  sqlite.exec("ALTER TABLE guests ADD COLUMN token TEXT NOT NULL DEFAULT ''");
+}
 
 export const db = drizzle(sqlite, { schema });

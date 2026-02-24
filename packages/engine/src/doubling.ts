@@ -1,6 +1,6 @@
-import type { GameState } from "./types";
-import { cloneState } from "./state";
-import { opponent } from "./moves";
+import type { GameState } from "./types.js";
+import { cloneState } from "./state.js";
+import { opponent } from "./moves.js";
 
 /**
  * Check if the current player can offer a double.

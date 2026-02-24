@@ -1,4 +1,5 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID, randomBytes } from "node:crypto";
+import { eq } from "drizzle-orm";
 import { db } from "./db/index.js";
 import { guests } from "./db/schema.js";
 
@@ -66,23 +67,79 @@ function generateDisplayName(): string {
   return randomElement(ADJECTIVES) + randomElement(NOUNS);
 }
 
+function generateToken(): string {
+  return randomBytes(32).toString("hex");
+}
+
 export interface GuestAccount {
   id: string;
   displayName: string;
+  username: string | null;
+  token: string;
 }
 
 export function createGuest(): GuestAccount {
   const id = randomUUID();
   const displayName = generateDisplayName();
+  const token = generateToken();
   const now = new Date();
 
   db.insert(guests)
     .values({
       id,
       displayName,
+      token,
       createdAt: now,
     })
     .run();
 
-  return { id, displayName };
+  return { id, displayName, username: null, token };
+}
+
+export function lookupByToken(token: string): GuestAccount | null {
+  const row = db.select().from(guests).where(eq(guests.token, token)).get();
+  if (!row) return null;
+  return {
+    id: row.id,
+    displayName: row.displayName,
+    username: row.username,
+    token: row.token,
+  };
+}
+
+export function isUsernameTaken(username: string): boolean {
+  const row = db
+    .select({ id: guests.id })
+    .from(guests)
+    .where(eq(guests.username, username))
+    .get();
+  return !!row;
+}
+
+export function claimUsername(
+  playerId: string,
+  username: string
+): { ok: true } | { ok: false; error: string } {
+  // Validate username format
+  const trimmed = username.trim();
+  if (trimmed.length < 2 || trimmed.length > 20) {
+    return { ok: false, error: "Username must be 2-20 characters." };
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
+    return {
+      ok: false,
+      error: "Username can only contain letters, numbers, hyphens, and underscores.",
+    };
+  }
+
+  if (isUsernameTaken(trimmed)) {
+    return { ok: false, error: "Username is already taken." };
+  }
+
+  db.update(guests)
+    .set({ username: trimmed, displayName: trimmed })
+    .where(eq(guests.id, playerId))
+    .run();
+
+  return { ok: true };
 }

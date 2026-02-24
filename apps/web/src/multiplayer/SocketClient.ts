@@ -9,6 +9,8 @@ const LOCAL_STORAGE_KEY = "backyamon_guest";
 interface GuestIdentity {
   playerId: string;
   displayName: string;
+  username: string | null;
+  token: string;
 }
 
 function loadGuestIdentity(): GuestIdentity | null {
@@ -17,7 +19,7 @@ function loadGuestIdentity(): GuestIdentity | null {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (parsed && parsed.playerId && parsed.displayName) {
+    if (parsed && parsed.playerId && parsed.token) {
       return parsed as GuestIdentity;
     }
   } catch {
@@ -94,9 +96,19 @@ export class SocketClient {
 
       this.socket.once(
         "registered",
-        (data: { playerId: string; displayName: string }) => {
+        (data: {
+          playerId: string;
+          displayName: string;
+          username: string | null;
+          token: string;
+        }) => {
           clearTimeout(timeout);
-          this.identity = { playerId: data.playerId, displayName: data.displayName };
+          this.identity = {
+            playerId: data.playerId,
+            displayName: data.displayName,
+            username: data.username,
+            token: data.token,
+          };
           saveGuestIdentity(this.identity);
           resolve(this.identity);
         }
@@ -107,7 +119,34 @@ export class SocketClient {
         reject(new Error(data.message));
       });
 
-      this.socket.emit("register");
+      // Send token for session restoration if available
+      const cached = loadGuestIdentity();
+      this.socket.emit("register", cached?.token ? { token: cached.token } : {});
+    });
+  }
+
+  claimUsername(username: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error("Claim username timed out"));
+      }, 10_000);
+
+      this.socket.once("username-claimed", (data: { username: string }) => {
+        clearTimeout(timeout);
+        if (this.identity) {
+          this.identity.username = data.username;
+          this.identity.displayName = data.username;
+          saveGuestIdentity(this.identity);
+        }
+        resolve(data.username);
+      });
+
+      this.socket.once("username-error", (data: { message: string }) => {
+        clearTimeout(timeout);
+        reject(new Error(data.message));
+      });
+
+      this.socket.emit("claim-username", { username });
     });
   }
 

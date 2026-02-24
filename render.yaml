@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: backyamon-server
+    runtime: node
+    plan: free
+    buildCommand: npm install && npx turbo build --filter=@backyamon/server
+    startCommand: node apps/server/dist/index.js
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: WEB_URL
+        sync: false
+      - key: PORT
+        value: 3001

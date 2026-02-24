@@ -1,7 +1,7 @@
-import { Player, type GameState, type Move, type PointState } from "./types";
-import { MOVE_DIRECTION, POINTS_COUNT } from "./constants";
-import { cloneState } from "./state";
-import { canBearOff, getBearOffMoves } from "./bearing-off";
+import { Player, type GameState, type Move, type PointState } from "./types.js";
+import { MOVE_DIRECTION, POINTS_COUNT } from "./constants.js";
+import { cloneState } from "./state.js";
+import { canBearOff, getBearOffMoves } from "./bearing-off.js";
 
 export function opponent(player: Player): Player {
   return player === Player.Gold ? Player.Red : Player.Gold;

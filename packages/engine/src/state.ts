@@ -1,5 +1,5 @@
-import { Player, type GameState } from "./types";
-import { INITIAL_POSITIONS } from "./constants";
+import { Player, type GameState } from "./types.js";
+import { INITIAL_POSITIONS } from "./constants.js";
 
 export function createInitialState(matchLength = 1): GameState {
   return {
