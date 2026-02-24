@@ -1,0 +1,6 @@
+{
+  "buildCommand": "npx turbo build --filter=@backyamon/web",
+  "outputDirectory": "apps/web/.next",
+  "framework": "nextjs",
+  "installCommand": "npm install"
+}
