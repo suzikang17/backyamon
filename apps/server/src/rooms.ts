@@ -17,19 +17,18 @@ export interface GameRoom {
 
 const rooms = new Map<string, GameRoom>();
 
-// Rasta / reggae / Caribbean themed word lists for room names
-const ADJECTIVES = [
-  "IRIE", "ZION", "DREAD", "ROOTS", "NATTY", "MYSTIC", "GOLDEN", "RASTA",
-  "DUB", "JAH", "REBEL", "LION", "ROYAL", "BLESSED", "TROPICAL", "ISLAND",
-  "REGGAE", "COOL", "EASY", "MELLOW", "MASSIVE", "BIG", "YARD", "WICKED",
-  "SWEET", "HEAVY", "DEEP", "HIGH", "ONE", "BASS",
-];
-
-const NOUNS = [
-  "VIBES", "RIDDIM", "YARD", "WAVES", "SOUND", "FIRE", "CHALICE", "ROOTS",
-  "BEACH", "BREEZE", "SUNSET", "GROOVE", "ECHO", "LION", "THUNDER", "SESSION",
-  "SHACK", "BOUNCE", "STEPPA", "JUNGLE", "DROP", "FLAME", "GANJA", "RIVER",
-  "SKANK", "DUBPLATE", "SIREN", "PALM", "REEF", "DRUM",
+// Rasta / reggae / Caribbean themed room names — single words
+const ROOM_NAMES = [
+  "IRIE", "ZION", "RIDDIM", "VIBES", "ROOTS", "NATTY", "MYSTIC", "DUB",
+  "JAH", "REBEL", "LION", "BLESSED", "REGGAE", "MELLOW", "MASSIVE", "WICKED",
+  "CHALICE", "BREEZE", "SUNSET", "GROOVE", "THUNDER", "STEPPA", "JUNGLE",
+  "FLAME", "SIREN", "DUBPLATE", "SKANK", "REEF", "PALM", "DRUM",
+  "BURNIN", "EXODUS", "UPRISING", "KAYA", "BABYLON", "RASTA", "NYABINGHI",
+  "BOOMSHOT", "SOUNDBOY", "SELECTOR", "BASHMENT", "DANCEHALL", "ROCKSTEADY",
+  "CALYPSO", "TIDAL", "COCONUT", "MANGO", "PAPAYA", "HIBISCUS", "BAMBOO",
+  "VOLCANO", "LAGOON", "CORAL", "MARLEY", "TUBBY", "SCRATCH", "STUDIO",
+  "VINYL", "BASSLINE", "OFFBEAT", "ECHO", "REVERB", "DREAD", "EMPRESS",
+  "KINGSTON", "TRENCHTOWN", "MONTEGO", "NEGRIL", "OCHO", "PORTMORE",
 ];
 
 function pick<T>(arr: T[]): T {
@@ -39,7 +38,7 @@ function pick<T>(arr: T[]): T {
 function generateRoomName(): string {
   let name: string;
   do {
-    name = `${pick(ADJECTIVES)}-${pick(NOUNS)}`;
+    name = pick(ROOM_NAMES);
   } while (rooms.has(name)); // Ensure uniqueness
   return name;
 }
