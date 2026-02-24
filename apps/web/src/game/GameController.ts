@@ -53,11 +53,15 @@ export class GameController {
   // Track dice values for display
   private currentDiceValues: number[] = [];
 
+  // Undo state: stack of previous states within the current turn
+  private turnStateHistory: GameState[] = [];
+
   // Callbacks for UI updates
   onStateChange: ((state: GameState) => void) | null = null;
   onGameOver: ((winner: Player, winType: WinType) => void) | null = null;
   onMessage: ((msg: string) => void) | null = null;
   onWaitingForRoll: ((waiting: boolean) => void) | null = null;
+  onCanUndo: ((canUndo: boolean) => void) | null = null;
 
   constructor(app: Application, difficulty: Difficulty) {
     this.app = app;
@@ -151,6 +155,63 @@ export class GameController {
     });
   }
 
+  // -- Keyboard navigation delegation --
+
+  deselectPiece(): void {
+    this.inputHandler?.deselectCurrent();
+  }
+
+  selectNextPiece(): void {
+    this.inputHandler?.selectNextMoveable();
+  }
+
+  cycleTarget(direction: 1 | -1): void {
+    this.inputHandler?.cycleTarget(direction);
+  }
+
+  confirmMove(): void {
+    this.inputHandler?.confirmMove();
+  }
+
+  hasSelection(): boolean {
+    return this.inputHandler?.hasSelection() ?? false;
+  }
+
+  /**
+   * Undo the last move made during the current turn.
+   */
+  undoMove(): void {
+    if (this.destroyed) return;
+    if (this.turnStateHistory.length === 0) return;
+
+    // Disable current input
+    this.inputHandler.disable();
+
+    // Pop the previous state
+    this.state = this.turnStateHistory.pop()!;
+    this.emitStateChange();
+
+    // Re-render pieces
+    this.pieceRenderer.render(this.state);
+
+    // Update dice display
+    if (this.state.dice) {
+      this.diceRenderer.updateUsedDice(
+        this.currentDiceValues,
+        this.state.dice.remaining
+      );
+    }
+
+    // Update undo availability
+    this.onCanUndo?.(this.turnStateHistory.length > 0);
+
+    // Re-enable input for the restored state
+    this.onMessage?.("Select a piece to move");
+    // Clear auto-select to avoid re-selecting after undo
+    this.inputHandler.setAutoSelectFrom(null);
+    this.enableHumanInput();
+  }
+
   private async startHumanTurn(): Promise<void> {
     if (this.destroyed) return;
 
@@ -165,6 +226,10 @@ export class GameController {
     if (this.destroyed) return;
 
     this.onWaitingForRoll?.(false);
+
+    // Reset undo stack at start of turn
+    this.turnStateHistory = [];
+    this.onCanUndo?.(false);
 
     // Roll dice
     this.sound.playSFX("dice-roll");
@@ -225,6 +290,10 @@ export class GameController {
     this.inputHandler.onMoveSelected = async (move: Move) => {
       if (this.destroyed) return;
       this.inputHandler.disable();
+
+      // Push current state onto undo stack before applying move
+      this.turnStateHistory.push(this.state);
+      this.onCanUndo?.(true);
 
       // Detect move type for audio before applying
       this.playMoveSFX(move);
@@ -332,6 +401,10 @@ export class GameController {
 
   private endCurrentTurn(): void {
     if (this.destroyed) return;
+
+    // Clear undo stack - turn is being committed
+    this.turnStateHistory = [];
+    this.onCanUndo?.(false);
 
     // End turn (checks winner and switches player)
     this.state = endTurn(this.state);

@@ -15,9 +15,16 @@ export class PieceRenderer {
   private container: Container;
   private pieceContainers: Map<string, Container> = new Map();
 
+  // Glow effect state
+  private glowContainer: Container;
+  private glowGraphics: Graphics[] = [];
+  private glowAnimTicker: ((dt: any) => void) | null = null;
+
   constructor(app: Application, boardRenderer: BoardRenderer) {
     this.app = app;
     this.boardRenderer = boardRenderer;
+    this.glowContainer = new Container();
+    app.stage.addChild(this.glowContainer);
     this.container = new Container();
     app.stage.addChild(this.container);
   }
@@ -110,7 +117,7 @@ export class PieceRenderer {
       }
     }
 
-    // Render borne off as mini stacked chips
+    // Render borne off as a compact count badge
     for (const player of [Player.Gold, Player.Red]) {
       const borneOff = state.borneOff[player];
       if (borneOff === 0) continue;
@@ -118,40 +125,35 @@ export class PieceRenderer {
       const pos = this.boardRenderer.getBearOffPosition(player);
       const color = player === Player.Gold ? GOLD_COLOR : RED_COLOR;
       const border = player === Player.Gold ? GOLD_BORDER : RED_BORDER;
-      const miniR = radius * 0.55;
-      const chipSpacing = Math.min(miniR * 0.6, (radius * 4) / Math.max(borneOff, 1));
 
-      // Stack direction: Gold stacks upward, Red stacks downward
-      for (let i = 0; i < borneOff; i++) {
-        const chip = new Graphics();
-        const yOff = player === Player.Gold
-          ? -(i * chipSpacing)
-          : i * chipSpacing;
-        chip
-          .roundRect(pos.x - miniR, pos.y + yOff - miniR * 0.4, miniR * 2, miniR * 0.8, 3)
-          .fill({ color })
-          .roundRect(pos.x - miniR, pos.y + yOff - miniR * 0.4, miniR * 2, miniR * 0.8, 3)
-          .stroke({ color: border, width: 1 });
-        this.container.addChild(chip);
-      }
+      const badgeContainer = new Container();
+      badgeContainer.x = pos.x;
+      badgeContainer.y = pos.y;
 
-      // Count label on top
+      // Background badge
+      const badgeW = radius * 1.6;
+      const badgeH = radius * 1.6;
+      const bg = new Graphics();
+      bg.roundRect(-badgeW / 2, -badgeH / 2, badgeW, badgeH, 6)
+        .fill({ color, alpha: 0.25 })
+        .roundRect(-badgeW / 2, -badgeH / 2, badgeW, badgeH, 6)
+        .stroke({ color: border, width: 1.5 });
+      badgeContainer.addChild(bg);
+
+      // Count number
       const label = new Text({
         text: `${borneOff}`,
         style: {
-          fontSize: Math.max(9, Math.floor(miniR * 1.4)),
+          fontSize: Math.max(12, Math.floor(radius * 0.9)),
           fill: color,
           fontFamily: "Inter, sans-serif",
           fontWeight: "bold",
         },
       });
       label.anchor.set(0.5, 0.5);
-      const labelYOff = player === Player.Gold
-        ? -(borneOff * chipSpacing) - miniR * 1.2
-        : borneOff * chipSpacing + miniR * 1.2;
-      label.x = pos.x;
-      label.y = pos.y + labelYOff;
-      this.container.addChild(label);
+      badgeContainer.addChild(label);
+
+      this.container.addChild(badgeContainer);
     }
   }
 
@@ -316,7 +318,65 @@ export class PieceRenderer {
     });
   }
 
+  /**
+   * Show a pulsing glow behind all pieces that have legal moves.
+   * Called when input is enabled and waiting for piece selection.
+   */
+  showMoveableGlow(moveableFroms: Set<number | "bar">, player: Player): void {
+    this.clearMoveableGlow();
+
+    const radius = this.boardRenderer.getPieceRadius();
+    const glowColor = player === Player.Gold ? 0xffd700 : 0xce1126;
+
+    for (const from of moveableFroms) {
+      const piece = this.getPieceAt(from, player);
+      if (!piece) continue;
+
+      const g = new Graphics();
+      // Outer glow circle drawn at the piece's position
+      g.circle(piece.x, piece.y, radius * 1.35).fill({
+        color: glowColor,
+        alpha: 0.25,
+      });
+      g.circle(piece.x, piece.y, radius * 1.15).fill({
+        color: glowColor,
+        alpha: 0.15,
+      });
+
+      this.glowContainer.addChild(g);
+      this.glowGraphics.push(g);
+    }
+
+    // Start pulsing animation
+    if (this.glowGraphics.length > 0 && !this.glowAnimTicker) {
+      const startTime = performance.now();
+      this.glowAnimTicker = () => {
+        const elapsed = performance.now() - startTime;
+        // Pulse between 0.4 and 1.0, period ~1000ms
+        const pulse = 0.7 + Math.sin(elapsed * 0.006) * 0.3;
+        for (const g of this.glowGraphics) {
+          g.alpha = pulse;
+        }
+      };
+      this.app.ticker.add(this.glowAnimTicker);
+    }
+  }
+
+  /**
+   * Remove all moveable glow effects.
+   */
+  clearMoveableGlow(): void {
+    if (this.glowAnimTicker) {
+      this.app.ticker.remove(this.glowAnimTicker);
+      this.glowAnimTicker = null;
+    }
+    this.glowGraphics = [];
+    this.glowContainer.removeChildren();
+  }
+
   destroy(): void {
+    this.clearMoveableGlow();
+    this.glowContainer.destroy({ children: true });
     this.container.destroy({ children: true });
     this.pieceContainers.clear();
   }

@@ -25,6 +25,7 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
   const [message, setMessage] = useState("");
   const [waitingForRoll, setWaitingForRoll] = useState(false);
   const [gameState, setGameState] = useState<GameState | null>(null);
+  const [canUndo, setCanUndo] = useState(false);
 
   const soundManager = useMemo(() => SoundManager.getInstance(), []);
 
@@ -41,12 +42,66 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
     controllerRef.current?.offerDouble();
   }, []);
 
+  const handleUndo = useCallback(() => {
+    controllerRef.current?.undoMove();
+  }, []);
+
   // Determine if doubling is possible from current state
   const canDouble =
     gameState !== null &&
     canOfferDouble(gameState) &&
     gameState.currentPlayer === Player.Gold &&
     waitingForRoll;
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const ctrl = controllerRef.current;
+      if (!ctrl) return;
+
+      switch (e.key) {
+        case " ":
+        case "Enter":
+          e.preventDefault();
+          if (waitingForRoll) {
+            soundManager.resumeContext();
+            ctrl.rollForHuman();
+          } else if (ctrl.hasSelection()) {
+            ctrl.confirmMove();
+          }
+          break;
+        case "Escape":
+          e.preventDefault();
+          ctrl.deselectPiece();
+          break;
+        case "Tab":
+          e.preventDefault();
+          ctrl.selectNextPiece();
+          break;
+        case "ArrowRight":
+        case "ArrowDown":
+          e.preventDefault();
+          ctrl.cycleTarget(1);
+          break;
+        case "ArrowLeft":
+        case "ArrowUp":
+          e.preventDefault();
+          ctrl.cycleTarget(-1);
+          break;
+        case "z":
+          if (e.metaKey || e.ctrlKey) {
+            e.preventDefault();
+            ctrl.undoMove();
+          } else {
+            ctrl.undoMove();
+          }
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [waitingForRoll, soundManager]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -109,6 +164,10 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
         if (!destroyed) setGameState(state);
       };
 
+      controller.onCanUndo = (canUndoNow) => {
+        if (!destroyed) setCanUndo(canUndoNow);
+      };
+
       controller.onGameOver = (winner, winType) => {
         if (!destroyed) {
           onGameOver?.(winner, winType);
@@ -155,8 +214,10 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
         opponentName={opponentName}
         onOfferDouble={handleOfferDouble}
         onRollDice={handleRollClick}
+        onUndo={handleUndo}
         canRoll={waitingForRoll}
         canDouble={canDouble}
+        canUndo={canUndo}
         soundManager={soundManager}
       />
 

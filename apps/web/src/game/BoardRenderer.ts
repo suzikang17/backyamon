@@ -34,6 +34,8 @@ export class BoardRenderer {
   private app: Application;
   private container: Container;
   private highlightContainer: Container;
+  private highlightAnimTicker: ((dt: any) => void) | null = null;
+  private highlightGraphics: Graphics[] = [];
   private boardWidth: number;
   private boardHeight: number;
 
@@ -434,7 +436,9 @@ export class BoardRenderer {
       ? (maxHeight - diameter) / (count - 1)
       : idealSpacing;
 
-    const offset = stackIndex * spacing + this._pieceRadius + 2;
+    // Inset from the board edge so pieces don't clip the frame
+    const edgeInset = this._pieceRadius * 0.3;
+    const offset = stackIndex * spacing + this._pieceRadius + edgeInset;
 
     return {
       x: base.x,
@@ -454,20 +458,33 @@ export class BoardRenderer {
       const tipY =
         dir === "up" ? pos.y - this.pointHeight : pos.y + this.pointHeight;
 
+      // Brighter triangle highlight
       g.moveTo(pos.x - halfW, pos.y)
         .lineTo(pos.x + halfW, pos.y)
         .lineTo(pos.x, tipY)
         .closePath()
-        .fill({ color: 0x00ff88, alpha: 0.3 });
+        .fill({ color: 0x00ffaa, alpha: 0.35 });
 
-      // Glow circle at tip
-      g.circle(pos.x, tipY, this._pieceRadius * 1.2).fill({
-        color: 0x00ff88,
-        alpha: 0.2,
+      // Landing dot at the base of the triangle (where pieces actually land)
+      const dotY = dir === "up" ? pos.y - this._pieceRadius - 2 : pos.y + this._pieceRadius + 2;
+      g.circle(pos.x, dotY, this._pieceRadius * 0.5).fill({
+        color: 0xffffff,
+        alpha: 0.6,
+      });
+
+      // Outer glow ring at landing position
+      g.circle(pos.x, dotY, this._pieceRadius * 0.8).stroke({
+        color: 0x00ffaa,
+        alpha: 0.5,
+        width: 2,
       });
 
       this.highlightContainer.addChild(g);
+      this.highlightGraphics.push(g);
     }
+
+    // Start pulsing animation on highlights
+    this.startHighlightPulse();
   }
 
   highlightBearOff(player: Player): void {
@@ -479,15 +496,49 @@ export class BoardRenderer {
       this.zionWidth * 0.8,
       this._pieceRadius * 3,
       6
-    ).fill({ color: 0x00ff88, alpha: 0.3 });
+    ).fill({ color: 0x00ffaa, alpha: 0.4 });
+    // Add a dot in the center
+    g.circle(pos.x, pos.y, this._pieceRadius * 0.5).fill({
+      color: 0xffffff,
+      alpha: 0.6,
+    });
     this.highlightContainer.addChild(g);
+    this.highlightGraphics.push(g);
+
+    // Start pulsing if not already
+    this.startHighlightPulse();
+  }
+
+  private startHighlightPulse(): void {
+    if (this.highlightAnimTicker) return; // already running
+
+    const startTime = performance.now();
+    this.highlightAnimTicker = () => {
+      const elapsed = performance.now() - startTime;
+      // Pulse between 0.5 and 1.0 alpha, period ~800ms
+      const pulse = 0.75 + Math.sin(elapsed * 0.008) * 0.25;
+      for (const g of this.highlightGraphics) {
+        g.alpha = pulse;
+      }
+    };
+    this.app.ticker.add(this.highlightAnimTicker);
+  }
+
+  private stopHighlightPulse(): void {
+    if (this.highlightAnimTicker) {
+      this.app.ticker.remove(this.highlightAnimTicker);
+      this.highlightAnimTicker = null;
+    }
   }
 
   clearHighlights(): void {
+    this.stopHighlightPulse();
+    this.highlightGraphics = [];
     this.highlightContainer.removeChildren();
   }
 
   destroy(): void {
+    this.stopHighlightPulse();
     this.container.destroy({ children: true });
     this.highlightContainer.destroy({ children: true });
   }

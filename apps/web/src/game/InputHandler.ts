@@ -18,6 +18,9 @@ export class InputHandler {
   private selectedPieceOrigY = 0;
   private isDragging = false;
 
+  // Multi-move: track pending auto-select after a move completes
+  private pendingAutoSelectFrom: number | "bar" | null = null;
+
   // Hit areas for click targets
   private hitAreaContainer: Container;
   private pointHitAreas: Map<number, Graphics> = new Map();
@@ -110,6 +113,23 @@ export class InputHandler {
     this.enabled = true;
     this.deselect();
     this.updateCursors();
+
+    // Show glow on all moveable pieces
+    this.showMoveableGlow();
+
+    // Multi-move: if we have a pending auto-select from a previous move,
+    // auto-select the same point if it still has moves
+    const autoFrom = this.pendingAutoSelectFrom;
+    this.pendingAutoSelectFrom = null;
+
+    if (autoFrom !== null) {
+      const movesFromHere = this.legalMoves.filter((m) => m.from === autoFrom);
+      if (movesFromHere.length > 0) {
+        // Auto-select this piece (without drag)
+        this.selectPiece(autoFrom);
+        return;
+      }
+    }
   }
 
   /**
@@ -118,7 +138,17 @@ export class InputHandler {
   disable(): void {
     this.enabled = false;
     this.deselect();
+    this.pieceRenderer.clearMoveableGlow();
     this.updateCursors();
+  }
+
+  /**
+   * Set the point/bar to auto-select on next enable() call.
+   * Used for multi-move from the same position (doubles).
+   * Pass null to clear.
+   */
+  setAutoSelectFrom(from: number | "bar" | null): void {
+    this.pendingAutoSelectFrom = from;
   }
 
   private updateCursors(): void {
@@ -185,6 +215,12 @@ export class InputHandler {
       return;
     }
 
+    // Auto-move: if there's exactly one legal move from here, execute it immediately
+    if (movesFromHere.length === 1) {
+      this.executeMove(movesFromHere[0]);
+      return;
+    }
+
     // Select this piece
     this.selectPiece(pointIndex, e);
   }
@@ -201,6 +237,12 @@ export class InputHandler {
     const movesFromBar = this.legalMoves.filter((m) => m.from === "bar");
     if (movesFromBar.length === 0) {
       this.deselect();
+      return;
+    }
+
+    // Auto-move: if there's exactly one legal move from bar, execute it immediately
+    if (movesFromBar.length === 1) {
+      this.executeMove(movesFromBar[0]);
       return;
     }
 
@@ -227,6 +269,9 @@ export class InputHandler {
 
     if (!this.state) return;
     const player = this.state.currentPlayer;
+
+    // Clear moveable glow once a piece is selected
+    this.pieceRenderer.clearMoveableGlow();
 
     this.selectedFrom = from;
     this.selectedPiece = this.pieceRenderer.getPieceAt(from, player);
@@ -335,7 +380,12 @@ export class InputHandler {
   }
 
   private executeMove(move: Move): void {
+    // Remember the source for multi-move (same position doubles)
+    const from = move.from;
     this.deselect();
+    this.pieceRenderer.clearMoveableGlow();
+    // Set auto-select hint for the next enable() call
+    this.pendingAutoSelectFrom = from;
     if (this.onMoveSelected) {
       this.onMoveSelected(move);
     }
@@ -354,6 +404,123 @@ export class InputHandler {
     this.selectedPiece = null;
     this.isDragging = false;
     this.boardRenderer.clearHighlights();
+  }
+
+  /**
+   * Show glow effects on all pieces that have legal moves.
+   */
+  private showMoveableGlow(): void {
+    if (!this.state) return;
+
+    const player = this.state.currentPlayer;
+    const moveableFroms = new Set<number | "bar">();
+
+    for (const move of this.legalMoves) {
+      moveableFroms.add(move.from);
+    }
+
+    if (moveableFroms.size > 0) {
+      this.pieceRenderer.showMoveableGlow(moveableFroms, player);
+    }
+  }
+
+  /**
+   * Deselect the current piece (Escape key).
+   */
+  deselectCurrent(): void {
+    if (!this.enabled) return;
+    this.deselect();
+    this.showMoveableGlow();
+  }
+
+  /**
+   * Cycle to the next moveable piece (Tab key).
+   * If nothing is selected, selects the first moveable piece.
+   * If a piece is selected, selects the next one.
+   */
+  selectNextMoveable(): void {
+    if (!this.enabled || !this.state) return;
+
+    const player = this.state.currentPlayer;
+    // Collect all unique source points that have legal moves, sorted
+    const moveableFroms: (number | "bar")[] = [];
+    const seen = new Set<number | string>();
+    for (const move of this.legalMoves) {
+      const key = String(move.from);
+      if (!seen.has(key)) {
+        seen.add(key);
+        moveableFroms.push(move.from);
+      }
+    }
+
+    if (moveableFroms.length === 0) return;
+
+    // Sort: "bar" first, then numeric ascending
+    moveableFroms.sort((a, b) => {
+      if (a === "bar") return -1;
+      if (b === "bar") return 1;
+      return (a as number) - (b as number);
+    });
+
+    // Find current index
+    let currentIdx = -1;
+    if (this.selectedFrom !== null) {
+      currentIdx = moveableFroms.indexOf(this.selectedFrom);
+    }
+
+    // Move to next
+    const nextIdx = (currentIdx + 1) % moveableFroms.length;
+    const nextFrom = moveableFroms[nextIdx];
+
+    // Check for auto-move (single destination)
+    const movesFromHere = this.legalMoves.filter((m) => m.from === nextFrom);
+    if (movesFromHere.length === 1) {
+      this.executeMove(movesFromHere[0]);
+    } else {
+      this.selectPiece(nextFrom);
+    }
+  }
+
+  /**
+   * Cycle through available target destinations for the selected piece (Arrow keys).
+   * Returns the currently highlighted target index for visual feedback.
+   */
+  private highlightedTargetIdx = -1;
+
+  cycleTarget(direction: 1 | -1): void {
+    if (!this.enabled || this.selectedFrom === null) return;
+
+    const movesFromHere = this.legalMoves.filter((m) => m.from === this.selectedFrom);
+    if (movesFromHere.length === 0) return;
+
+    this.highlightedTargetIdx += direction;
+    if (this.highlightedTargetIdx >= movesFromHere.length) this.highlightedTargetIdx = 0;
+    if (this.highlightedTargetIdx < 0) this.highlightedTargetIdx = movesFromHere.length - 1;
+  }
+
+  /**
+   * Confirm the currently selected piece's move. If a target is highlighted via
+   * arrow keys, use that. Otherwise pick the first available target.
+   */
+  confirmMove(): void {
+    if (!this.enabled || this.selectedFrom === null) return;
+
+    const movesFromHere = this.legalMoves.filter((m) => m.from === this.selectedFrom);
+    if (movesFromHere.length === 0) return;
+
+    const idx = this.highlightedTargetIdx >= 0 && this.highlightedTargetIdx < movesFromHere.length
+      ? this.highlightedTargetIdx
+      : 0;
+
+    this.highlightedTargetIdx = -1;
+    this.executeMove(movesFromHere[idx]);
+  }
+
+  /**
+   * Check if a piece is currently selected.
+   */
+  hasSelection(): boolean {
+    return this.selectedFrom !== null;
   }
 
   destroy(): void {
