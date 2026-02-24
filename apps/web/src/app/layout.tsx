@@ -1,5 +1,17 @@
 import type { Metadata } from "next";
+import { Inter, Bangers } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
+const bangers = Bangers({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-bangers",
+});
 
 export const metadata: Metadata = {
   title: "Backyamon - Ya Mon!",
@@ -13,7 +25,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-[#1A1A0E] text-[#F4E1C1] min-h-screen">
+      <body
+        className={`${inter.variable} ${bangers.variable} font-sans bg-[#1A1A0E] text-[#F4E1C1] min-h-screen antialiased`}
+      >
         {children}
       </body>
     </html>
