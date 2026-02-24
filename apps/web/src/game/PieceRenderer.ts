@@ -464,23 +464,13 @@ export class PieceRenderer {
 
       const g = new Graphics();
 
-      // Wide soft outer halo
-      g.circle(piece.x, piece.y, radius * 1.8).fill({
-        color: glowColor,
-        alpha: 0.12,
-      });
-      // Mid glow ring
-      g.circle(piece.x, piece.y, radius * 1.5).fill({
+      // Tight glow ring
+      g.circle(piece.x, piece.y, radius * 1.18).fill({
         color: glowColor,
         alpha: 0.2,
       });
-      // Bright inner ring
-      g.circle(piece.x, piece.y, radius * 1.25).fill({
-        color: brightColor,
-        alpha: 0.35,
-      });
-      // Hot core ring (stroke only for crisp edge)
-      g.circle(piece.x, piece.y, radius * 1.1).stroke({
+      // Crisp bright edge
+      g.circle(piece.x, piece.y, radius * 1.08).stroke({
         color: brightColor,
         width: 2,
         alpha: 0.6,
@@ -490,19 +480,14 @@ export class PieceRenderer {
       this.glowGraphics.push(g);
     }
 
-    // Animated pulse: alpha + scale breathing
+    // Animated pulse: alpha only
     if (this.glowGraphics.length > 0 && !this.glowAnimTicker) {
       const startTime = performance.now();
       this.glowAnimTicker = () => {
         const elapsed = performance.now() - startTime;
-        const sin = Math.sin(elapsed * 0.005);
-        // Alpha pulses between 0.5 and 1.0
-        const pulse = 0.75 + sin * 0.25;
-        // Scale breathes between 0.95 and 1.05
-        const scale = 1 + sin * 0.05;
+        const pulse = 0.7 + Math.sin(elapsed * 0.005) * 0.3;
         for (const g of this.glowGraphics) {
           g.alpha = pulse;
-          g.scale.set(scale);
         }
       };
       this.app.ticker.add(this.glowAnimTicker);
