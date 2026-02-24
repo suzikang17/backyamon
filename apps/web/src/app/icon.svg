@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2a1f0e"/>
+      <stop offset="100%" stop-color="#1A1A0E"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#D4A857"/>
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="248" fill="url(#bg)" stroke="#8B4513" stroke-width="8"/>
+  <!-- Rasta stripe ring -->
+  <circle cx="256" cy="256" r="220" fill="none" stroke="#006B3F" stroke-width="12" stroke-dasharray="230 461" stroke-dashoffset="0"/>
+  <circle cx="256" cy="256" r="220" fill="none" stroke="#FFD700" stroke-width="12" stroke-dasharray="230 461" stroke-dashoffset="-230"/>
+  <circle cx="256" cy="256" r="220" fill="none" stroke="#CE1126" stroke-width="12" stroke-dasharray="230 461" stroke-dashoffset="-461"/>
+  <!-- Board triangle (backgammon point) -->
+  <polygon points="256,100 196,320 316,320" fill="url(#gold)" opacity="0.9"/>
+  <!-- Piece stack on the triangle -->
+  <circle cx="256" cy="290" r="38" fill="#1A1A0E" stroke="#8B4513" stroke-width="4"/>
+  <circle cx="256" cy="290" r="28" fill="none" stroke="#D4A857" stroke-width="2" opacity="0.6"/>
+  <circle cx="256" cy="218" r="38" fill="#FFD700" stroke="#D4A857" stroke-width="4"/>
+  <circle cx="256" cy="218" r="28" fill="none" stroke="#1A1A0E" stroke-width="2" opacity="0.3"/>
+  <!-- Dice dots representing "Ya Mon" -->
+  <g fill="#F4E1C1" opacity="0.8">
+    <circle cx="160" cy="400" r="10"/>
+    <circle cx="352" cy="400" r="10"/>
+    <circle cx="256" cy="380" r="10"/>
+  </g>
+</svg>
