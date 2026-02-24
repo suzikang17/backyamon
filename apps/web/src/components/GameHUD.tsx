@@ -103,9 +103,9 @@ export function GameHUD({
         />
       </div>
 
-      {/* Right side: roll button when waiting */}
+      {/* Center: roll button when waiting */}
       {canRoll && (
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-auto">
+        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 pointer-events-auto">
           <button
             onClick={() => {
               soundManager.resumeContext();
@@ -113,8 +113,8 @@ export function GameHUD({
             }}
             className="
               bg-gradient-to-b from-[#D4A857] to-[#8B4513]
-              text-[#1A1A0E] font-heading text-lg
-              px-5 py-3 rounded-xl
+              text-[#1A1A0E] font-heading text-base sm:text-lg
+              px-4 sm:px-5 py-2 sm:py-3 rounded-xl
               border-2 border-[#FFD700]
               shadow-lg shadow-[#FFD700]/20
               hover:brightness-110 active:scale-95

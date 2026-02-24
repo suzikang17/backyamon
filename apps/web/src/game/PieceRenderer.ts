@@ -41,7 +41,7 @@ export class PieceRenderer {
       const visualCount = Math.min(count, MAX_VISUAL_STACK);
 
       for (let s = 0; s < visualCount; s++) {
-        const pos = this.boardRenderer.getPiecePosition(i, s);
+        const pos = this.boardRenderer.getPiecePosition(i, s, visualCount);
         const pieceContainer = this.createPiece(point.player, radius);
         pieceContainer.x = pos.x;
         pieceContainer.y = pos.y;
@@ -76,14 +76,15 @@ export class PieceRenderer {
       if (barCount === 0) continue;
 
       const barPos = this.boardRenderer.getBarPosition(player);
-      const visualBarCount = Math.min(barCount, 3);
+      const visualBarCount = Math.min(barCount, 4);
 
       for (let s = 0; s < visualBarCount; s++) {
+        // Stack toward player's side (Gold=down, Red=up)
         const offset =
           player === Player.Gold
-            ? s * radius * 1.8
-            : -(s * radius * 1.8);
-        const pieceContainer = this.createPiece(player, radius * 0.9);
+            ? -(s * radius * 1.6)
+            : s * radius * 1.6;
+        const pieceContainer = this.createPiece(player, radius * 0.85);
         pieceContainer.x = barPos.x;
         pieceContainer.y = barPos.y + offset;
 
@@ -109,60 +110,125 @@ export class PieceRenderer {
       }
     }
 
-    // Render borne off counts
+    // Render borne off as mini stacked chips
     for (const player of [Player.Gold, Player.Red]) {
       const borneOff = state.borneOff[player];
       if (borneOff === 0) continue;
 
       const pos = this.boardRenderer.getBearOffPosition(player);
-      const bearOffContainer = new Container();
-      bearOffContainer.x = pos.x;
-      bearOffContainer.y = pos.y;
+      const color = player === Player.Gold ? GOLD_COLOR : RED_COLOR;
+      const border = player === Player.Gold ? GOLD_BORDER : RED_BORDER;
+      const miniR = radius * 0.55;
+      const chipSpacing = Math.min(miniR * 0.6, (radius * 4) / Math.max(borneOff, 1));
 
-      const bg = new Graphics();
-      bg.roundRect(-radius * 1.1, -radius * 1.1, radius * 2.2, radius * 2.2, 4)
-        .fill({
-          color: player === Player.Gold ? GOLD_COLOR : RED_COLOR,
-          alpha: 0.3,
-        });
-      bearOffContainer.addChild(bg);
+      // Stack direction: Gold stacks upward, Red stacks downward
+      for (let i = 0; i < borneOff; i++) {
+        const chip = new Graphics();
+        const yOff = player === Player.Gold
+          ? -(i * chipSpacing)
+          : i * chipSpacing;
+        chip
+          .roundRect(pos.x - miniR, pos.y + yOff - miniR * 0.4, miniR * 2, miniR * 0.8, 3)
+          .fill({ color })
+          .roundRect(pos.x - miniR, pos.y + yOff - miniR * 0.4, miniR * 2, miniR * 0.8, 3)
+          .stroke({ color: border, width: 1 });
+        this.container.addChild(chip);
+      }
 
+      // Count label on top
       const label = new Text({
         text: `${borneOff}`,
         style: {
-          fontSize: Math.max(12, Math.floor(radius * 1.2)),
-          fill: player === Player.Gold ? GOLD_COLOR : RED_COLOR,
+          fontSize: Math.max(9, Math.floor(miniR * 1.4)),
+          fill: color,
           fontFamily: "Inter, sans-serif",
           fontWeight: "bold",
         },
       });
       label.anchor.set(0.5, 0.5);
-      bearOffContainer.addChild(label);
-
-      this.container.addChild(bearOffContainer);
+      const labelYOff = player === Player.Gold
+        ? -(borneOff * chipSpacing) - miniR * 1.2
+        : borneOff * chipSpacing + miniR * 1.2;
+      label.x = pos.x;
+      label.y = pos.y + labelYOff;
+      this.container.addChild(label);
     }
   }
 
+  /**
+   * Draw a stylized lion head piece - the default Backyamon piece set.
+   * Features a radiating mane, lighter face circle, eyes, and nose.
+   */
   private createPiece(player: Player, radius: number): Container {
     const c = new Container();
     const g = new Graphics();
     const color = player === Player.Gold ? GOLD_COLOR : RED_COLOR;
     const border = player === Player.Gold ? GOLD_BORDER : RED_BORDER;
+    const darkShade = player === Player.Gold ? 0x997a00 : 0x7a0a18;
+    const lightShade = player === Player.Gold ? 0xffee88 : 0xe84858;
 
-    // Shadow
-    g.circle(1, 2, radius).fill({ color: 0x000000, alpha: 0.25 });
+    // Drop shadow
+    g.circle(1.5, 3, radius).fill({ color: 0x000000, alpha: 0.35 });
 
-    // Main circle
+    // Mane base (outer circle)
     g.circle(0, 0, radius).fill({ color });
 
-    // Border
+    // Mane tufts: V-shaped fur points radiating outward
+    const tuftCount = 10;
+    for (let i = 0; i < tuftCount; i++) {
+      const angle = (i / tuftCount) * Math.PI * 2;
+      const tipR = radius * 0.97;
+      const baseR = radius * 0.7;
+      const halfW = (Math.PI / tuftCount) * 0.55;
+
+      g.moveTo(
+        Math.cos(angle - halfW) * baseR,
+        Math.sin(angle - halfW) * baseR
+      )
+        .lineTo(Math.cos(angle) * tipR, Math.sin(angle) * tipR)
+        .lineTo(
+          Math.cos(angle + halfW) * baseR,
+          Math.sin(angle + halfW) * baseR
+        )
+        .closePath()
+        .fill({ color: darkShade, alpha: 0.45 });
+    }
+
+    // Face (lighter inner circle)
+    const faceR = radius * 0.55;
+    g.circle(0, radius * 0.04, faceR).fill({ color: lightShade });
+
+    // Eyes
+    const eyeR = Math.max(1.5, radius * 0.09);
+    const eyeY = -radius * 0.06;
+    g.circle(-radius * 0.17, eyeY, eyeR).fill({ color: 0x1a1a0e });
+    g.circle(radius * 0.17, eyeY, eyeR).fill({ color: 0x1a1a0e });
+
+    // Nose (small inverted triangle)
+    const noseW = Math.max(2, radius * 0.1);
+    const noseH = Math.max(1.8, radius * 0.09);
+    g.moveTo(-noseW, radius * 0.12)
+      .lineTo(noseW, radius * 0.12)
+      .lineTo(0, radius * 0.12 + noseH)
+      .closePath()
+      .fill({ color: darkShade });
+
+    // Mouth (small curved line)
+    g.moveTo(-radius * 0.08, radius * 0.26)
+      .lineTo(0, radius * 0.3)
+      .lineTo(radius * 0.08, radius * 0.26)
+      .stroke({ color: darkShade, width: Math.max(0.8, radius * 0.04) });
+
+    // Outer border
     g.circle(0, 0, radius).stroke({ color: border, width: 2 });
 
-    // Highlight (inner shine)
-    g.circle(-radius * 0.2, -radius * 0.2, radius * 0.4).fill({
-      color: 0xffffff,
-      alpha: 0.15,
-    });
+    // Top highlight shine
+    g.ellipse(-radius * 0.1, -radius * 0.38, radius * 0.28, radius * 0.1).fill(
+      {
+        color: 0xffffff,
+        alpha: 0.12,
+      }
+    );
 
     c.addChild(g);
     return c;

@@ -162,8 +162,8 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
 
       {/* Message overlay */}
       {message && (
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-none z-20">
-          <div className="bg-[#1A1A0E]/90 text-[#FFD700] font-heading text-sm sm:text-lg px-4 sm:px-6 py-1.5 sm:py-2 rounded-xl border border-[#8B4513] whitespace-nowrap">
+        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 pointer-events-none z-20">
+          <div className="bg-[#1A1A0E]/85 text-[#D4A857] font-heading text-xs sm:text-sm px-3 sm:px-5 py-1 sm:py-1.5 rounded-lg border border-[#8B4513]/60 whitespace-nowrap backdrop-blur-sm">
             {message}
           </div>
         </div>

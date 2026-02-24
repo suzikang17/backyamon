@@ -4,17 +4,17 @@ import { Player } from "@backyamon/engine";
 /**
  * BoardRenderer - Draws the backgammon board using PixiJS Graphics API.
  *
- * Layout (all dimensions relative to given width/height):
+ * Layout from Gold player's perspective (all dimensions relative to given width/height):
  *   +-------------------------------------------------+--------+
- *   |  13 14 15 16 17 18 | BAR | 19 20 21 22 23 24   |  ZION  |
- *   |   (triangles down) |     |   (triangles down)   | (Gold) |
+ *   |  12 11 10  9  8  7 | BAR |  6  5  4  3  2  1   |  ZION  |
+ *   |   (triangles down) |     |   (triangles down)   | (Red)  |
  *   |                    |     |                       |        |
- *   |   (triangles up)   |     |   (triangles up)      | (Red)  |
- *   |  12 11 10  9  8  7 |     |   6  5  4  3  2  1   |        |
+ *   |   (triangles up)   |     |   (triangles up)      | (Gold) |
+ *   |  13 14 15 16 17 18 |     |  19 20 21 22 23 24   |        |
  *   +-------------------------------------------------+--------+
  *
- * Point numbering matches standard backgammon:
- *   Gold home = 19-24 (top right), Red home = 1-6 (bottom right)
+ * Point numbering matches standard backgammon from Gold's POV:
+ *   Gold home = 19-24 (bottom right), Red home = 1-6 (top right)
  */
 
 // Board colors
@@ -161,14 +161,26 @@ export class BoardRenderer {
     babylonLabel.y = this.playAreaY + this.playAreaH / 2;
     this.container.addChild(babylonLabel);
 
-    // Draw Zion tray
+    // Draw Zion tray with subtle golden tint
     const zion = new Graphics();
     zion
       .rect(this.zionX, this.playAreaY, this.zionWidth, this.playAreaH)
-      .fill({ color: ZION_COLOR })
+      .fill({ color: ZION_COLOR });
+    // Golden gradient overlay for Zion
+    const zionGlow = new Graphics();
+    zionGlow
+      .rect(this.zionX, this.playAreaY, this.zionWidth, this.playAreaH)
+      .fill({ color: 0xffd700, alpha: 0.04 });
+    zion
       .rect(this.zionX, this.playAreaY, this.zionWidth, this.playAreaH)
       .stroke({ color: BOARD_BORDER, width: 2 });
+    // Divider line in Zion between Gold and Red halves
+    zion
+      .moveTo(this.zionX + 4, this.playAreaY + this.playAreaH / 2)
+      .lineTo(this.zionX + this.zionWidth - 4, this.playAreaY + this.playAreaH / 2)
+      .stroke({ color: BOARD_BORDER, width: 1, alpha: 0.5 });
     this.container.addChild(zion);
+    this.container.addChild(zionGlow);
 
     // "ZION" label on the tray
     const zionLabel = new Text({
@@ -185,6 +197,7 @@ export class BoardRenderer {
     zionLabel.rotation = -Math.PI / 2;
     zionLabel.x = this.zionX + this.zionWidth / 2;
     zionLabel.y = this.playAreaY + this.playAreaH / 2;
+    zionLabel.alpha = 0.4;
     this.container.addChild(zionLabel);
 
     // Draw the 24 triangular points
@@ -282,41 +295,42 @@ export class BoardRenderer {
 
   /**
    * Get the base position of a point (where pieces stack from).
-   * Points 0-11 (1-12) are on the bottom row.
-   * Points 12-23 (13-24) are on the top row.
+   * From Gold's perspective (Gold = bottom):
+   *   Points 0-11 (1-12) are on the TOP row (opponent's side).
+   *   Points 12-23 (13-24) are on the BOTTOM row (player's side).
    *
    * Layout within each row:
-   *   Bottom row (right to left): 0,1,2,3,4,5 | bar | 6,7,8,9,10,11
-   *   Top row (left to right): 12,13,14,15,16,17 | bar | 18,19,20,21,22,23
+   *   Top row (right to left): 0,1,2,3,4,5 | bar | 6,7,8,9,10,11
+   *   Bottom row (left to right): 12,13,14,15,16,17 | bar | 18,19,20,21,22,23
    */
   getPointPosition(pointIndex: number): { x: number; y: number } {
     let x = 0;
     let y = 0;
 
     if (pointIndex >= 0 && pointIndex <= 5) {
-      // Bottom right quadrant, points 1-6 (Red home board)
+      // Top right quadrant, points 1-6 (Red home board)
       // Rightmost = point 1 (index 0), leftmost = point 6 (index 5)
-      const slot = 5 - pointIndex; // 0=rightmost, 5=leftmost
+      const slot = 5 - pointIndex;
       x =
         this.barX +
         this.barWidth +
         slot * this._pointWidth +
         this._pointWidth / 2;
-      y = this.playAreaY + this.playAreaH;
+      y = this.playAreaY;
     } else if (pointIndex >= 6 && pointIndex <= 11) {
-      // Bottom left quadrant, points 7-12
+      // Top left quadrant, points 7-12
       // Rightmost = point 7 (index 6), leftmost = point 12 (index 11)
       const slot = 11 - pointIndex;
       x = this.playAreaX + slot * this._pointWidth + this._pointWidth / 2;
-      y = this.playAreaY + this.playAreaH;
+      y = this.playAreaY;
     } else if (pointIndex >= 12 && pointIndex <= 17) {
-      // Top left quadrant, points 13-18
+      // Bottom left quadrant, points 13-18
       // Leftmost = point 13 (index 12), rightmost = point 18 (index 17)
       const slot = pointIndex - 12;
       x = this.playAreaX + slot * this._pointWidth + this._pointWidth / 2;
-      y = this.playAreaY;
+      y = this.playAreaY + this.playAreaH;
     } else {
-      // Top right quadrant, points 19-24 (Gold home board)
+      // Bottom right quadrant, points 19-24 (Gold home board)
       // Leftmost = point 19 (index 18), rightmost = point 24 (index 23)
       const slot = pointIndex - 18;
       x =
@@ -324,34 +338,34 @@ export class BoardRenderer {
         this.barWidth +
         slot * this._pointWidth +
         this._pointWidth / 2;
-      y = this.playAreaY;
+      y = this.playAreaY + this.playAreaH;
     }
 
     return { x, y };
   }
 
   getPointDirection(pointIndex: number): "up" | "down" {
-    // Bottom row points up, top row points down
-    return pointIndex < 12 ? "up" : "down";
+    // Top row (0-11) points down, bottom row (12-23) points up
+    return pointIndex < 12 ? "down" : "up";
   }
 
   getBarPosition(player: Player): { x: number; y: number } {
     const x = this.barX + this.barWidth / 2;
-    // Gold bar pieces in top half, Red in bottom half
+    // Gold bar pieces in bottom half (player's side), Red in top half
     const y =
       player === Player.Gold
-        ? this.playAreaY + this.playAreaH * 0.3
-        : this.playAreaY + this.playAreaH * 0.7;
+        ? this.playAreaY + this.playAreaH * 0.7
+        : this.playAreaY + this.playAreaH * 0.3;
     return { x, y };
   }
 
   getBearOffPosition(player: Player): { x: number; y: number } {
     const x = this.zionX + this.zionWidth / 2;
-    // Gold borne off in top half, Red in bottom half
+    // Gold borne off in bottom half, Red in top half
     const y =
       player === Player.Gold
-        ? this.playAreaY + this.playAreaH * 0.25
-        : this.playAreaY + this.playAreaH * 0.75;
+        ? this.playAreaY + this.playAreaH * 0.75
+        : this.playAreaY + this.playAreaH * 0.25;
     return { x, y };
   }
 
@@ -387,24 +401,38 @@ export class BoardRenderer {
   }
 
   getDiceCenterPosition(): { x: number; y: number } {
+    // Position dice in the right half of the board, between bar and Zion
+    const rightHalfCenter = this.barX + this.barWidth + (this.zionX - this.barX - this.barWidth) / 2;
     return {
-      x: this.barX + this.barWidth / 2,
+      x: rightHalfCenter,
       y: this.playAreaY + this.playAreaH / 2,
     };
   }
 
   /**
    * Get the position where a piece should be rendered on a point,
-   * taking into account stacking.
+   * taking into account stacking. Spacing is adaptive so pieces
+   * never overflow beyond the triangle height.
    */
   getPiecePosition(
     pointIndex: number,
-    stackIndex: number
+    stackIndex: number,
+    totalInStack?: number
   ): { x: number; y: number } {
     const base = this.getPointPosition(pointIndex);
     const dir = this.getPointDirection(pointIndex);
     const diameter = this._pieceRadius * 2;
-    const spacing = diameter * 0.95;
+
+    // Maximum available height for stacking is the triangle height
+    const maxHeight = this.pointHeight - this._pieceRadius;
+    const count = totalInStack ?? (stackIndex + 1);
+
+    // Default spacing, compressed if needed to fit within triangle
+    const idealSpacing = diameter * 0.95;
+    const neededHeight = (count - 1) * idealSpacing + diameter;
+    const spacing = neededHeight > maxHeight && count > 1
+      ? (maxHeight - diameter) / (count - 1)
+      : idealSpacing;
 
     const offset = stackIndex * spacing + this._pieceRadius + 2;
 
