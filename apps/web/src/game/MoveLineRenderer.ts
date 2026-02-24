@@ -2,10 +2,10 @@ import { Application, Container, Graphics, Text } from "pixi.js";
 import { Player, type GameState, type Move } from "@backyamon/engine";
 import { BoardRenderer } from "./BoardRenderer";
 
-const FADE_ALPHA = 0.25;
-const ACTIVE_ALPHA = 0.7;
-const LINE_WIDTH_FADE = 2;
-const LINE_WIDTH_ACTIVE = 3.5;
+const FADE_ALPHA = 0.4;
+const ACTIVE_ALPHA = 0.9;
+const LINE_WIDTH_FADE = 2.5;
+const LINE_WIDTH_ACTIVE = 4;
 
 /**
  * Renders curved arcs from moveable pieces to their legal targets.
@@ -299,8 +299,8 @@ export class MoveLineRenderer {
     _player: Player | null,
     active: boolean
   ): number {
-    // Use high-contrast colors that stand out against the board
-    return active ? 0x00ffcc : 0x88ddbb;
+    // Bright white/green that stands out against the dark board
+    return active ? 0x00ff88 : 0xffffff;
   }
 }
 
