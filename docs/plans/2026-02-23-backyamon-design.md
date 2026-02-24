@@ -309,3 +309,4 @@ Sound effects remain per-game (not global), layered on top of jukebox/sampler:
 - Story mode - journey through themed opponents
 - Spectator mode
 - Tournament brackets
+- Live audio streaming ("Go Live" - a player streams audio from their mic/input, everyone hears it)
