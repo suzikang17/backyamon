@@ -477,6 +477,102 @@ export class InputHandler {
   }
 
   /**
+   * Spatial navigation between moveable pieces.
+   *
+   * Board visual layout (Gold's perspective):
+   *   Top row (left→right):    11, 10, 9, 8, 7, 6  |bar|  5, 4, 3, 2, 1, 0
+   *   Bottom row (left→right): 12, 13, 14, 15, 16, 17 |bar| 18, 19, 20, 21, 22, 23
+   *
+   * Left/Right: navigate within same row by visual x position.
+   * Up/Down: jump to closest piece on the other row.
+   */
+  navigatePieces(direction: "up" | "down" | "left" | "right"): void {
+    if (!this.enabled || !this.state) return;
+    const moveable = this.getMoveableFroms().filter((f): f is number => typeof f === "number");
+    const hasBar = this.getMoveableFroms().includes("bar");
+
+    if (moveable.length === 0 && !hasBar) return;
+
+    // Visual x-index (0=leftmost, 11=rightmost) for each point
+    const visualX = (p: number): number => {
+      if (p >= 12) return p - 12;    // bottom: 12→0, 13→1, ... 23→11
+      return 11 - p;                  // top: 11→0, 10→1, ... 0→11
+    };
+
+    const isBottom = (p: number) => p >= 12;
+    const isTop = (p: number) => p < 12;
+
+    const bottomPieces = moveable.filter(isBottom).sort((a, b) => visualX(a) - visualX(b));
+    const topPieces = moveable.filter(isTop).sort((a, b) => visualX(a) - visualX(b));
+
+    const currentFrom = this.selectedFrom;
+    const currentIsBottom = typeof currentFrom === "number" && isBottom(currentFrom);
+    const currentIsTop = typeof currentFrom === "number" && isTop(currentFrom);
+    const currentX = typeof currentFrom === "number" ? visualX(currentFrom) : 6; // bar is middle
+
+    // Find closest piece by visual x in a list
+    const closestByX = (list: number[], targetX: number): number | null => {
+      if (list.length === 0) return null;
+      let best = list[0];
+      let bestDist = Math.abs(visualX(best) - targetX);
+      for (const p of list) {
+        const dist = Math.abs(visualX(p) - targetX);
+        if (dist < bestDist) { best = p; bestDist = dist; }
+      }
+      return best;
+    };
+
+    let target: number | "bar" | null = null;
+
+    switch (direction) {
+      case "up": {
+        if (currentFrom === null || currentIsBottom || currentFrom === "bar") {
+          // Jump to top row, closest to current x
+          target = closestByX(topPieces, currentX);
+        }
+        break;
+      }
+      case "down": {
+        if (currentFrom === null || currentIsTop || currentFrom === "bar") {
+          // Jump to bottom row, closest to current x
+          target = closestByX(bottomPieces, currentX);
+        }
+        break;
+      }
+      case "left": {
+        const row = currentIsTop ? topPieces : currentIsBottom ? bottomPieces : bottomPieces;
+        if (currentFrom === null) {
+          // Select rightmost (highest visual x) on bottom row, or top if none
+          target = row.length > 0 ? row[row.length - 1] : (topPieces.length > 0 ? topPieces[topPieces.length - 1] : null);
+        } else {
+          const idx = row.indexOf(currentFrom as number);
+          if (idx > 0) target = row[idx - 1];
+          else if (hasBar && currentFrom !== "bar") target = "bar";
+        }
+        break;
+      }
+      case "right": {
+        const row = currentIsTop ? topPieces : currentIsBottom ? bottomPieces : bottomPieces;
+        if (currentFrom === null) {
+          // Select leftmost on bottom row, or top if none
+          target = row.length > 0 ? row[0] : (topPieces.length > 0 ? topPieces[0] : null);
+        } else if (currentFrom === "bar") {
+          // From bar, go to closest piece on bottom row
+          target = closestByX(bottomPieces, 6) ?? closestByX(topPieces, 6);
+        } else {
+          const idx = row.indexOf(currentFrom as number);
+          if (idx >= 0 && idx < row.length - 1) target = row[idx + 1];
+        }
+        break;
+      }
+    }
+
+    if (target !== null) {
+      this.selectPiece(target);
+    }
+  }
+
+  /**
    * Cycle through available target destinations for the selected piece (Arrow keys).
    * Returns the currently highlighted target index for visual feedback.
    */

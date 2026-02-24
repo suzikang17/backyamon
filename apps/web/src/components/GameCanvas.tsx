@@ -76,30 +76,46 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
           ctrl.deselectPiece();
           break;
         case "Tab":
-        case "n": // vim: next piece
+        case "n": // vim: next target
           e.preventDefault();
-          ctrl.selectNextPiece();
+          if (ctrl.hasSelection()) {
+            ctrl.cycleTarget(1);
+          }
           break;
         case "ArrowRight":
-        case "ArrowDown":
         case "l": // vim: right
-        case "j": // vim: down
           e.preventDefault();
           if (ctrl.hasSelection()) {
             ctrl.cycleTarget(1);
           } else {
-            ctrl.selectNextPiece();
+            ctrl.navigatePieces("right");
           }
           break;
         case "ArrowLeft":
-        case "ArrowUp":
         case "h": // vim: left
+          e.preventDefault();
+          if (ctrl.hasSelection()) {
+            ctrl.cycleTarget(-1);
+          } else {
+            ctrl.navigatePieces("left");
+          }
+          break;
+        case "ArrowUp":
         case "k": // vim: up
           e.preventDefault();
           if (ctrl.hasSelection()) {
             ctrl.cycleTarget(-1);
           } else {
-            ctrl.selectPrevPiece();
+            ctrl.navigatePieces("up");
+          }
+          break;
+        case "ArrowDown":
+        case "j": // vim: down
+          e.preventDefault();
+          if (ctrl.hasSelection()) {
+            ctrl.cycleTarget(1);
+          } else {
+            ctrl.navigatePieces("down");
           }
           break;
         case "u": // vim: undo

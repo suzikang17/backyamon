@@ -169,6 +169,10 @@ export class GameController {
     this.inputHandler?.selectPrevMoveable();
   }
 
+  navigatePieces(direction: "up" | "down" | "left" | "right"): void {
+    this.inputHandler?.navigatePieces(direction);
+  }
+
   cycleTarget(direction: 1 | -1): void {
     this.inputHandler?.cycleTarget(direction);
   }
