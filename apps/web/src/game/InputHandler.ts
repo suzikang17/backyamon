@@ -472,13 +472,7 @@ export class InputHandler {
     const nextIdx = (currentIdx + 1) % moveableFroms.length;
     const nextFrom = moveableFroms[nextIdx];
 
-    // Check for auto-move (single destination)
-    const movesFromHere = this.legalMoves.filter((m) => m.from === nextFrom);
-    if (movesFromHere.length === 1) {
-      this.executeMove(movesFromHere[0]);
-    } else {
-      this.selectPiece(nextFrom);
-    }
+    this.selectPiece(nextFrom);
   }
 
   /**
