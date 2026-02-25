@@ -32,11 +32,22 @@ export class MoveLineRenderer {
   private moveLines: MoveLineData[] = [];
   // Currently highlighted piece
   private highlightedFrom: number | "bar" | null = null;
+  // Whether to show faded arcs for all legal moves (beginner guide)
+  private _showFadedArcs = true;
 
   // Callback when an active line/label is clicked (execute move)
   onMoveClicked: ((move: Move) => void) | null = null;
   // Callback when a faded line is clicked (highlight source piece)
   onSourceClicked: ((from: number | "bar") => void) | null = null;
+
+  set showFadedArcs(value: boolean) {
+    this._showFadedArcs = value;
+    this.fadeContainer.visible = value;
+  }
+
+  get showFadedArcs(): boolean {
+    return this._showFadedArcs;
+  }
 
   constructor(app: Application, boardRenderer: BoardRenderer) {
     this.app = app;
@@ -169,7 +180,7 @@ export class MoveLineRenderer {
     const dy = endPos.y - startPos.y;
     const dist = Math.sqrt(dx * dx + dy * dy) || 1;
 
-    const arcHeight = Math.min(dist * 0.25, radius * 3);
+    const arcHeight = Math.max(radius * 1.5, Math.min(dist * 0.25, radius * 3));
     const nx = -dy / dist;
     const ny = dx / dist;
     let cpX = midX + nx * arcHeight;
@@ -303,7 +314,7 @@ export class MoveLineRenderer {
     const dy = lineData.endY - lineData.startY;
     const dist = Math.sqrt(dx * dx + dy * dy) || 1;
 
-    const arcHeight = Math.min(dist * 0.25, radius * 3);
+    const arcHeight = Math.max(radius * 1.5, Math.min(dist * 0.25, radius * 3));
     // Perpendicular direction
     const nx = -dy / dist;
     const ny = dx / dist;

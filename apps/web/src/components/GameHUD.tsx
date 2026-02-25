@@ -15,6 +15,8 @@ interface GameHUDProps {
   canDouble: boolean;
   canUndo?: boolean;
   soundManager: SoundManager;
+  showMoveArcs?: boolean;
+  onToggleMoveArcs?: (show: boolean) => void;
 }
 
 export function GameHUD({
@@ -28,9 +30,12 @@ export function GameHUD({
   canDouble,
   canUndo = false,
   soundManager,
+  showMoveArcs,
+  onToggleMoveArcs,
 }: GameHUDProps) {
   const [muted, setMuted] = useState(soundManager.isMuted());
   const [musicPlaying, setMusicPlaying] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const handleToggleMute = useCallback(() => {
     soundManager.resumeContext();
@@ -122,6 +127,32 @@ export function GameHUD({
           >
             {musicPlaying ? <MusicOnIcon /> : <MusicOffIcon />}
           </button>
+          {/* Settings gear */}
+          {onToggleMoveArcs && (
+            <div className="relative">
+              <button
+                onClick={(e) => { (e.target as HTMLElement).blur(); setSettingsOpen(!settingsOpen); }}
+                tabIndex={-1}
+                className="pointer-events-auto bg-[#1A1A0E]/80 hover:bg-[#1A1A0E] rounded-lg p-2 sm:p-1.5 border border-[#8B4513] transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
+                title="Settings"
+              >
+                <GearIcon />
+              </button>
+              {settingsOpen && (
+                <div className="pointer-events-auto absolute right-0 top-full mt-1 bg-[#1A1A0E]/95 rounded-lg border border-[#8B4513] p-3 min-w-[180px] z-50 shadow-lg">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={showMoveArcs ?? true}
+                      onChange={(e) => onToggleMoveArcs(e.target.checked)}
+                      className="accent-[#D4A857] w-4 h-4 cursor-pointer"
+                    />
+                    <span className="font-heading text-xs text-[#D4A857]">Show move arcs</span>
+                  </label>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -323,6 +354,15 @@ function MusicOffIcon() {
       <circle cx="6" cy="18" r="3" />
       <circle cx="18" cy="16" r="3" />
       <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  );
+}
+
+function GearIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4A857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </svg>
   );
 }

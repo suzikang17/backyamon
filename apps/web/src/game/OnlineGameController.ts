@@ -5,7 +5,8 @@ import {
   type Move,
   type WinType,
   type Dice,
-  getLegalMoves,
+  rollDice,
+  getConstrainedMoves,
   canMove,
 } from "@backyamon/engine";
 import { SocketClient } from "@/multiplayer/SocketClient";
@@ -55,8 +56,11 @@ export class OnlineGameController extends BaseGameController {
     // Bind server events
     this.bindServerEvents();
 
-    // If it's already our turn (e.g. Gold starts), prompt
-    if (this.state.currentPlayer === this.localPlayer && this.state.phase === "ROLLING") {
+    // Handle initial phase
+    if (this.state.phase === "OPENING_ROLL") {
+      this.onWaitingForRoll?.(true);
+      this.onMessage?.("Opening roll — click to roll!");
+    } else if (this.state.currentPlayer === this.localPlayer && this.state.phase === "ROLLING") {
       this.startLocalTurn();
     } else if (this.state.phase === "ROLLING") {
       this.onMessage?.("Waiting for opponent to roll...");
@@ -68,6 +72,15 @@ export class OnlineGameController extends BaseGameController {
    */
   rollForHuman(): void {
     if (this.destroyed) return;
+
+    // Opening roll — either player can trigger it
+    if (this.state.phase === "OPENING_ROLL") {
+      this.onWaitingForRoll?.(false);
+      this.onMessage?.("Rolling...");
+      this.socketClient.rollDice();
+      return;
+    }
+
     if (this.state.phase !== "ROLLING") return;
     if (this.state.currentPlayer !== this.localPlayer) return;
 
@@ -89,7 +102,7 @@ export class OnlineGameController extends BaseGameController {
   private enableLocalInput(): void {
     if (this.destroyed) return;
 
-    const legalMoves = getLegalMoves(this.state);
+    const legalMoves = getConstrainedMoves(this.state);
 
     if (legalMoves.length === 0) {
       // No moves: server will auto-end turn via turn-ended event
@@ -128,6 +141,16 @@ export class OnlineGameController extends BaseGameController {
       this.boundHandlers.set(event, handler);
       this.socketClient.on(event, handler);
     };
+
+    bind("opening-roll-tied", (data: unknown) => {
+      this.handleOpeningRollTied(data as { goldDie: number; redDie: number });
+    });
+
+    bind("opening-roll-result", (data: unknown) => {
+      this.handleOpeningRollResult(
+        data as { goldDie: number; redDie: number; firstPlayer: Player; dice: Dice }
+      );
+    });
 
     bind("dice-rolled", (data: unknown) => {
       this.handleDiceRolled(data as { dice: Dice });
@@ -193,6 +216,69 @@ export class OnlineGameController extends BaseGameController {
 
   // ── Server Event Handlers ────────────────────────────────────────────
 
+  private async handleOpeningRollTied(data: { goldDie: number; redDie: number }): Promise<void> {
+    if (this.destroyed) return;
+    this.sound.playSFX("dice-roll");
+
+    // Show dice on separate sides: Red on left, Gold on right
+    const isGold = this.localPlayer === Player.Gold;
+    const leftDie = isGold ? data.redDie : data.goldDie;
+    const rightDie = isGold ? data.goldDie : data.redDie;
+    await this.diceRenderer.showOpeningRoll(leftDie, rightDie);
+    if (this.destroyed) return;
+
+    this.onMessage?.(`Tied ${data.goldDie}-${data.redDie}! Roll again...`);
+    setTimeout(() => {
+      if (this.destroyed) return;
+      this.onWaitingForRoll?.(true);
+      this.onMessage?.("Opening roll — click to roll!");
+    }, 1500);
+  }
+
+  private async handleOpeningRollResult(data: {
+    goldDie: number;
+    redDie: number;
+    firstPlayer: Player;
+    dice: Dice;
+  }): Promise<void> {
+    if (this.destroyed) return;
+    this.sound.playSFX("dice-roll");
+
+    // Show dice on separate sides: Red on left, Gold on right
+    const isGold = this.localPlayer === Player.Gold;
+    const leftDie = isGold ? data.redDie : data.goldDie;
+    const rightDie = isGold ? data.goldDie : data.redDie;
+    await this.diceRenderer.showOpeningRoll(leftDie, rightDie);
+    if (this.destroyed) return;
+
+    // Update state
+    this.state = {
+      ...this.state,
+      currentPlayer: data.firstPlayer,
+      dice: data.dice,
+      phase: "MOVING",
+    };
+    this.storeDiceValues(data.dice);
+    this.emitStateChange();
+
+    const isLocal = data.firstPlayer === this.localPlayer;
+    const myDie = isGold ? data.goldDie : data.redDie;
+    const theirDie = isGold ? data.redDie : data.goldDie;
+
+    if (isLocal) {
+      this.onMessage?.(`You rolled ${myDie} vs ${theirDie} — you go first!`);
+      // Brief pause, then show combined dice and enable input
+      setTimeout(async () => {
+        if (this.destroyed) return;
+        await this.diceRenderer.showRoll(data.dice);
+        if (this.destroyed) return;
+        this.enableLocalInput();
+      }, 800);
+    } else {
+      this.onMessage?.(`Opponent rolled ${theirDie} vs ${myDie} — they go first`);
+    }
+  }
+
   private async handleDiceRolled(data: { dice: Dice }): Promise<void> {
     if (this.destroyed) return;
     this.sound.playSFX("dice-roll");
@@ -211,7 +297,7 @@ export class OnlineGameController extends BaseGameController {
 
     // If it's local player's turn, enable input
     if (this.state.currentPlayer === this.localPlayer) {
-      const legalMoves = getLegalMoves(this.state);
+      const legalMoves = getConstrainedMoves(this.state);
       if (legalMoves.length === 0) {
         this.onMessage?.("No legal moves! Turn passes...");
         // Server will send turn-ended

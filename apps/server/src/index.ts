@@ -4,7 +4,9 @@ import { Server } from "socket.io";
 import {
   Player,
   rollDice,
+  rollSingleDie,
   getLegalMoves,
+  getConstrainedMoves,
   applyMove,
   endTurn,
   canMove,
@@ -352,6 +354,42 @@ io.on("connection", (socket) => {
 
     const state = room.state;
 
+    // Handle opening roll — either player can trigger it
+    if (state.phase === "OPENING_ROLL") {
+      const goldDie = rollSingleDie();
+      const redDie = rollSingleDie();
+
+      if (goldDie === redDie) {
+        broadcastToRoom(room, "opening-roll-tied", { goldDie, redDie });
+        return;
+      }
+
+      const firstPlayer = goldDie > redDie ? Player.Gold : Player.Red;
+      const dice = rollDice([Math.max(goldDie, redDie), Math.min(goldDie, redDie)]);
+      state.currentPlayer = firstPlayer;
+      state.dice = dice;
+      state.phase = "MOVING";
+      room.state = state;
+
+      if (!canMove(state)) {
+        room.state = endTurn(state);
+        broadcastToRoom(room, "opening-roll-result", {
+          goldDie, redDie, firstPlayer, dice,
+        });
+        broadcastToRoom(room, "turn-ended", {
+          state: room.state,
+          currentPlayer: room.state.currentPlayer,
+        });
+        if (room.state.phase === "GAME_OVER") handleGameOver(room);
+        return;
+      }
+
+      broadcastToRoom(room, "opening-roll-result", {
+        goldDie, redDie, firstPlayer, dice,
+      });
+      return;
+    }
+
     // Verify it's the sender's turn
     if (state.currentPlayer !== role) {
       socket.emit("error", { message: "Not your turn." });
@@ -416,8 +454,8 @@ io.on("connection", (socket) => {
       return;
     }
 
-    // 3. Get legal moves and check the move is legal
-    const legalMoves = getLegalMoves(state);
+    // 3. Get constrained legal moves (enforces must-use-higher-die / maximize dice)
+    const legalMoves = getConstrainedMoves(state);
     const isLegal = legalMoves.some((lm) => movesEqual(lm, move));
     if (!isLegal) {
       socket.emit("error", { message: "Illegal move." });

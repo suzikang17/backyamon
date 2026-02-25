@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { rollDice, getDiceMoveCounts } from "../dice";
+import { rollDice, getDiceMoveCounts, rollSingleDie } from "../dice";
 
 describe("rollDice", () => {
   it("should return two values between 1 and 6", () => {
@@ -45,5 +45,19 @@ describe("getDiceMoveCounts", () => {
       expect(result).toHaveLength(4);
       expect(result.every((v) => v === i)).toBe(true);
     }
+  });
+});
+
+describe("rollSingleDie", () => {
+  it("should return a value between 1 and 6", () => {
+    for (let i = 0; i < 100; i++) {
+      const value = rollSingleDie();
+      expect(value).toBeGreaterThanOrEqual(1);
+      expect(value).toBeLessThanOrEqual(6);
+    }
+  });
+
+  it("should accept a forced value", () => {
+    expect(rollSingleDie(4)).toBe(4);
   });
 });

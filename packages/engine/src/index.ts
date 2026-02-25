@@ -14,3 +14,4 @@ export { BeachBum } from "./ai/beach-bum.js";
 export { Selector, evaluateBoard, calculatePipCount } from "./ai/selector.js";
 export { KingTubby } from "./ai/king-tubby.js";
 export { getAllLegalTurns } from "./ai/turn-generator.js";
+export { getConstrainedMoves } from "./constrained-moves.js";

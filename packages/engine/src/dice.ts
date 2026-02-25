@@ -9,6 +9,10 @@ export function rollDice(forced?: [number, number]): Dice {
   return { values, remaining };
 }
 
+export function rollSingleDie(forced?: number): number {
+  return forced ?? Math.floor(Math.random() * 6) + 1;
+}
+
 export function getDiceMoveCounts(values: [number, number]): number[] {
   if (values[0] === values[1]) {
     return [values[0], values[0], values[0], values[0]];

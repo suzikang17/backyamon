@@ -535,6 +535,19 @@ export class BoardRenderer {
     };
   }
 
+  getLeftDicePosition(): { x: number; y: number } {
+    // Center of the left half of the board (between play area start and bar)
+    const leftHalfCenter = this.playAreaX + (this.barX - this.playAreaX) / 2;
+    return {
+      x: leftHalfCenter,
+      y: this.playAreaY + this.playAreaH / 2,
+    };
+  }
+
+  getRightDicePosition(): { x: number; y: number } {
+    return this.getDiceCenterPosition();
+  }
+
   /**
    * Get the position where a piece should be rendered on a point,
    * taking into account stacking. Spacing is adaptive so pieces

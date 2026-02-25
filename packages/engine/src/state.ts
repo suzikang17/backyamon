@@ -7,7 +7,7 @@ export function createInitialState(matchLength = 1): GameState {
     bar: { [Player.Gold]: 0, [Player.Red]: 0 } as Record<Player, number>,
     borneOff: { [Player.Gold]: 0, [Player.Red]: 0 } as Record<Player, number>,
     currentPlayer: Player.Gold,
-    phase: "ROLLING",
+    phase: "OPENING_ROLL",
     dice: null,
     doublingCube: { value: 1, owner: null },
     matchScore: { [Player.Gold]: 0, [Player.Red]: 0 } as Record<

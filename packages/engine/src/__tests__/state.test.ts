@@ -36,8 +36,8 @@ describe("createInitialState", () => {
     expect(state.borneOff[Player.Gold]).toBe(0);
     expect(state.borneOff[Player.Red]).toBe(0);
 
-    // Game should start in ROLLING phase
-    expect(state.phase).toBe("ROLLING");
+    // Game should start in OPENING_ROLL phase
+    expect(state.phase).toBe("OPENING_ROLL");
     expect(state.currentPlayer).toBe(Player.Gold);
     expect(state.doublingCube).toEqual({ value: 1, owner: null });
     expect(state.dice).toBeNull();

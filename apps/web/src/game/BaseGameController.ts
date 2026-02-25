@@ -94,6 +94,14 @@ export abstract class BaseGameController {
     return this.inputHandler?.hasTargetHighlighted() ?? false;
   }
 
+  // ── Settings ──────────────────────────────────────────────────────
+
+  setShowMoveArcs(show: boolean): void {
+    if (this.moveLineRenderer) {
+      this.moveLineRenderer.showFadedArcs = show;
+    }
+  }
+
   // ── Abstract ───────────────────────────────────────────────────────
 
   abstract rollForHuman(): void;

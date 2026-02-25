@@ -6,7 +6,9 @@ import {
   type WinType,
   createInitialState,
   rollDice,
+  rollSingleDie,
   getLegalMoves,
+  getConstrainedMoves,
   applyMove,
   endTurn,
   canMove,
@@ -100,8 +102,9 @@ export class GameController extends BaseGameController {
     this.pieceRenderer.render(this.state);
     this.emitStateChange();
 
-    // Gold (human) always goes first
-    this.startHumanTurn();
+    // Start with opening roll ceremony
+    this.onMessage?.("Opening roll - click to roll!");
+    this.onWaitingForRoll?.(true);
   }
 
   /**
@@ -109,6 +112,13 @@ export class GameController extends BaseGameController {
    */
   rollForHuman(): void {
     if (this.destroyed) return;
+
+    if (this.state.phase === "OPENING_ROLL") {
+      this.sound.resumeContext();
+      this.performOpeningRoll();
+      return;
+    }
+
     if (this.state.phase !== "ROLLING") return;
     if (this.state.currentPlayer !== Player.Gold) return;
 
@@ -200,6 +210,115 @@ export class GameController extends BaseGameController {
     this.enableHumanInput();
   }
 
+  private async performOpeningRoll(): Promise<void> {
+    if (this.destroyed) return;
+    this.onWaitingForRoll?.(false);
+
+    let goldDie: number;
+    let redDie: number;
+
+    do {
+      goldDie = rollSingleDie();
+      redDie = rollSingleDie();
+
+      // Show dice on separate sides: opponent (Red) on left, player (Gold) on right
+      this.sound.playSFX("dice-roll");
+      await this.diceRenderer.showOpeningRoll(redDie, goldDie);
+      if (this.destroyed) return;
+
+      if (goldDie === redDie) {
+        this.onMessage?.(`Tied ${goldDie}-${redDie}! Roll again...`);
+        this.onWaitingForRoll?.(true);
+        // Wait for player to click again to re-roll
+        return;
+      }
+    } while (false);
+
+    // Determine who goes first — use both dice for the first turn
+    const firstPlayer = goldDie > redDie ? Player.Gold : Player.Red;
+    const dice = rollDice([Math.max(goldDie, redDie), Math.min(goldDie, redDie)]);
+    this.state = {
+      ...this.state,
+      currentPlayer: firstPlayer,
+      dice,
+      phase: "MOVING",
+    };
+    this.storeDiceValues(dice);
+    this.emitStateChange();
+
+    if (firstPlayer === Player.Gold) {
+      this.onMessage?.(`You rolled ${goldDie} vs ${redDie} — you go first!`);
+      await this.delay(800);
+      if (this.destroyed) return;
+      // Show the combined dice in normal position for move selection
+      await this.diceRenderer.showRoll(dice);
+      if (this.destroyed) return;
+      this.enableHumanInput();
+    } else {
+      this.onMessage?.(`${this.ai.name} rolled ${redDie} vs ${goldDie} — they go first!`);
+      await this.delay(800);
+      if (this.destroyed) return;
+      this.diceRenderer.hide();
+      this.startAIFirstTurn();
+    }
+  }
+
+  private async startAIFirstTurn(): Promise<void> {
+    if (this.destroyed) return;
+
+    const thinkMsg = aiThinkingMessage(this.ai.name);
+    this.onMessage?.(thinkMsg);
+    this.sound.speak(thinkMsg, 1.0);
+
+    await this.delay(500);
+    if (this.destroyed) return;
+
+    // Show the opening dice for the AI's turn
+    this.sound.playSFX("dice-roll");
+    await this.diceRenderer.showRoll(this.state.dice!);
+    if (this.destroyed) return;
+
+    // AI selects moves with the opening dice
+    const moves = this.ai.selectMoves(this.state);
+
+    if (moves.length === 0) {
+      this.onMessage?.(aiNoMovesMessage(this.ai.name));
+      await this.delay(800);
+      if (this.destroyed) return;
+      this.diceRenderer.hide();
+      this.endCurrentTurn();
+      return;
+    }
+
+    // Animate each AI move
+    for (let i = 0; i < moves.length; i++) {
+      if (this.destroyed) return;
+      const move = moves[i];
+      this.playMoveSFX(move);
+      this.state = applyMove(this.state, move);
+      this.emitStateChange();
+
+      if (this.state.dice) {
+        this.diceRenderer.updateUsedDice(this.currentDiceValues, this.state.dice.remaining);
+      }
+
+      await this.pieceRenderer.animateMove(move, Player.Red);
+      if (this.destroyed) return;
+      this.spawnLandingDust(move, Player.Red);
+      this.moveLineRenderer.showOpponentMove(move, Player.Red);
+      this.pieceRenderer.render(this.state);
+
+      if (i < moves.length - 1) {
+        await this.delay(400);
+      }
+    }
+
+    if (this.destroyed) return;
+    this.onMessage?.("");
+    this.diceRenderer.hide();
+    this.endCurrentTurn();
+  }
+
   private async startHumanTurn(): Promise<void> {
     if (this.destroyed) return;
 
@@ -233,8 +352,8 @@ export class GameController extends BaseGameController {
     await this.diceRenderer.showRoll(dice);
     if (this.destroyed) return;
 
-    // Check legal moves
-    const legalMoves = getLegalMoves(this.state);
+    // Check legal moves (constrained by must-use-higher-die / must-maximize rules)
+    const legalMoves = getConstrainedMoves(this.state);
 
     if (legalMoves.length === 0) {
       this.onMessage?.(noMovesMessage());
@@ -252,7 +371,7 @@ export class GameController extends BaseGameController {
   private enableHumanInput(): void {
     if (this.destroyed) return;
 
-    const legalMoves = getLegalMoves(this.state);
+    const legalMoves = getConstrainedMoves(this.state);
 
     if (legalMoves.length === 0) {
       // No more moves available, end turn

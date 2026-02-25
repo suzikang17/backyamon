@@ -27,6 +27,13 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
   const [waitingForRoll, setWaitingForRoll] = useState(false);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [canUndo, setCanUndo] = useState(false);
+  const [showMoveArcs, setShowMoveArcs] = useState(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("backyamon_show_arcs_sp");
+      return stored !== null ? stored === "true" : true; // default ON in singleplayer
+    }
+    return true;
+  });
 
   const soundManager = useMemo(() => SoundManager.getInstance(), []);
 
@@ -45,6 +52,12 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
 
   const handleUndo = useCallback(() => {
     controllerRef.current?.undoMove();
+  }, []);
+
+  const handleToggleMoveArcs = useCallback((show: boolean) => {
+    setShowMoveArcs(show);
+    localStorage.setItem("backyamon_show_arcs_sp", String(show));
+    controllerRef.current?.setShowMoveArcs(show);
   }, []);
 
   // Determine if doubling is possible from current state
@@ -130,6 +143,10 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
       };
 
       controller.startGame();
+
+      // Apply move arcs preference (default on in singleplayer)
+      const storedArcs = localStorage.getItem("backyamon_show_arcs_sp");
+      controller.setShowMoveArcs(storedArcs !== null ? storedArcs === "true" : true);
     };
 
     init();
@@ -174,6 +191,8 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
         canDouble={canDouble}
         canUndo={canUndo}
         soundManager={soundManager}
+        showMoveArcs={showMoveArcs}
+        onToggleMoveArcs={handleToggleMoveArcs}
       />
 
       {/* Message bar — below the canvas, not overlapping the board */}

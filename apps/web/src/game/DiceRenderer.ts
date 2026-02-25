@@ -83,6 +83,31 @@ export class DiceRenderer {
     await this.animateRoll();
   }
 
+  /**
+   * Show opening roll with each die on its own side of the board.
+   * Left die = opponent's roll, right die = local player's roll.
+   */
+  async showOpeningRoll(leftValue: number, rightValue: number): Promise<void> {
+    this.hide();
+
+    const leftPos = this.boardRenderer.getLeftDicePosition();
+    const rightPos = this.boardRenderer.getRightDicePosition();
+
+    const leftDie = this.createDie(leftValue);
+    leftDie.x = leftPos.x;
+    leftDie.y = leftPos.y;
+    this.container.addChild(leftDie);
+    this.dieContainers.push(leftDie);
+
+    const rightDie = this.createDie(rightValue);
+    rightDie.x = rightPos.x;
+    rightDie.y = rightPos.y;
+    this.container.addChild(rightDie);
+    this.dieContainers.push(rightDie);
+
+    await this.animateRoll();
+  }
+
   private async animateRoll(): Promise<void> {
     return new Promise<void>((resolve) => {
       const startTime = performance.now();

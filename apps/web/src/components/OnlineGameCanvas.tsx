@@ -33,6 +33,13 @@ export function OnlineGameCanvas({
   const [waitingForRoll, setWaitingForRoll] = useState(false);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [opponentDisconnected, setOpponentDisconnected] = useState(false);
+  const [showMoveArcs, setShowMoveArcs] = useState(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("backyamon_show_arcs");
+      return stored !== null ? stored === "true" : false; // default OFF in multiplayer
+    }
+    return false;
+  });
 
   const soundManager = useMemo(() => SoundManager.getInstance(), []);
 
@@ -45,6 +52,12 @@ export function OnlineGameCanvas({
 
   const handleOfferDouble = useCallback(() => {
     controllerRef.current?.offerDouble();
+  }, []);
+
+  const handleToggleMoveArcs = useCallback((show: boolean) => {
+    setShowMoveArcs(show);
+    localStorage.setItem("backyamon_show_arcs", String(show));
+    controllerRef.current?.setShowMoveArcs(show);
   }, []);
 
   // Determine if doubling is possible from current state
@@ -127,6 +140,10 @@ export function OnlineGameCanvas({
       };
 
       controller.startGame(initialState, localPlayer);
+
+      // Apply move arcs preference (default off in multiplayer)
+      const storedArcs = localStorage.getItem("backyamon_show_arcs");
+      controller.setShowMoveArcs(storedArcs === "true");
     };
 
     init();
@@ -177,6 +194,8 @@ export function OnlineGameCanvas({
         canRoll={waitingForRoll}
         canDouble={canDouble}
         soundManager={soundManager}
+        showMoveArcs={showMoveArcs}
+        onToggleMoveArcs={handleToggleMoveArcs}
       />
 
       {/* Message bar — below the canvas, not overlapping the board */}

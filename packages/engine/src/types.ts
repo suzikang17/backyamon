@@ -9,6 +9,7 @@ export type PointState = {
 } | null;
 
 export type GamePhase =
+  | "OPENING_ROLL"
   | "ROLLING"
   | "MOVING"
   | "DOUBLING"
