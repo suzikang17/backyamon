@@ -437,28 +437,34 @@ export default function LobbyPage() {
       </div>
 
       {/* Players list */}
-      {view === "lobby" && players.length > 0 && (
+      {view === "lobby" && (
         <div className="w-full max-w-3xl mt-8">
           <p className="text-[#D4A857] text-xs font-heading text-center tracking-wider uppercase mb-3">
             Registered Players
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-            {players.map((p) => (
-              <div
-                key={p.username}
-                className="rounded-xl bg-[#1A1A0E]/80 border border-[#8B4513]/40 px-3 py-2 text-center"
-              >
-                <span className="text-[#FFD700] font-heading text-sm block">
-                  {p.username}
-                </span>
-                {(p.wins > 0 || p.losses > 0) && (
-                  <span className="text-[#D4A857]/50 font-heading text-xs">
-                    {p.wins}W - {p.losses}L
+          {players.length === 0 ? (
+            <p className="text-[#D4A857]/40 text-sm text-center font-heading">
+              No players yet — claim a username to get listed!
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              {players.map((p) => (
+                <div
+                  key={p.username}
+                  className="rounded-xl bg-[#1A1A0E]/80 border border-[#8B4513]/40 px-3 py-2 text-center"
+                >
+                  <span className="text-[#FFD700] font-heading text-sm block">
+                    {p.username}
                   </span>
-                )}
-              </div>
-            ))}
-          </div>
+                  {(p.wins > 0 || p.losses > 0) && (
+                    <span className="text-[#D4A857]/50 font-heading text-xs">
+                      {p.wins}W - {p.losses}L
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
