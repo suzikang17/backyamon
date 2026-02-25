@@ -79,6 +79,17 @@ export default function LobbyPage() {
       client.listRooms();
     });
 
+    // Re-register on socket.io auto-reconnect (new socket id on server)
+    client.onReconnect(async () => {
+      try {
+        const identity = await client.register();
+        setDisplayName(identity.displayName);
+        setUsername(identity.username);
+      } catch {
+        // will show as disconnected
+      }
+    });
+
     client.on("room-list", (data: unknown) => {
       const { rooms: roomList } = data as { rooms: WaitingRoom[] };
       setRooms(roomList);

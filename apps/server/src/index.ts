@@ -203,7 +203,7 @@ io.on("connection", (socket) => {
   socket.on("claim-username", ({ username }: { username: string }) => {
     const playerInfo = socketToPlayer.get(socket.id);
     if (!playerInfo) {
-      socket.emit("error", { message: "Not registered." });
+      socket.emit("username-error", { message: "Not registered. Try refreshing." });
       return;
     }
 
