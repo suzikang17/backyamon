@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Application } from "pixi.js";
-import { Player, type GameState, type WinType } from "@backyamon/engine";
+import { Player, type GameState, type WinType, canOfferDouble } from "@backyamon/engine";
 import { OnlineGameController } from "@/game/OnlineGameController";
 import { SocketClient } from "@/multiplayer/SocketClient";
+import { SoundManager } from "@/audio/SoundManager";
+import { useGameKeyboard } from "@/hooks/useGameKeyboard";
+import { GameHUD } from "./GameHUD";
 
 interface OnlineGameCanvasProps {
   socketClient: SocketClient;
@@ -28,13 +31,31 @@ export function OnlineGameCanvas({
   const appRef = useRef<Application | null>(null);
   const [message, setMessage] = useState("");
   const [waitingForRoll, setWaitingForRoll] = useState(false);
+  const [gameState, setGameState] = useState<GameState | null>(null);
   const [opponentDisconnected, setOpponentDisconnected] = useState(false);
+
+  const soundManager = useMemo(() => SoundManager.getInstance(), []);
 
   const handleRollClick = useCallback(() => {
     if (waitingForRoll && controllerRef.current) {
+      soundManager.resumeContext();
       controllerRef.current.rollForHuman();
     }
-  }, [waitingForRoll]);
+  }, [waitingForRoll, soundManager]);
+
+  const handleOfferDouble = useCallback(() => {
+    controllerRef.current?.offerDouble();
+  }, []);
+
+  // Determine if doubling is possible from current state
+  const canDouble =
+    gameState !== null &&
+    canOfferDouble(gameState) &&
+    gameState.currentPlayer === localPlayer &&
+    waitingForRoll;
+
+  // Shared keyboard shortcuts (no undo in multiplayer — server owns state)
+  useGameKeyboard(controllerRef, waitingForRoll, soundManager);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -87,6 +108,10 @@ export function OnlineGameCanvas({
         if (!destroyed) setWaitingForRoll(waiting);
       };
 
+      controller.onStateChange = (state) => {
+        if (!destroyed) setGameState(state);
+      };
+
       controller.onGameOver = (winner, winType, pointsWon) => {
         if (!destroyed) {
           onGameOver?.(winner, winType, pointsWon);
@@ -124,7 +149,7 @@ export function OnlineGameCanvas({
   }, [socketClient, roomId, localPlayer, initialState, opponentName, onGameOver]);
 
   return (
-    <div className="relative w-full max-w-[800px]">
+    <div className="relative w-full max-w-[900px]">
       {/* Opponent disconnect warning */}
       {opponentDisconnected && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50">
@@ -137,9 +162,21 @@ export function OnlineGameCanvas({
       {/* Canvas container */}
       <div
         ref={containerRef}
-        className="w-full aspect-[8/5] rounded-2xl border-2 border-[#8B4513] overflow-hidden shadow-lg"
+        className="w-full aspect-[8/5] rounded-2xl border-2 border-[#8B4513] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
         onClick={handleRollClick}
         style={{ cursor: waitingForRoll ? "pointer" : "default", touchAction: "manipulation" }}
+      />
+
+      {/* HUD overlay */}
+      <GameHUD
+        state={gameState}
+        playerColor={localPlayer}
+        opponentName={opponentName}
+        onOfferDouble={handleOfferDouble}
+        onRollDice={handleRollClick}
+        canRoll={waitingForRoll}
+        canDouble={canDouble}
+        soundManager={soundManager}
       />
 
       {/* Message bar — below the canvas, not overlapping the board */}
@@ -150,18 +187,6 @@ export function OnlineGameCanvas({
           </p>
         )}
       </div>
-
-      {/* Roll prompt */}
-      {waitingForRoll && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div
-            className="bg-[#1A1A0E]/80 text-[#FFD700] font-heading text-lg sm:text-2xl px-6 sm:px-8 py-3 sm:py-4 rounded-2xl border-2 border-[#D4A857] animate-pulse pointer-events-auto cursor-pointer min-h-[44px]"
-            onClick={handleRollClick}
-          >
-            Roll Dice
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -33,6 +33,13 @@ export const metadata: Metadata = {
     title: "Back Ya'Mon!",
     description: "Play backgammon with Rastafarian vibes",
     type: "website",
+    images: ["/opengraph-image"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Back Ya'Mon!",
+    description: "Play backgammon with Rastafarian vibes",
+    images: ["/twitter-image"],
   },
 };
 

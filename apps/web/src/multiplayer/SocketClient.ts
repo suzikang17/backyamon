@@ -55,27 +55,51 @@ export class SocketClient {
 
   // ── Connection ───────────────────────────────────────────────────────
 
-  connect(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (this.socket.connected) {
-        resolve();
-        return;
+  connect(options?: {
+    maxRetries?: number;
+    onRetry?: (attempt: number, maxRetries: number) => void;
+  }): Promise<void> {
+    const maxRetries = options?.maxRetries ?? 5;
+    const onRetry = options?.onRetry;
+
+    const tryOnce = (): Promise<void> =>
+      new Promise((resolve, reject) => {
+        if (this.socket.connected) {
+          resolve();
+          return;
+        }
+
+        const onConnect = () => {
+          this.socket.off("connect_error", onError);
+          resolve();
+        };
+
+        const onError = (err: Error) => {
+          this.socket.off("connect", onConnect);
+          this.socket.disconnect();
+          reject(err);
+        };
+
+        this.socket.once("connect", onConnect);
+        this.socket.once("connect_error", onError);
+        this.socket.connect();
+      });
+
+    const run = async (): Promise<void> => {
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          await tryOnce();
+          return;
+        } catch (err) {
+          if (attempt === maxRetries) throw err;
+          onRetry?.(attempt, maxRetries);
+          // Exponential backoff: 1s, 2s, 4s, 8s, 16s...
+          await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt - 1)));
+        }
       }
+    };
 
-      const onConnect = () => {
-        this.socket.off("connect_error", onError);
-        resolve();
-      };
-
-      const onError = (err: Error) => {
-        this.socket.off("connect", onConnect);
-        reject(err);
-      };
-
-      this.socket.once("connect", onConnect);
-      this.socket.once("connect_error", onError);
-      this.socket.connect();
-    });
+    return run();
   }
 
   disconnect(): void {

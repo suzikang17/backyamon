@@ -5,6 +5,7 @@ import { Application } from "pixi.js";
 import { Player, type GameState, type WinType, canOfferDouble } from "@backyamon/engine";
 import { GameController } from "@/game/GameController";
 import { SoundManager } from "@/audio/SoundManager";
+import { useGameKeyboard } from "@/hooks/useGameKeyboard";
 import { GameHUD } from "./GameHUD";
 
 interface GameCanvasProps {
@@ -53,103 +54,9 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
     gameState.currentPlayer === Player.Gold &&
     waitingForRoll;
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const ctrl = controllerRef.current;
-      if (!ctrl) return;
-
-      switch (e.key) {
-        case " ":
-        case "Enter":
-          e.preventDefault();
-          if (waitingForRoll) {
-            soundManager.resumeContext();
-            ctrl.rollForHuman();
-          } else if (ctrl.hasSelection()) {
-            ctrl.confirmMove();
-          }
-          break;
-        case "Escape":
-        case "q": // vim: quit selection
-          e.preventDefault();
-          ctrl.deselectPiece();
-          break;
-        case "Tab":
-        case "n": // vim: next target
-          e.preventDefault();
-          if (ctrl.hasSelection()) {
-            ctrl.cycleTarget(1);
-          }
-          break;
-        case "ArrowRight":
-        case "l": // vim: right
-          e.preventDefault();
-          if (ctrl.hasSelection()) {
-            ctrl.cycleTarget(1);
-          } else {
-            ctrl.navigatePieces("right");
-          }
-          break;
-        case "ArrowLeft":
-        case "h": // vim: left
-          e.preventDefault();
-          if (ctrl.hasSelection()) {
-            ctrl.cycleTarget(-1);
-          } else {
-            ctrl.navigatePieces("left");
-          }
-          break;
-        case "ArrowUp":
-        case "k": // vim: up
-          e.preventDefault();
-          if (ctrl.hasSelection()) {
-            ctrl.cycleTarget(-1);
-          } else {
-            ctrl.navigatePieces("up");
-          }
-          break;
-        case "ArrowDown":
-        case "j": // vim: down
-          e.preventDefault();
-          if (ctrl.hasSelection()) {
-            ctrl.cycleTarget(1);
-          } else {
-            ctrl.navigatePieces("down");
-          }
-          break;
-        case "u": // vim: undo
-          e.preventDefault();
-          ctrl.undoMove();
-          break;
-        case "z":
-          if (e.metaKey || e.ctrlKey) {
-            e.preventDefault();
-          }
-          ctrl.undoMove();
-          break;
-        case "m":
-          e.preventDefault();
-          soundManager.toggleMute();
-          break;
-        case "1":
-        case "2":
-        case "3":
-        case "4":
-        case "5":
-        case "6":
-          if (ctrl.hasSelection()) {
-            e.preventDefault();
-            ctrl.selectMoveByNumber(parseInt(e.key));
-          }
-          break;
-      }
-    };
-
-    // Use capture phase to intercept keys before any focused element swallows them
-    window.addEventListener("keydown", handleKeyDown, true);
-    return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [waitingForRoll, soundManager]);
+  // Shared keyboard shortcuts
+  const undoOptions = useMemo(() => ({ onUndo: handleUndo }), [handleUndo]);
+  useGameKeyboard(controllerRef, waitingForRoll, soundManager, undoOptions);
 
   useEffect(() => {
     const container = containerRef.current;

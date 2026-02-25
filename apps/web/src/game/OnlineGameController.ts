@@ -8,50 +8,29 @@ import {
   getLegalMoves,
   canMove,
 } from "@backyamon/engine";
-import { BoardRenderer } from "./BoardRenderer";
-import { PieceRenderer } from "./PieceRenderer";
-import { DiceRenderer } from "./DiceRenderer";
-import { InputHandler } from "./InputHandler";
-import { MoveLineRenderer } from "./MoveLineRenderer";
-import { AmbienceLayer } from "./AmbienceLayer";
 import { SocketClient } from "@/multiplayer/SocketClient";
-import { SoundManager } from "@/audio/SoundManager";
+import { BaseGameController } from "./BaseGameController";
 
-export class OnlineGameController {
-  private app: Application;
-  private boardRenderer!: BoardRenderer;
-  private pieceRenderer!: PieceRenderer;
-  private moveLineRenderer!: MoveLineRenderer;
-  private ambienceLayer!: AmbienceLayer;
-  private diceRenderer!: DiceRenderer;
-  private inputHandler!: InputHandler;
+export class OnlineGameController extends BaseGameController {
   private socketClient: SocketClient;
-  private sound: SoundManager;
-
-  private state!: GameState;
   private localPlayer: Player = Player.Gold;
   private roomId: string;
-  private destroyed = false;
 
-  // Track dice values for display
-  private currentDiceValues: number[] = [];
+  // Track the last dice values so we can show them in messages
+  private lastRollValues: [number, number] = [0, 0];
 
-  // Callbacks for UI updates
-  onStateChange: ((state: GameState) => void) | null = null;
+  // Callbacks specific to online play
   onGameOver:
     | ((winner: Player, winType: WinType, pointsWon: number) => void)
     | null = null;
-  onMessage: ((msg: string) => void) | null = null;
-  onWaitingForRoll: ((waiting: boolean) => void) | null = null;
   onOpponentDisconnected: (() => void) | null = null;
   onOpponentReconnected: (() => void) | null = null;
   onError: ((message: string) => void) | null = null;
 
   constructor(app: Application, socketClient: SocketClient, roomId: string) {
-    this.app = app;
+    super(app);
     this.socketClient = socketClient;
     this.roomId = roomId;
-    this.sound = SoundManager.getInstance();
   }
 
   /**
@@ -61,20 +40,7 @@ export class OnlineGameController {
   startGame(initialState: GameState, localPlayer: Player): void {
     if (this.destroyed) return;
 
-    const w = this.app.screen.width;
-    const h = this.app.screen.height;
-
-    this.boardRenderer = new BoardRenderer(this.app, w, h);
-    this.ambienceLayer = new AmbienceLayer(this.app, w, h);
-    this.pieceRenderer = new PieceRenderer(this.app, this.boardRenderer);
-    this.diceRenderer = new DiceRenderer(this.app, this.boardRenderer);
-    this.moveLineRenderer = new MoveLineRenderer(this.app, this.boardRenderer);
-    this.inputHandler = new InputHandler(
-      this.app,
-      this.boardRenderer,
-      this.pieceRenderer,
-      this.moveLineRenderer
-    );
+    this.initRenderers();
 
     this.state = initialState;
     this.localPlayer = localPlayer;
@@ -107,6 +73,7 @@ export class OnlineGameController {
 
     this.onWaitingForRoll?.(false);
     this.onMessage?.("Rolling...");
+    this.moveLineRenderer.clearOpponentMoves();
     this.socketClient.rollDice();
   }
 
@@ -229,17 +196,17 @@ export class OnlineGameController {
   private async handleDiceRolled(data: { dice: Dice }): Promise<void> {
     if (this.destroyed) return;
     this.sound.playSFX("dice-roll");
+    this.moveLineRenderer.clearOpponentMoves();
 
     const { dice } = data;
     this.state = { ...this.state, dice, phase: "MOVING" };
-    this.currentDiceValues =
-      dice.values[0] === dice.values[1]
-        ? [dice.values[0], dice.values[0], dice.values[0], dice.values[0]]
-        : [dice.values[0], dice.values[1]];
+    this.lastRollValues = [dice.values[0], dice.values[1]];
+    this.storeDiceValues(dice);
     this.emitStateChange();
 
     // Animate dice
     await this.diceRenderer.showRoll(dice);
+    this.diceShownAt = performance.now();
     if (this.destroyed) return;
 
     // If it's local player's turn, enable input
@@ -252,7 +219,8 @@ export class OnlineGameController {
         this.enableLocalInput();
       }
     } else {
-      this.onMessage?.("Opponent is moving...");
+      const [a, b] = this.lastRollValues;
+      this.onMessage?.(`Opponent rolled ${a} & ${b}`);
     }
   }
 
@@ -266,19 +234,7 @@ export class OnlineGameController {
     const movingPlayer = this.state.currentPlayer;
 
     // Play move SFX based on pre-move state
-    if (move.to === "off") {
-      this.sound.playSFX("bear-off");
-    } else if (typeof move.to === "number") {
-      const target = this.state.points[move.to];
-      const opp = this.state.currentPlayer === Player.Gold ? Player.Red : Player.Gold;
-      if (target && target.player === opp && target.count === 1) {
-        this.sound.playSFX("piece-hit");
-      } else {
-        this.sound.playSFX("piece-move");
-      }
-    } else {
-      this.sound.playSFX("piece-move");
-    }
+    this.playMoveSFX(move);
 
     // Update state from server
     this.state = state;
@@ -288,6 +244,11 @@ export class OnlineGameController {
     await this.pieceRenderer.animateMove(move, movingPlayer);
     if (this.destroyed) return;
     this.spawnLandingDust(move, movingPlayer);
+
+    // Show opponent move arc so the local player can see what happened
+    if (movingPlayer !== this.localPlayer) {
+      this.moveLineRenderer.showOpponentMove(move, movingPlayer);
+    }
 
     // Re-render to show correct state
     this.pieceRenderer.render(this.state);
@@ -315,20 +276,33 @@ export class OnlineGameController {
     ) {
       // No more moves; server will send turn-ended
       this.onMessage?.("No more moves...");
+    } else if (this.state.currentPlayer !== this.localPlayer) {
+      // Keep showing opponent's roll while they move
+      const [a, b] = this.lastRollValues;
+      this.onMessage?.(`Opponent rolled ${a} & ${b}`);
     }
   }
 
-  private handleTurnEnded(data: {
+  private async handleTurnEnded(data: {
     state: GameState;
     currentPlayer: Player;
-  }): void {
+  }): Promise<void> {
     if (this.destroyed) return;
 
     this.state = data.state;
-    this.diceRenderer.hide();
     this.inputHandler.disable();
     this.emitStateChange();
     this.pieceRenderer.render(this.state);
+
+    // Ensure dice stay visible for at least 1s so players can see the roll
+    const elapsed = performance.now() - this.diceShownAt;
+    const MIN_DICE_VISIBLE_MS = 1000;
+    if (elapsed < MIN_DICE_VISIBLE_MS) {
+      await new Promise((r) => setTimeout(r, MIN_DICE_VISIBLE_MS - elapsed));
+      if (this.destroyed) return;
+    }
+
+    this.diceRenderer.hide();
 
     if (this.state.phase === "GAME_OVER") {
       // game-over event will handle this
@@ -419,38 +393,10 @@ export class OnlineGameController {
     return this.localPlayer;
   }
 
-  getState(): GameState {
-    return this.state;
-  }
-
-  // ── Utilities ────────────────────────────────────────────────────────
-
-  private spawnLandingDust(move: Move, player: Player): void {
-    if (!this.ambienceLayer) return;
-    let pos: { x: number; y: number } | null = null;
-    if (move.to === "off") {
-      pos = this.boardRenderer.getBearOffPosition(player);
-    } else if (typeof move.to === "number") {
-      pos = this.boardRenderer.getPiecePosition(move.to, 0);
-    }
-    if (pos) {
-      this.ambienceLayer.spawnDustBurst(pos.x, pos.y);
-    }
-  }
-
-  private emitStateChange(): void {
-    this.sound.updateMood(this.state);
-    this.onStateChange?.(this.state);
-  }
+  // ── Lifecycle ────────────────────────────────────────────────────────
 
   destroy(): void {
-    this.destroyed = true;
-    this.sound.stopMusic();
     this.unbindServerEvents();
-    this.inputHandler?.destroy();
-    this.diceRenderer?.destroy();
-    this.pieceRenderer?.destroy();
-    this.ambienceLayer?.destroy();
-    this.boardRenderer?.destroy();
+    super.destroy();
   }
 }

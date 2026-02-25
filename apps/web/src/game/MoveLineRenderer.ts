@@ -6,6 +6,9 @@ const FADE_ALPHA = 0.4;
 const ACTIVE_ALPHA = 0.9;
 const LINE_WIDTH_FADE = 2.5;
 const LINE_WIDTH_ACTIVE = 4;
+const OPPONENT_ARC_COLOR = 0xff6644;
+const OPPONENT_ARC_ALPHA = 0.7;
+const OPPONENT_ARC_WIDTH = 3;
 
 /**
  * Renders curved arcs from moveable pieces to their legal targets.
@@ -22,6 +25,8 @@ export class MoveLineRenderer {
   private fadeContainer: Container;
   // Container for active (highlighted) lines drawn on top
   private activeContainer: Container;
+  // Container for opponent's recent move arcs
+  private opponentContainer: Container;
 
   // All line data for the current state
   private moveLines: MoveLineData[] = [];
@@ -40,8 +45,11 @@ export class MoveLineRenderer {
     this.fadeContainer.zIndex = 400;
     this.activeContainer = new Container();
     this.activeContainer.zIndex = 450;
+    this.opponentContainer = new Container();
+    this.opponentContainer.zIndex = 410;
     app.stage.addChild(this.fadeContainer);
     app.stage.addChild(this.activeContainer);
+    app.stage.addChild(this.opponentContainer);
   }
 
   /**
@@ -143,6 +151,83 @@ export class MoveLineRenderer {
     ).length;
   }
 
+  /**
+   * Show an opponent's completed move as an arc on the board.
+   * Arcs accumulate across the turn; call clearOpponentMoves() to reset.
+   */
+  showOpponentMove(move: Move, player: Player): void {
+    const startPos = this.getPointPos(move.from, player);
+    const endPos = this.getPointPos(move.to, player);
+    if (!startPos || !endPos) return;
+
+    const radius = this.boardRenderer.getPieceRadius();
+
+    // Curved arc (same logic as drawLine)
+    const midX = (startPos.x + endPos.x) / 2;
+    const midY = (startPos.y + endPos.y) / 2;
+    const dx = endPos.x - startPos.x;
+    const dy = endPos.y - startPos.y;
+    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+
+    const arcHeight = Math.min(dist * 0.25, radius * 3);
+    const nx = -dy / dist;
+    const ny = dx / dist;
+    let cpX = midX + nx * arcHeight;
+    let cpY = midY + ny * arcHeight;
+
+    const bounds = this.boardRenderer.getPlayAreaBounds();
+    const boardCenterY = bounds.y + bounds.height / 2;
+    const wantBelow = midY < boardCenterY;
+    const cpIsBelow = cpY > midY;
+    if (wantBelow !== cpIsBelow) {
+      cpX = midX - nx * arcHeight;
+      cpY = midY - ny * arcHeight;
+    }
+
+    // Offset start/end to piece edge
+    const stX = cpX - startPos.x;
+    const stY = cpY - startPos.y;
+    const stLen = Math.sqrt(stX * stX + stY * stY) || 1;
+    const edgeStartX = startPos.x + (stX / stLen) * radius;
+    const edgeStartY = startPos.y + (stY / stLen) * radius;
+
+    const tangentX = endPos.x - cpX;
+    const tangentY = endPos.y - cpY;
+    const tangentLen = Math.sqrt(tangentX * tangentX + tangentY * tangentY) || 1;
+    const tdx = tangentX / tangentLen;
+    const tdy = tangentY / tangentLen;
+    const edgeEndX = endPos.x - tdx * radius;
+    const edgeEndY = endPos.y - tdy * radius;
+
+    // Draw the arc
+    const g = new Graphics();
+    g.moveTo(edgeStartX, edgeStartY);
+    g.quadraticCurveTo(cpX, cpY, edgeEndX, edgeEndY);
+    g.stroke({ color: OPPONENT_ARC_COLOR, width: OPPONENT_ARC_WIDTH, alpha: OPPONENT_ARC_ALPHA });
+    this.opponentContainer.addChild(g);
+
+    // Arrowhead
+    const arrowSize = radius * 0.35;
+    const arrowG = new Graphics();
+    arrowG
+      .moveTo(edgeEndX, edgeEndY)
+      .lineTo(
+        edgeEndX - tdx * arrowSize + tdy * arrowSize * 0.5,
+        edgeEndY - tdy * arrowSize - tdx * arrowSize * 0.5
+      )
+      .lineTo(
+        edgeEndX - tdx * arrowSize - tdy * arrowSize * 0.5,
+        edgeEndY - tdy * arrowSize + tdx * arrowSize * 0.5
+      )
+      .closePath()
+      .fill({ color: OPPONENT_ARC_COLOR, alpha: OPPONENT_ARC_ALPHA });
+    this.opponentContainer.addChild(arrowG);
+  }
+
+  clearOpponentMoves(): void {
+    this.opponentContainer.removeChildren();
+  }
+
   clear(): void {
     this.fadeContainer.removeChildren();
     this.activeContainer.removeChildren();
@@ -153,8 +238,24 @@ export class MoveLineRenderer {
 
   destroy(): void {
     this.clear();
+    this.clearOpponentMoves();
     this.fadeContainer.destroy({ children: true });
     this.activeContainer.destroy({ children: true });
+    this.opponentContainer.destroy({ children: true });
+  }
+
+  /**
+   * Get a fixed position for a point/bar/off (no stack info needed).
+   * Used for opponent move arcs where we don't need precise piece positions.
+   */
+  private getPointPos(
+    point: number | "bar" | "off",
+    player: Player
+  ): { x: number; y: number } | null {
+    if (point === "bar") return this.boardRenderer.getBarPosition(player);
+    if (point === "off") return this.boardRenderer.getBearOffPosition(player);
+    if (typeof point === "number") return this.boardRenderer.getPointPosition(point);
+    return null;
   }
 
   private getPosition(
@@ -219,18 +320,33 @@ export class MoveLineRenderer {
       cpY = midY - ny * arcHeight;
     }
 
+    // Offset start/end to the edge of the piece (not center)
+    const startTangentX = cpX - lineData.startX;
+    const startTangentY = cpY - lineData.startY;
+    const startTangentLen = Math.sqrt(startTangentX * startTangentX + startTangentY * startTangentY) || 1;
+    const edgeStartX = lineData.startX + (startTangentX / startTangentLen) * radius;
+    const edgeStartY = lineData.startY + (startTangentY / startTangentLen) * radius;
+
+    const endTangentX = lineData.endX - cpX;
+    const endTangentY = lineData.endY - cpY;
+    const endTangentLen = Math.sqrt(endTangentX * endTangentX + endTangentY * endTangentY) || 1;
+    const tdx = endTangentX / endTangentLen;
+    const tdy = endTangentY / endTangentLen;
+    const edgeEndX = lineData.endX - tdx * radius;
+    const edgeEndY = lineData.endY - tdy * radius;
+
     // Draw the arc
     const g = new Graphics();
-    g.moveTo(lineData.startX, lineData.startY);
-    g.quadraticCurveTo(cpX, cpY, lineData.endX, lineData.endY);
+    g.moveTo(edgeStartX, edgeStartY);
+    g.quadraticCurveTo(cpX, cpY, edgeEndX, edgeEndY);
     g.stroke({ color, width: lineWidth, alpha });
     container.addChild(g);
 
     // Faded arcs: click to highlight the source piece
     if (!active) {
       const fadeHitG = new Graphics();
-      fadeHitG.moveTo(lineData.startX, lineData.startY);
-      fadeHitG.quadraticCurveTo(cpX, cpY, lineData.endX, lineData.endY);
+      fadeHitG.moveTo(edgeStartX, edgeStartY);
+      fadeHitG.quadraticCurveTo(cpX, cpY, edgeEndX, edgeEndY);
       fadeHitG.stroke({ color: 0xffffff, width: Math.max(radius * 1.2, 16), alpha: 0.001 });
       fadeHitG.eventMode = "static";
       fadeHitG.cursor = "pointer";
@@ -240,18 +356,11 @@ export class MoveLineRenderer {
       container.addChild(fadeHitG);
     }
 
-    // Tangent direction at the end point (for arrowhead orientation)
-    const tangentX = lineData.endX - cpX;
-    const tangentY = lineData.endY - cpY;
-    const tangentLen = Math.sqrt(tangentX * tangentX + tangentY * tangentY) || 1;
-    const tdx = tangentX / tangentLen;
-    const tdy = tangentY / tangentLen;
-
     // Arrowhead
     if (active) {
       const arrowSize = radius * 0.4;
-      const ax = lineData.endX;
-      const ay = lineData.endY;
+      const ax = edgeEndX;
+      const ay = edgeEndY;
       const arrowG = new Graphics();
       arrowG
         .moveTo(ax, ay)
@@ -269,8 +378,8 @@ export class MoveLineRenderer {
 
       // Wide invisible hit area for clicking
       const hitG = new Graphics();
-      hitG.moveTo(lineData.startX, lineData.startY);
-      hitG.quadraticCurveTo(cpX, cpY, lineData.endX, lineData.endY);
+      hitG.moveTo(edgeStartX, edgeStartY);
+      hitG.quadraticCurveTo(cpX, cpY, edgeEndX, edgeEndY);
       hitG.stroke({ color: 0xffffff, width: Math.max(radius * 1.4, 18), alpha: 0.001 });
       hitG.eventMode = "static";
       hitG.cursor = "pointer";
@@ -284,8 +393,8 @@ export class MoveLineRenderer {
     if (active && lineData.label !== null) {
       const labelSize = Math.max(10, radius * 0.7);
       // Offset the label slightly back along the tangent so it doesn't overlap the point
-      const labelX = lineData.endX - tdx * radius * 0.6;
-      const labelY = lineData.endY - tdy * radius * 0.6;
+      const labelX = edgeEndX - tdx * radius * 0.6;
+      const labelY = edgeEndY - tdy * radius * 0.6;
 
       const labelBg = new Graphics();
       labelBg.circle(labelX, labelY, labelSize * 0.75).fill({

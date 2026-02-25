@@ -28,62 +28,69 @@ export default function LobbyPage() {
   const [customRoomName, setCustomRoomName] = useState("");
   const [error, setError] = useState("");
   const [connecting, setConnecting] = useState(true);
+  const [retryInfo, setRetryInfo] = useState<{ attempt: number; max: number } | null>(null);
+
+  const setupConnection = useCallback(async (client: SocketClient) => {
+    setConnecting(true);
+    setError("");
+    setRetryInfo(null);
+
+    try {
+      await client.connect({
+        maxRetries: 5,
+        onRetry: (attempt, max) => {
+          setRetryInfo({ attempt, max });
+        },
+      });
+      setRetryInfo(null);
+      setConnected(true);
+
+      const identity = await client.register();
+      setDisplayName(identity.displayName);
+      setUsername(identity.username);
+      setConnecting(false);
+
+      client.listRooms();
+    } catch (err) {
+      setRetryInfo(null);
+      setError(
+        err instanceof Error ? err.message : "Failed to connect to server"
+      );
+      setConnecting(false);
+    }
+  }, []);
+
+  const handleRetry = useCallback(() => {
+    const client = socketRef.current;
+    if (client) setupConnection(client);
+  }, [setupConnection]);
 
   // Connect, register, and listen for room updates
   useEffect(() => {
     const client = new SocketClient();
     socketRef.current = client;
 
-    let destroyed = false;
-
-    const setup = async () => {
-      try {
-        await client.connect();
-        if (destroyed) return;
-        setConnected(true);
-
-        const identity = await client.register();
-        if (destroyed) return;
-        setDisplayName(identity.displayName);
-        setUsername(identity.username);
-        setConnecting(false);
-
-        client.listRooms();
-      } catch (err) {
-        if (destroyed) return;
-        setError(
-          err instanceof Error ? err.message : "Failed to connect to server"
-        );
-        setConnecting(false);
-      }
-    };
-
     client.on("disconnect", () => {
-      if (!destroyed) setConnected(false);
+      setConnected(false);
     });
 
     client.on("connect", () => {
-      if (!destroyed) {
-        setConnected(true);
-        client.listRooms();
-      }
+      setConnected(true);
+      client.listRooms();
     });
 
     client.on("room-list", (data: unknown) => {
-      if (!destroyed) {
-        const { rooms: roomList } = data as { rooms: WaitingRoom[] };
-        setRooms(roomList);
-      }
+      const { rooms: roomList } = data as { rooms: WaitingRoom[] };
+      setRooms(roomList);
     });
 
-    setup();
+    setupConnection(client);
 
     return () => {
-      destroyed = true;
       client.destroy();
       socketRef.current = null;
     };
-  }, []);
+  }, [setupConnection]);
 
   const handleQuickMatch = useCallback(async () => {
     const client = socketRef.current;
@@ -207,11 +214,17 @@ export default function LobbyPage() {
       <div className="flex items-center gap-2 mb-6">
         <div
           className={`w-2.5 h-2.5 rounded-full ${
-            connected ? "bg-[#006B3F]" : "bg-[#CE1126]"
+            connected ? "bg-[#006B3F]" : retryInfo || connecting ? "bg-[#FFD700] animate-pulse" : "bg-[#CE1126]"
           }`}
         />
         <span className="text-[#D4A857] text-sm font-heading">
-          {connecting ? "Connecting..." : connected ? "Connected" : "Disconnected"}
+          {retryInfo
+            ? `Server waking up... (${retryInfo.attempt}/${retryInfo.max})`
+            : connecting
+              ? "Connecting..."
+              : connected
+                ? "Connected"
+                : "Disconnected"}
         </span>
         {displayName && (
           <span className="text-[#F4E1C1] text-sm ml-1 font-heading">
@@ -247,8 +260,16 @@ export default function LobbyPage() {
 
       {/* Error */}
       {error && (
-        <div className="bg-[#CE1126]/20 border border-[#CE1126] rounded-xl px-6 py-2 mb-4 max-w-md text-center">
+        <div className="bg-[#CE1126]/20 border border-[#CE1126] rounded-xl px-6 py-3 mb-4 max-w-md text-center flex flex-col items-center gap-2">
           <p className="text-[#CE1126] text-sm font-heading">{error}</p>
+          {!connected && !connecting && (
+            <button
+              onClick={handleRetry}
+              className="rounded-xl wood-btn wood-btn-green px-6 py-1.5 text-sm font-bold text-[#FFD700] interactive-btn cursor-pointer font-heading"
+            >
+              Try Again
+            </button>
+          )}
         </div>
       )}
 

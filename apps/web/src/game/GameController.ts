@@ -19,14 +19,9 @@ import {
   KingTubby,
   type AIPlayer,
 } from "@backyamon/engine";
-import { BoardRenderer } from "./BoardRenderer";
-import { PieceRenderer, type PieceSet } from "./PieceRenderer";
-import { DiceRenderer } from "./DiceRenderer";
-import { InputHandler } from "./InputHandler";
-import { MoveLineRenderer } from "./MoveLineRenderer";
-import { AmbienceLayer } from "./AmbienceLayer";
-import { SoundManager } from "@/audio/SoundManager";
+import type { PieceSet } from "./PieceRenderer";
 import type { MusicStyle } from "@/audio/MusicEngine";
+import { BaseGameController } from "./BaseGameController";
 import {
   greetingMessage,
   turnStartMessage,
@@ -48,6 +43,12 @@ const DIFFICULTY_MUSIC: Record<Difficulty, MusicStyle> = {
   hard: "dancehall",
 };
 
+const PIECE_SETS: Record<Difficulty, PieceSet> = {
+  easy: "coconut",
+  medium: "vinyl",
+  hard: "lion",
+};
+
 function createAI(difficulty: Difficulty): AIPlayer {
   switch (difficulty) {
     case "easy":
@@ -59,38 +60,21 @@ function createAI(difficulty: Difficulty): AIPlayer {
   }
 }
 
-export class GameController {
-  private app: Application;
+export class GameController extends BaseGameController {
   private difficulty: Difficulty;
-  private boardRenderer!: BoardRenderer;
-  private pieceRenderer!: PieceRenderer;
-  private diceRenderer!: DiceRenderer;
-  private moveLineRenderer!: MoveLineRenderer;
-  private ambienceLayer!: AmbienceLayer;
-  private inputHandler!: InputHandler;
   private ai: AIPlayer;
-  private state!: GameState;
-  private destroyed = false;
-  private sound: SoundManager;
-
-  // Track dice values for display
-  private currentDiceValues: number[] = [];
 
   // Undo state: stack of previous states within the current turn
   private turnStateHistory: GameState[] = [];
 
-  // Callbacks for UI updates
-  onStateChange: ((state: GameState) => void) | null = null;
+  // Callbacks specific to single-player
   onGameOver: ((winner: Player, winType: WinType) => void) | null = null;
-  onMessage: ((msg: string) => void) | null = null;
-  onWaitingForRoll: ((waiting: boolean) => void) | null = null;
   onCanUndo: ((canUndo: boolean) => void) | null = null;
 
   constructor(app: Application, difficulty: Difficulty) {
-    this.app = app;
+    super(app);
     this.difficulty = difficulty;
     this.ai = createAI(difficulty);
-    this.sound = SoundManager.getInstance();
   }
 
   get aiName(): string {
@@ -101,26 +85,7 @@ export class GameController {
    * Start a new game.
    */
   startGame(): void {
-    const w = this.app.screen.width;
-    const h = this.app.screen.height;
-
-    const pieceSetMap: Record<Difficulty, PieceSet> = {
-      easy: "coconut",
-      medium: "vinyl",
-      hard: "lion",
-    };
-
-    this.boardRenderer = new BoardRenderer(this.app, w, h);
-    this.ambienceLayer = new AmbienceLayer(this.app, w, h);
-    this.pieceRenderer = new PieceRenderer(this.app, this.boardRenderer, pieceSetMap[this.difficulty]);
-    this.diceRenderer = new DiceRenderer(this.app, this.boardRenderer);
-    this.moveLineRenderer = new MoveLineRenderer(this.app, this.boardRenderer);
-    this.inputHandler = new InputHandler(
-      this.app,
-      this.boardRenderer,
-      this.pieceRenderer,
-      this.moveLineRenderer
-    );
+    this.initRenderers(PIECE_SETS[this.difficulty]);
 
     this.state = createInitialState();
     this.sound.setMusicStyle(DIFFICULTY_MUSIC[this.difficulty]);
@@ -200,44 +165,6 @@ export class GameController {
     });
   }
 
-  // -- Keyboard navigation delegation --
-
-  deselectPiece(): void {
-    this.inputHandler?.deselectCurrent();
-  }
-
-  selectNextPiece(): void {
-    this.inputHandler?.selectNextMoveable();
-  }
-
-  selectPrevPiece(): void {
-    this.inputHandler?.selectPrevMoveable();
-  }
-
-  navigatePieces(direction: "up" | "down" | "left" | "right"): void {
-    this.inputHandler?.navigatePieces(direction);
-  }
-
-  cycleTarget(direction: 1 | -1): void {
-    this.inputHandler?.cycleTarget(direction);
-  }
-
-  selectMoveByNumber(num: number): void {
-    this.inputHandler?.selectMoveByNumber(num);
-  }
-
-  confirmMove(): void {
-    this.inputHandler?.confirmMove();
-  }
-
-  hasSelection(): boolean {
-    return this.inputHandler?.hasSelection() ?? false;
-  }
-
-  hasTargetHighlighted(): boolean {
-    return this.inputHandler?.hasTargetHighlighted() ?? false;
-  }
-
   /**
    * Undo the last move made during the current turn.
    */
@@ -288,6 +215,9 @@ export class GameController {
 
     this.onWaitingForRoll?.(false);
 
+    // Clear opponent move arcs from previous AI turn
+    this.moveLineRenderer.clearOpponentMoves();
+
     // Reset undo stack at start of turn
     this.turnStateHistory = [];
     this.onCanUndo?.(false);
@@ -296,9 +226,7 @@ export class GameController {
     this.sound.playSFX("dice-roll");
     const dice = rollDice();
     this.state = { ...this.state, dice, phase: "MOVING" };
-    this.currentDiceValues = dice.values[0] === dice.values[1]
-      ? [dice.values[0], dice.values[0], dice.values[0], dice.values[0]]
-      : [dice.values[0], dice.values[1]];  // originalValues tracks all uses (4 for doubles) for dimming logic
+    this.storeDiceValues(dice);
     this.emitStateChange();
 
     // Show dice animation
@@ -403,9 +331,7 @@ export class GameController {
     this.sound.playSFX("dice-roll");
     const dice = rollDice();
     this.state = { ...this.state, dice, phase: "MOVING" };
-    this.currentDiceValues = dice.values[0] === dice.values[1]
-      ? [dice.values[0], dice.values[0], dice.values[0], dice.values[0]]
-      : [dice.values[0], dice.values[1]];  // originalValues tracks all uses (4 for doubles) for dimming logic
+    this.storeDiceValues(dice);
     this.emitStateChange();
 
     // Show dice animation
@@ -448,6 +374,9 @@ export class GameController {
       await this.pieceRenderer.animateMove(move, Player.Red);
       if (this.destroyed) return;
       this.spawnLandingDust(move, Player.Red);
+
+      // Show arc for this AI move
+      this.moveLineRenderer.showOpponentMove(move, Player.Red);
 
       this.pieceRenderer.render(this.state);
 
@@ -500,60 +429,7 @@ export class GameController {
     }
   }
 
-  /**
-   * Play the appropriate SFX for a move, inspecting the current state
-   * before the move is applied.
-   */
-  private playMoveSFX(move: Move): void {
-    if (move.to === "off") {
-      this.sound.playSFX("bear-off");
-      return;
-    }
-
-    // Check for a hit (opponent blot on target)
-    if (typeof move.to === "number") {
-      const target = this.state.points[move.to];
-      const opp =
-        this.state.currentPlayer === Player.Gold ? Player.Red : Player.Gold;
-      if (target && target.player === opp && target.count === 1) {
-        this.sound.playSFX("piece-hit");
-        return;
-      }
-    }
-
-    this.sound.playSFX("piece-move");
-  }
-
-  private spawnLandingDust(move: Move, player: Player): void {
-    if (!this.ambienceLayer) return;
-    let pos: { x: number; y: number } | null = null;
-    if (move.to === "off") {
-      pos = this.boardRenderer.getBearOffPosition(player);
-    } else if (typeof move.to === "number") {
-      pos = this.boardRenderer.getPiecePosition(move.to, 0);
-    }
-    if (pos) {
-      this.ambienceLayer.spawnDustBurst(pos.x, pos.y);
-    }
-  }
-
-  private emitStateChange(): void {
-    this.sound.updateMood(this.state);
-    this.onStateChange?.(this.state);
-  }
-
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  destroy(): void {
-    this.sound.stopMusic();
-    this.destroyed = true;
-    this.inputHandler?.destroy();
-    this.moveLineRenderer?.destroy();
-    this.diceRenderer?.destroy();
-    this.pieceRenderer?.destroy();
-    this.ambienceLayer?.destroy();
-    this.boardRenderer?.destroy();
   }
 }
