@@ -39,7 +39,8 @@ import {
   tryMatch,
 } from "./matchmaking.js";
 import { db } from "./db/index.js";
-import { matches } from "./db/schema.js";
+import { guests, matches } from "./db/schema.js";
+import { isNotNull, sql } from "drizzle-orm";
 
 // Map socketId -> playerId for session tracking
 const socketToPlayer = new Map<string, { playerId: string; displayName: string }>();
@@ -225,6 +226,23 @@ io.on("connection", (socket) => {
 
   socket.on("list-rooms", () => {
     socket.emit("room-list", { rooms: getWaitingRooms() });
+  });
+
+  // ── Player Listing ──────────────────────────────────────────────────
+
+  socket.on("list-players", () => {
+    const rows = db
+      .select({
+        username: guests.username,
+        createdAt: guests.createdAt,
+        wins: sql<number>`(SELECT COUNT(*) FROM matches WHERE winner_id = ${guests.id})`,
+        losses: sql<number>`(SELECT COUNT(*) FROM matches WHERE (gold_player_id = ${guests.id} OR red_player_id = ${guests.id}) AND winner_id IS NOT NULL AND winner_id != ${guests.id})`,
+      })
+      .from(guests)
+      .where(isNotNull(guests.username))
+      .all();
+
+    socket.emit("player-list", { players: rows });
   });
 
   // ── Room Creation ─────────────────────────────────────────────────────

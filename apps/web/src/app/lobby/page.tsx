@@ -11,6 +11,13 @@ interface WaitingRoom {
   createdAt: string;
 }
 
+interface PlayerInfo {
+  username: string;
+  createdAt: string;
+  wins: number;
+  losses: number;
+}
+
 type LobbyView = "lobby" | "quick-match" | "waiting";
 
 export default function LobbyPage() {
@@ -24,6 +31,7 @@ export default function LobbyPage() {
   const [usernameError, setUsernameError] = useState("");
   const [claimingUsername, setClaimingUsername] = useState(false);
   const [rooms, setRooms] = useState<WaitingRoom[]>([]);
+  const [players, setPlayers] = useState<PlayerInfo[]>([]);
   const [roomCode, setRoomCode] = useState("");
   const [customRoomName, setCustomRoomName] = useState("");
   const [error, setError] = useState("");
@@ -51,6 +59,7 @@ export default function LobbyPage() {
       setConnecting(false);
 
       client.listRooms();
+      client.listPlayers();
     } catch (err) {
       setRetryInfo(null);
       setError(
@@ -93,6 +102,11 @@ export default function LobbyPage() {
     client.on("room-list", (data: unknown) => {
       const { rooms: roomList } = data as { rooms: WaitingRoom[] };
       setRooms(roomList);
+    });
+
+    client.on("player-list", (data: unknown) => {
+      const { players: list } = data as { players: PlayerInfo[] };
+      setPlayers(list);
     });
 
     setupConnection(client);
@@ -421,6 +435,32 @@ export default function LobbyPage() {
           </div>
         )}
       </div>
+
+      {/* Players list */}
+      {view === "lobby" && players.length > 0 && (
+        <div className="w-full max-w-3xl mt-8">
+          <p className="text-[#D4A857] text-xs font-heading text-center tracking-wider uppercase mb-3">
+            Registered Players
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+            {players.map((p) => (
+              <div
+                key={p.username}
+                className="rounded-xl bg-[#1A1A0E]/80 border border-[#8B4513]/40 px-3 py-2 text-center"
+              >
+                <span className="text-[#FFD700] font-heading text-sm block">
+                  {p.username}
+                </span>
+                {(p.wins > 0 || p.losses > 0) && (
+                  <span className="text-[#D4A857]/50 font-heading text-xs">
+                    {p.wins}W - {p.losses}L
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Link
         href="/"

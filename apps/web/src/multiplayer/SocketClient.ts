@@ -265,6 +265,10 @@ export class SocketClient {
     this.socket.emit("leave-queue");
   }
 
+  listPlayers(): void {
+    this.socket.emit("list-players");
+  }
+
   listRooms(): void {
     this.socket.emit("list-rooms");
   }
