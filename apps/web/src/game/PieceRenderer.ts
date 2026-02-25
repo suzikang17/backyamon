@@ -418,26 +418,53 @@ export class PieceRenderer {
     animPiece.zIndex = 1000;
     this.container.addChild(animPiece);
 
+    // Drop shadow under the animated piece
+    const shadow = new Graphics();
+    shadow.ellipse(0, 0, radius * 0.7, radius * 0.25)
+      .fill({ color: 0x000000, alpha: 0.25 });
+    shadow.zIndex = 999;
+    this.container.addChild(shadow);
+
     // Animate with ticker
     return new Promise<void>((resolve) => {
-      const duration = 300; // ms
+      const duration = 350; // ms
       const startTime = performance.now();
+      const dx = endX - startX;
+      const dy = endY - startY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      // Arc height scales with distance, with a nice minimum
+      const arcHeight = Math.max(radius * 1.5, dist * 0.2);
 
       const tickFn = () => {
         const elapsed = performance.now() - startTime;
         const t = Math.min(elapsed / duration, 1);
-        // Ease out cubic
+        // Ease out cubic for lateral movement
         const ease = 1 - Math.pow(1 - t, 3);
 
-        animPiece.x = startX + (endX - startX) * ease;
-        animPiece.y = startY + (endY - startY) * ease;
+        const baseX = startX + dx * ease;
+        const baseY = startY + dy * ease;
 
-        // Slight arc
-        const arcHeight = Math.abs(endX - startX) * 0.15;
-        animPiece.y -= Math.sin(t * Math.PI) * arcHeight;
+        // Hop arc (parabolic)
+        const hop = Math.sin(t * Math.PI) * arcHeight;
+
+        animPiece.x = baseX;
+        animPiece.y = baseY - hop;
+
+        // Scale: slight grow at peak, settle to normal
+        const scalePulse = 1 + Math.sin(t * Math.PI) * 0.12;
+        animPiece.scale.set(scalePulse);
+
+        // Shadow follows ground position, squashes at peak
+        shadow.x = baseX;
+        shadow.y = baseY + radius * 0.3;
+        const shadowScale = 1 - Math.sin(t * Math.PI) * 0.3;
+        shadow.scale.set(shadowScale, shadowScale * 0.6);
+        shadow.alpha = 0.25 * (1 - Math.sin(t * Math.PI) * 0.5);
 
         if (t >= 1) {
           this.app.ticker.remove(tickFn);
+          shadow.destroy();
           animPiece.destroy();
           resolve();
         }

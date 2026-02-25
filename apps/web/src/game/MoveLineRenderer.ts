@@ -6,9 +6,9 @@ const FADE_ALPHA = 0.4;
 const ACTIVE_ALPHA = 0.9;
 const LINE_WIDTH_FADE = 2.5;
 const LINE_WIDTH_ACTIVE = 4;
-const OPPONENT_ARC_COLOR = 0xff6644;
-const OPPONENT_ARC_ALPHA = 0.7;
-const OPPONENT_ARC_WIDTH = 3;
+const OPPONENT_ARC_COLOR = 0xf0a070;
+const OPPONENT_ARC_ALPHA = 0.45;
+const OPPONENT_ARC_WIDTH = 2;
 
 /**
  * Renders curved arcs from moveable pieces to their legal targets.
@@ -217,8 +217,8 @@ export class MoveLineRenderer {
     g.stroke({ color: OPPONENT_ARC_COLOR, width: OPPONENT_ARC_WIDTH, alpha: OPPONENT_ARC_ALPHA });
     this.opponentContainer.addChild(g);
 
-    // Arrowhead
-    const arrowSize = radius * 0.35;
+    // Arrowhead (small, subtle)
+    const arrowSize = radius * 0.25;
     const arrowG = new Graphics();
     arrowG
       .moveTo(edgeEndX, edgeEndY)

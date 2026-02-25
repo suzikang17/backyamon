@@ -17,6 +17,7 @@ interface GameHUDProps {
   soundManager: SoundManager;
   showMoveArcs?: boolean;
   onToggleMoveArcs?: (show: boolean) => void;
+  children?: React.ReactNode;
 }
 
 export function GameHUD({
@@ -32,6 +33,7 @@ export function GameHUD({
   soundManager,
   showMoveArcs,
   onToggleMoveArcs,
+  children,
 }: GameHUDProps) {
   const [muted, setMuted] = useState(soundManager.isMuted());
   const [musicPlaying, setMusicPlaying] = useState(false);
@@ -80,82 +82,86 @@ export function GameHUD({
   }
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-10">
-      {/* Top bar: opponent info */}
-      <div className="flex items-center justify-between px-3 pt-2">
-        <div className="flex items-center gap-2 pointer-events-auto">
-          <PlayerBadge name={opponentName} color={opponentColor} />
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Score display (match play) */}
-          {state.matchLength > 1 && (
-            <div className="bg-[#1A1A0E]/80 rounded-lg px-3 py-1 text-xs font-heading border border-[#8B4513]">
-              <span className="text-[#D4A857]">Match to {state.matchLength}: </span>
-              <span className="text-[#FFD700]">
-                {state.matchScore[playerColor]}
-              </span>
-              <span className="text-[#D4A857]"> - </span>
-              <span className="text-[#CE1126]">
-                {state.matchScore[opponentColor]}
-              </span>
-            </div>
-          )}
-          {/* Volume toggle */}
-          <button
-            onClick={(e) => { (e.target as HTMLElement).blur(); handleToggleMute(); }}
-            tabIndex={-1}
-            className="pointer-events-auto bg-[#1A1A0E]/80 hover:bg-[#1A1A0E] rounded-lg p-2 sm:p-1.5 border border-[#8B4513] transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
-            title={muted ? "Unmute" : "Mute"}
-          >
-            {muted ? <SpeakerMutedIcon /> : <SpeakerIcon />}
-          </button>
-          {/* Music toggle */}
-          <button
-            onClick={(e) => {
-              (e.target as HTMLElement).blur();
-              soundManager.resumeContext();
-              if (soundManager.isMusicPlaying()) {
-                soundManager.stopMusic();
-              } else {
-                soundManager.startMusic();
-              }
-              setMusicPlaying(!musicPlaying);
-            }}
-            tabIndex={-1}
-            className="pointer-events-auto bg-[#1A1A0E]/80 hover:bg-[#1A1A0E] rounded-lg p-2 sm:p-1.5 border border-[#8B4513] transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
-            title={musicPlaying ? "Stop Music" : "Start Music"}
-          >
-            {musicPlaying ? <MusicOnIcon /> : <MusicOffIcon />}
-          </button>
-          {/* Settings gear */}
-          {onToggleMoveArcs && (
-            <div className="relative">
-              <button
-                onClick={(e) => { (e.target as HTMLElement).blur(); setSettingsOpen(!settingsOpen); }}
-                tabIndex={-1}
-                className="pointer-events-auto bg-[#1A1A0E]/80 hover:bg-[#1A1A0E] rounded-lg p-2 sm:p-1.5 border border-[#8B4513] transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
-                title="Settings"
-              >
-                <GearIcon />
-              </button>
-              {settingsOpen && (
-                <div className="pointer-events-auto absolute right-0 top-full mt-1 bg-[#1A1A0E]/95 rounded-lg border border-[#8B4513] p-3 min-w-[180px] z-50 shadow-lg">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={showMoveArcs ?? true}
-                      onChange={(e) => onToggleMoveArcs(e.target.checked)}
-                      className="accent-[#D4A857] w-4 h-4 cursor-pointer"
-                    />
-                    <span className="font-heading text-xs text-[#D4A857]">Show move arcs</span>
-                  </label>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+    <>
+    {/* Top bar: opponent name + controls — ABOVE the board */}
+    <div className="flex items-center justify-between px-1 pb-1">
+      <div className="flex items-center gap-2">
+        <PlayerBadge name={opponentName} color={opponentColor} />
+        {/* Score display (match play) */}
+        {state.matchLength > 1 && (
+          <div className="bg-[#1A1A0E]/80 rounded-lg px-3 py-1 text-xs font-heading border border-[#8B4513]">
+            <span className="text-[#D4A857]">Match to {state.matchLength}: </span>
+            <span className="text-[#FFD700]">
+              {state.matchScore[playerColor]}
+            </span>
+            <span className="text-[#D4A857]"> - </span>
+            <span className="text-[#CE1126]">
+              {state.matchScore[opponentColor]}
+            </span>
+          </div>
+        )}
       </div>
+      <div className="flex items-center gap-2">
+        {/* Volume toggle */}
+        <button
+          onClick={(e) => { (e.target as HTMLElement).blur(); handleToggleMute(); }}
+          tabIndex={-1}
+          className="bg-[#1A1A0E]/80 hover:bg-[#1A1A0E] rounded-lg p-2 sm:p-1.5 border border-[#8B4513] transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+          title={muted ? "Unmute" : "Mute"}
+        >
+          {muted ? <SpeakerMutedIcon /> : <SpeakerIcon />}
+        </button>
+        {/* Music toggle */}
+        <button
+          onClick={(e) => {
+            (e.target as HTMLElement).blur();
+            soundManager.resumeContext();
+            if (soundManager.isMusicPlaying()) {
+              soundManager.stopMusic();
+            } else {
+              soundManager.startMusic();
+            }
+            setMusicPlaying(!musicPlaying);
+          }}
+          tabIndex={-1}
+          className="bg-[#1A1A0E]/80 hover:bg-[#1A1A0E] rounded-lg p-2 sm:p-1.5 border border-[#8B4513] transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+          title={musicPlaying ? "Stop Music" : "Start Music"}
+        >
+          {musicPlaying ? <MusicOnIcon /> : <MusicOffIcon />}
+        </button>
+        {/* Settings gear */}
+        {onToggleMoveArcs && (
+          <div className="relative">
+            <button
+              onClick={(e) => { (e.target as HTMLElement).blur(); setSettingsOpen(!settingsOpen); }}
+              tabIndex={-1}
+              className="bg-[#1A1A0E]/80 hover:bg-[#1A1A0E] rounded-lg p-2 sm:p-1.5 border border-[#8B4513] transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+              title="Settings"
+            >
+              <GearIcon />
+            </button>
+            {settingsOpen && (
+              <div className="absolute right-0 top-full mt-1 bg-[#1A1A0E]/95 rounded-lg border border-[#8B4513] p-3 min-w-[180px] z-50 shadow-lg">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showMoveArcs ?? true}
+                    onChange={(e) => onToggleMoveArcs(e.target.checked)}
+                    className="accent-[#D4A857] w-4 h-4 cursor-pointer"
+                  />
+                  <span className="font-heading text-xs text-[#D4A857]">Show move arcs</span>
+                </label>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
 
+    {/* Board area — canvas (children) with overlay on top */}
+    <div className="relative">
+      {children}
+      <div className="absolute inset-0 pointer-events-none z-10">
       {/* Doubling cube - small passive indicator, only visible when value > 1 */}
       {cubeValue > 1 && (
         <div className="absolute left-3 top-1/2 -translate-y-1/2">
@@ -165,10 +171,9 @@ export function GameHUD({
         </div>
       )}
 
-      {/* Bottom bar: player info + turn indicator (doubles as roll button) */}
+      {/* Bottom bar: undo + turn indicator / roll button */}
       <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between px-3 pb-2">
         <div className="flex items-center gap-2 pointer-events-auto">
-          <PlayerBadge name="You" color={playerColor} />
           {canUndo && onUndo && (
             <button
               onClick={(e) => { (e.target as HTMLElement).blur(); onUndo(); }}
@@ -220,6 +225,13 @@ export function GameHUD({
         )}
       </div>
     </div>
+    </div>
+
+    {/* Bottom bar: player name — BELOW the board */}
+    <div className="flex items-center justify-between px-1 pt-1">
+      <PlayerBadge name="You" color={playerColor} />
+    </div>
+    </>
   );
 }
 

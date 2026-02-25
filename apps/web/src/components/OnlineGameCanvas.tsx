@@ -176,15 +176,7 @@ export function OnlineGameCanvas({
         </div>
       )}
 
-      {/* Canvas container */}
-      <div
-        ref={containerRef}
-        className="w-full aspect-[8/5] rounded-2xl border-2 border-[#8B4513] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
-        onClick={handleRollClick}
-        style={{ cursor: waitingForRoll ? "pointer" : "default", touchAction: "manipulation" }}
-      />
-
-      {/* HUD overlay */}
+      {/* HUD renders: top bar (outside board), overlay, bottom bar (outside board) */}
       <GameHUD
         state={gameState}
         playerColor={localPlayer}
@@ -196,9 +188,17 @@ export function OnlineGameCanvas({
         soundManager={soundManager}
         showMoveArcs={showMoveArcs}
         onToggleMoveArcs={handleToggleMoveArcs}
-      />
+      >
+        {/* Canvas container — passed as children so HUD wraps around it */}
+        <div
+          ref={containerRef}
+          className="w-full aspect-[8/5] rounded-2xl border-2 border-[#8B4513] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
+          onClick={handleRollClick}
+          style={{ cursor: waitingForRoll ? "pointer" : "default", touchAction: "manipulation" }}
+        />
+      </GameHUD>
 
-      {/* Message bar — below the canvas, not overlapping the board */}
+      {/* Message bar */}
       <div className="h-8 flex items-center justify-center">
         {message && (
           <p className="text-[#D4A857] font-heading text-xs sm:text-sm whitespace-nowrap">
