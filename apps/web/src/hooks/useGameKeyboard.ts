@@ -7,7 +7,8 @@ import { SoundManager } from "@/audio/SoundManager";
  *
  * Space/Enter  - Roll dice or confirm move
  * Escape/Q     - Deselect piece
- * Tab/N        - Cycle targets forward
+ * Tab          - Cycle starting pieces (moveable pieces)
+ * `            - Cycle targets for selected piece
  * Arrow keys   - Navigate pieces / cycle targets
  * hjkl         - Vim-style navigation
  * U / Ctrl+Z   - Undo (when onUndo provided)
@@ -44,7 +45,14 @@ export function useGameKeyboard(
           ctrl.deselectPiece();
           break;
         case "Tab":
-        case "n":
+          e.preventDefault();
+          if (e.shiftKey) {
+            ctrl.selectPrevPiece();
+          } else {
+            ctrl.selectNextPiece();
+          }
+          break;
+        case "`":
           e.preventDefault();
           if (ctrl.hasSelection()) {
             ctrl.cycleTarget(1);

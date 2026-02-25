@@ -96,7 +96,7 @@ export class MoveLineRenderer {
         startY: start.y,
         endX: end.x,
         endY: end.y,
-        label: groupMoves.length > 1 ? labelIdx : null,
+        label: labelIdx,
       };
       this.moveLines.push(lineData);
 
