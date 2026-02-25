@@ -236,6 +236,12 @@ export class GameController extends BaseGameController {
 
     // Determine who goes first — use both dice for the first turn
     const firstPlayer = goldDie > redDie ? Player.Gold : Player.Red;
+
+    // Highlight the winning die (left=Red/0, right=Gold/1)
+    const winnerIndex: 0 | 1 = firstPlayer === Player.Gold ? 1 : 0;
+    await this.diceRenderer.highlightOpeningWinner(winnerIndex);
+    if (this.destroyed) return;
+
     const dice = rollDice([Math.max(goldDie, redDie), Math.min(goldDie, redDie)]);
     this.state = {
       ...this.state,
@@ -248,7 +254,7 @@ export class GameController extends BaseGameController {
 
     if (firstPlayer === Player.Gold) {
       this.onMessage?.(`You rolled ${goldDie} vs ${redDie} — you go first!`);
-      await this.delay(800);
+      await this.delay(1000);
       if (this.destroyed) return;
       // Show the combined dice in normal position for move selection
       await this.diceRenderer.showRoll(dice);
@@ -256,7 +262,7 @@ export class GameController extends BaseGameController {
       this.enableHumanInput();
     } else {
       this.onMessage?.(`${this.ai.name} rolled ${redDie} vs ${goldDie} — they go first!`);
-      await this.delay(800);
+      await this.delay(1000);
       if (this.destroyed) return;
       this.diceRenderer.hide();
       this.startAIFirstTurn();

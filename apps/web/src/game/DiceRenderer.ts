@@ -108,6 +108,56 @@ export class DiceRenderer {
     await this.animateRoll();
   }
 
+  /**
+   * After an opening roll, highlight the winning die and fade the losing one.
+   * winnerIndex: 0 = left die won, 1 = right die won.
+   */
+  async highlightOpeningWinner(winnerIndex: 0 | 1): Promise<void> {
+    const winner = this.dieContainers[winnerIndex];
+    const loser = this.dieContainers[1 - winnerIndex];
+    if (!winner || !loser) return;
+
+    // Add a glow ring behind the winning die
+    const glowSize = this.dieSize * 0.85;
+    const glow = new Graphics();
+    glow.circle(0, 0, glowSize).fill({ color: 0xffd700, alpha: 0.25 });
+    glow.circle(0, 0, glowSize * 0.8).fill({ color: 0xffd700, alpha: 0.15 });
+    glow.x = winner.x;
+    glow.y = winner.y;
+    // Insert glow behind the dice
+    this.container.addChildAt(glow, 0);
+
+    return new Promise<void>((resolve) => {
+      const startTime = performance.now();
+      const duration = 500;
+
+      const tickFn = () => {
+        const elapsed = performance.now() - startTime;
+        const t = Math.min(elapsed / duration, 1);
+        // Ease out cubic
+        const ease = 1 - Math.pow(1 - t, 3);
+
+        // Winner: scale up slightly
+        winner.scale.set(1 + ease * 0.2);
+
+        // Loser: fade and shrink
+        loser.alpha = 1 - ease * 0.65;
+        loser.scale.set(1 - ease * 0.1);
+
+        // Glow: pulse in
+        glow.alpha = ease * 0.8;
+        glow.scale.set(0.6 + ease * 0.4);
+
+        if (t >= 1) {
+          this.app.ticker.remove(tickFn);
+          resolve();
+        }
+      };
+
+      this.app.ticker.add(tickFn);
+    });
+  }
+
   private async animateRoll(): Promise<void> {
     return new Promise<void>((resolve) => {
       const startTime = performance.now();

@@ -244,11 +244,17 @@ export class OnlineGameController extends BaseGameController {
     if (this.destroyed) return;
     this.sound.playSFX("dice-roll");
 
-    // Show dice on separate sides: Red on left, Gold on right
+    // Show dice on separate sides: opponent on left, local on right
     const isGold = this.localPlayer === Player.Gold;
     const leftDie = isGold ? data.redDie : data.goldDie;
     const rightDie = isGold ? data.goldDie : data.redDie;
     await this.diceRenderer.showOpeningRoll(leftDie, rightDie);
+    if (this.destroyed) return;
+
+    // Highlight the winning die (left=opponent/0, right=local/1)
+    const isLocal = data.firstPlayer === this.localPlayer;
+    const winnerIndex: 0 | 1 = isLocal ? 1 : 0;
+    await this.diceRenderer.highlightOpeningWinner(winnerIndex);
     if (this.destroyed) return;
 
     // Update state
@@ -261,7 +267,6 @@ export class OnlineGameController extends BaseGameController {
     this.storeDiceValues(data.dice);
     this.emitStateChange();
 
-    const isLocal = data.firstPlayer === this.localPlayer;
     const myDie = isGold ? data.goldDie : data.redDie;
     const theirDie = isGold ? data.redDie : data.goldDie;
 
@@ -273,7 +278,7 @@ export class OnlineGameController extends BaseGameController {
         await this.diceRenderer.showRoll(data.dice);
         if (this.destroyed) return;
         this.enableLocalInput();
-      }, 800);
+      }, 1000);
     } else {
       this.onMessage?.(`Opponent rolled ${theirDie} vs ${myDie} — they go first`);
     }
