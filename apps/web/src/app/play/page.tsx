@@ -334,6 +334,20 @@ function OnlinePlayContent({ roomId }: { roomId: string }) {
         client.on("connect", () => {
           if (!destroyed) setConnected(true);
         });
+
+        // Auto-rejoin room when socket.io reconnects after a drop
+        client.onReconnect(async () => {
+          if (destroyed) return;
+          try {
+            await client.register();
+            const id = client.getIdentity();
+            if (id) {
+              client.reconnectToGame(id.playerId, roomId);
+            }
+          } catch {
+            // reconnect-to-game will emit room-joined or error
+          }
+        });
       } catch (err) {
         if (destroyed) return;
         setError(

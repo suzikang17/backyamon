@@ -44,14 +44,14 @@ import { matches } from "./db/schema.js";
 // Map socketId -> playerId for session tracking
 const socketToPlayer = new Map<string, { playerId: string; displayName: string }>();
 
-const DISCONNECT_TIMEOUT_MS = 30_000; // 30 seconds
-
 const httpServer = createServer();
 const io = new Server(httpServer, {
   cors: {
     origin: process.env.WEB_URL || "http://localhost:3000",
     methods: ["GET", "POST"],
   },
+  pingInterval: 10_000, // 10s — check connection frequently
+  pingTimeout: 20_000,  // 20s — allow some slack before declaring dead
 });
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -115,7 +115,7 @@ function handleGameOver(room: GameRoom): void {
   });
 
   saveMatchResult(room, winnerId, state.winType, pointsWon);
-  removeRoom(room.id);
+  // Room persists — players can rematch or leave explicitly
 }
 
 function processMatchmaking(): void {
@@ -645,54 +645,13 @@ io.on("connection", (socket) => {
       return;
     }
 
-    // Notify opponent
+    // Notify opponent — room persists, no forfeit timer
     const opponentSocketId = getOpponentSocket(room, socket.id);
     if (opponentSocketId) {
       io.to(opponentSocketId).emit("opponent-disconnected");
     }
 
-    // Start 30-second reconnection timer
-    if (room.disconnectTimer) {
-      clearTimeout(room.disconnectTimer);
-    }
-
-    const disconnectedRole = role;
-
-    room.disconnectTimer = setTimeout(() => {
-      // Timer expired: opponent wins by forfeit
-      const forfeitRoom = getRoom(room.id);
-      if (!forfeitRoom) return;
-
-      // Determine winner (the one still connected)
-      const winnerPlayer =
-        disconnectedRole === Player.Gold ? Player.Red : Player.Gold;
-      const winnerConn =
-        winnerPlayer === Player.Gold ? forfeitRoom.gold : forfeitRoom.red;
-      const winnerId = winnerConn?.playerId ?? "unknown";
-
-      forfeitRoom.state = {
-        ...forfeitRoom.state,
-        phase: "GAME_OVER",
-        winner: winnerPlayer,
-        winType: "ya_mon",
-      };
-
-      const pointsWon = getPointsWon(
-        "ya_mon",
-        forfeitRoom.state.doublingCube.value,
-      );
-
-      broadcastToRoom(forfeitRoom, "game-over", {
-        winner: winnerPlayer,
-        winType: "ya_mon",
-        pointsWon,
-      });
-
-      saveMatchResult(forfeitRoom, winnerId, "ya_mon", pointsWon);
-      removeRoom(forfeitRoom.id);
-    }, DISCONNECT_TIMEOUT_MS);
-
-    // Don't remove from socketToPlayer yet -- they might reconnect
+    // Don't remove from socketToPlayer — they might reconnect
   });
 
   // ── Reconnection ────────────────────────────────────────────────────
@@ -756,6 +715,33 @@ io.on("connection", (socket) => {
       }
     },
   );
+
+  // ── Leave / Delete Room ──────────────────────────────────────────────
+
+  socket.on("leave-room", ({ roomId }: { roomId: string }) => {
+    const room = getRoom(roomId);
+    if (!room) return;
+
+    const role = getPlayerRole(room, socket.id);
+    socket.leave(room.id);
+
+    // Notify opponent before removing
+    const opponentSocketId = getOpponentSocket(room, socket.id);
+    if (opponentSocketId) {
+      io.to(opponentSocketId).emit("opponent-left");
+    }
+
+    // Clear the leaving player's slot
+    if (role === Player.Gold) room.gold = null;
+    if (role === Player.Red) room.red = null;
+
+    // If both slots empty, remove room entirely
+    if (!room.gold && !room.red) {
+      removeRoom(room.id);
+    }
+
+    broadcastRoomList();
+  });
 });
 
 const PORT = process.env.PORT || 3001;

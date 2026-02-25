@@ -13,6 +13,8 @@ interface GuestIdentity {
   token: string;
 }
 
+const USERNAME_KEY = "backyamon_username";
+
 function loadGuestIdentity(): GuestIdentity | null {
   if (typeof window === "undefined") return null;
   try {
@@ -32,9 +34,18 @@ function saveGuestIdentity(identity: GuestIdentity): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(identity));
+    // Also persist username separately so it survives server restarts
+    if (identity.username) {
+      localStorage.setItem(USERNAME_KEY, identity.username);
+    }
   } catch {
     // ignore
   }
+}
+
+function getSavedUsername(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(USERNAME_KEY);
 }
 
 export class SocketClient {
@@ -47,6 +58,10 @@ export class SocketClient {
     this.socket = io(this.serverUrl, {
       autoConnect: false,
       transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionDelay: 1_000,
+      reconnectionDelayMax: 10_000,
+      reconnectionAttempts: Infinity,
     });
 
     // Restore cached identity
@@ -134,6 +149,19 @@ export class SocketClient {
             token: data.token,
           };
           saveGuestIdentity(this.identity);
+
+          // If server didn't return a username but we have one saved locally
+          // (e.g. server restarted), try to reclaim it automatically
+          if (!data.username) {
+            const saved = getSavedUsername();
+            if (saved) {
+              this.claimUsername(saved)
+                .then(() => resolve(this.identity!))
+                .catch(() => resolve(this.identity!)); // resolve either way
+              return;
+            }
+          }
+
           resolve(this.identity);
         }
       );
@@ -265,6 +293,19 @@ export class SocketClient {
 
   reconnectToGame(playerId: string, roomId: string): void {
     this.socket.emit("reconnect-to-game", { playerId, roomId });
+  }
+
+  leaveRoom(roomId: string): void {
+    this.socket.emit("leave-room", { roomId });
+  }
+
+  /**
+   * Register a callback that fires when socket.io auto-reconnects.
+   * Useful for re-joining a game room after a transient disconnect.
+   */
+  onReconnect(callback: () => void): () => void {
+    this.socket.io.on("reconnect", callback);
+    return () => this.socket.io.off("reconnect", callback);
   }
 
   // ── Event Listeners ──────────────────────────────────────────────────
