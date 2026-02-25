@@ -42,6 +42,7 @@ export default function TwitterImage() {
             borderRadius: 56,
             border: "8px solid #8B4513",
             background: "linear-gradient(180deg, #10242A 0%, #1A1A0E 50%, #0F1512 100%)",
+            display: "flex",
             position: "relative",
             overflow: "hidden",
           }}
