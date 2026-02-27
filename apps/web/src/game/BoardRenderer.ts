@@ -503,6 +503,14 @@ export class BoardRenderer {
     return this._pieceRadius;
   }
 
+  getZionWidth(): number {
+    return this.zionWidth;
+  }
+
+  getZionX(): number {
+    return this.zionX;
+  }
+
   getPlayAreaBounds(): {
     x: number;
     y: number;
@@ -627,18 +635,25 @@ export class BoardRenderer {
   highlightBearOff(player: Player): void {
     const pos = this.getBearOffPosition(player);
     const g = new Graphics();
+
+    // Subtle glowing outline instead of filled rectangle
     g.roundRect(
       pos.x - this.zionWidth * 0.4,
       pos.y - this._pieceRadius * 1.5,
       this.zionWidth * 0.8,
       this._pieceRadius * 3,
       6
-    ).fill({ color: 0x00ffaa, alpha: 0.4 });
-    // Add a dot in the center
-    g.circle(pos.x, pos.y, this._pieceRadius * 0.5).fill({
-      color: 0xffffff,
-      alpha: 0.6,
-    });
+    ).stroke({ color: 0x00ffaa, alpha: 0.7, width: 2 });
+
+    // Soft inner glow
+    g.roundRect(
+      pos.x - this.zionWidth * 0.4,
+      pos.y - this._pieceRadius * 1.5,
+      this.zionWidth * 0.8,
+      this._pieceRadius * 3,
+      6
+    ).fill({ color: 0x00ffaa, alpha: 0.1 });
+
     this.highlightContainer.addChild(g);
     this.highlightGraphics.push(g);
 
