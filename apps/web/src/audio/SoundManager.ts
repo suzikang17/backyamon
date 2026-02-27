@@ -39,6 +39,8 @@ export class SoundManager {
   private loadFailed: Set<SFXName> = new Set();
   private audioCtx: AudioContext | null = null;
   private music: MusicEngine;
+  private customHowls: Map<string, Howl> = new Map();
+  private customMusic: Howl | null = null;
   private _volume = 0.5;
   private _muted = false;
   private destroyed = false;
@@ -527,10 +529,61 @@ export class SoundManager {
   // Public API
   // ---------------------------------------------------------------------------
 
+  loadCustomSFX(slot: SFXName, url: string): void {
+    // Unload previous custom howl for this slot if any
+    const existing = this.customHowls.get(slot);
+    if (existing) existing.unload();
+
+    const howl = new Howl({
+      src: [url],
+      volume: this._volume,
+      preload: true,
+      onloaderror: () => {
+        this.customHowls.delete(slot);
+      },
+    });
+    this.customHowls.set(slot, howl);
+  }
+
+  loadCustomMusic(url: string): void {
+    if (this.customMusic) {
+      this.customMusic.unload();
+    }
+    this.customMusic = new Howl({
+      src: [url],
+      volume: this._volume * 0.4,
+      loop: true,
+      preload: true,
+    });
+  }
+
+  clearCustomSFX(slot: SFXName): void {
+    const existing = this.customHowls.get(slot);
+    if (existing) {
+      existing.unload();
+      this.customHowls.delete(slot);
+    }
+  }
+
+  clearCustomMusic(): void {
+    if (this.customMusic) {
+      this.customMusic.unload();
+      this.customMusic = null;
+    }
+  }
+
   playSFX(name: SFXName): void {
     if (this.destroyed || this._muted) return;
 
-    // Try Howl first (real audio file).
+    // Try custom SFX first
+    const custom = this.customHowls.get(name);
+    if (custom) {
+      custom.volume(this._volume);
+      custom.play();
+      return;
+    }
+
+    // Try Howl (real audio file)
     const howl = this.howls[name];
     if (howl && !this.loadFailed.has(name)) {
       howl.volume(this._volume);
@@ -538,7 +591,7 @@ export class SoundManager {
       return;
     }
 
-    // Fall back to synthetic.
+    // Fall back to synthetic
     const synth = this.syntheticPlayers[name];
     if (synth) {
       try {
@@ -555,6 +608,12 @@ export class SoundManager {
     for (const howl of Object.values(this.howls)) {
       if (howl) howl.volume(this._volume);
     }
+    for (const howl of this.customHowls.values()) {
+      howl.volume(this._volume);
+    }
+    if (this.customMusic) {
+      this.customMusic.volume(this._volume * 0.4);
+    }
   }
 
   getVolume(): number {
@@ -564,11 +623,13 @@ export class SoundManager {
   mute(): void {
     this._muted = true;
     this.music.mute();
+    if (this.customMusic) this.customMusic.mute(true);
   }
 
   unmute(): void {
     this._muted = false;
     this.music.unmute();
+    if (this.customMusic) this.customMusic.mute(false);
   }
 
   toggleMute(): boolean {
@@ -588,7 +649,13 @@ export class SoundManager {
 
   startMusic(): void {
     this.resumeContext();
-    this.music.start();
+    if (this.customMusic) {
+      if (!this.customMusic.playing()) {
+        this.customMusic.play();
+      }
+    } else {
+      this.music.start();
+    }
     this.startAmbience();
   }
 
@@ -597,7 +664,11 @@ export class SoundManager {
   }
 
   stopMusic(): void {
-    this.music.stop();
+    if (this.customMusic) {
+      this.customMusic.stop();
+    } else {
+      this.music.stop();
+    }
     this.stopAmbience();
   }
 
@@ -615,6 +686,9 @@ export class SoundManager {
   }
 
   isMusicPlaying(): boolean {
+    if (this.customMusic) {
+      return this.customMusic.playing();
+    }
     return this.music.isPlaying();
   }
 
@@ -726,6 +800,14 @@ export class SoundManager {
       if (howl) howl.unload();
     }
     this.howls = {};
+    for (const howl of this.customHowls.values()) {
+      howl.unload();
+    }
+    this.customHowls.clear();
+    if (this.customMusic) {
+      this.customMusic.unload();
+      this.customMusic = null;
+    }
     if (this.audioCtx) {
       this.audioCtx.close().catch(() => {});
       this.audioCtx = null;

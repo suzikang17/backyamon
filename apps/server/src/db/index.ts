@@ -29,6 +29,26 @@ sqlite.exec(`
     created_at INTEGER NOT NULL,
     completed_at INTEGER
   );
+
+  CREATE TABLE IF NOT EXISTS assets (
+    id TEXT PRIMARY KEY,
+    creator_id TEXT NOT NULL,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'private',
+    metadata TEXT,
+    r2_key TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS asset_reports (
+    id TEXT PRIMARY KEY,
+    asset_id TEXT NOT NULL,
+    reporter_id TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  );
 `);
 
 // Migrate: add columns if they don't exist (for existing databases)

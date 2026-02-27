@@ -1,4 +1,4 @@
-import { Application, Container, Graphics, Text } from "pixi.js";
+import { Application, Container, Graphics, Sprite, Text, Texture } from "pixi.js";
 import { Player, type GameState, type Move } from "@backyamon/engine";
 import { BoardRenderer } from "./BoardRenderer";
 
@@ -9,7 +9,7 @@ const RED_BORDER = 0x8a0b1a;
 
 const MAX_VISUAL_STACK = 5;
 
-export type PieceSet = "coconut" | "vinyl" | "lion";
+export type PieceSet = "coconut" | "vinyl" | "lion" | "custom";
 
 export class PieceRenderer {
   private app: Application;
@@ -17,6 +17,12 @@ export class PieceRenderer {
   private container: Container;
   private pieceContainers: Map<string, Container> = new Map();
   private pieceSet: PieceSet;
+
+  // Custom SVG piece support
+  private customSvgs: { gold: string; red: string } | null = null;
+  private textureCache: Map<string, Texture> = new Map();
+  private customTexturesReady = false;
+  private blobUrls: string[] = [];
 
   // Glow effect state
   private glowContainer: Container;
@@ -167,6 +173,8 @@ export class PieceRenderer {
         return this.createCoconutPiece(player, radius);
       case "vinyl":
         return this.createVinylPiece(player, radius);
+      case "custom":
+        return this.createCustomPiece(player, radius);
       case "lion":
       default:
         return this.createLionPiece(player, radius);
@@ -365,6 +373,68 @@ export class PieceRenderer {
     return c;
   }
 
+  // ── Custom SVG Piece Support ──────────────────────────────────────────
+
+  private async loadCustomTexture(svgStr: string, cacheKey: string): Promise<Texture> {
+    const cached = this.textureCache.get(cacheKey);
+    if (cached) return cached;
+
+    const blob = new Blob([svgStr], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    this.blobUrls.push(url);
+    const img = new Image();
+    img.src = url;
+    await new Promise<void>((resolve) => { img.onload = () => resolve(); });
+
+    const texture = Texture.from(img);
+    this.textureCache.set(cacheKey, texture);
+    return texture;
+  }
+
+  async setCustomSvgs(gold: string, red: string): Promise<void> {
+    this.customSvgs = { gold, red };
+    this.customTexturesReady = false;
+    this.pieceSet = "custom";
+
+    // Pre-load both textures
+    await Promise.all([
+      this.loadCustomTexture(gold, "custom-gold"),
+      this.loadCustomTexture(red, "custom-red"),
+    ]);
+    this.customTexturesReady = true;
+  }
+
+  private createCustomPiece(player: Player, radius: number): Container {
+    if (!this.customTexturesReady) {
+      return this.createLionPiece(player, radius); // fallback
+    }
+
+    const cacheKey = player === Player.Gold ? "custom-gold" : "custom-red";
+    const texture = this.textureCache.get(cacheKey);
+    if (!texture) return this.createLionPiece(player, radius);
+
+    const container = new Container();
+
+    // Drop shadow
+    const shadow = new Graphics();
+    shadow.circle(1, 2, radius).fill({ color: 0x000000, alpha: 0.3 });
+    container.addChild(shadow);
+
+    const sprite = new Sprite(texture);
+    sprite.width = radius * 2;
+    sprite.height = radius * 2;
+    sprite.anchor.set(0.5);
+    container.addChild(sprite);
+
+    // Border ring for consistency with other piece sets
+    const border = new Graphics();
+    const borderColor = player === Player.Gold ? 0xb8960f : 0x8a0b1a;
+    border.circle(0, 0, radius).stroke({ color: borderColor, width: 2 });
+    container.addChild(border);
+
+    return container;
+  }
+
   /**
    * Get the display object for a specific piece (for drag-and-drop).
    */
@@ -538,5 +608,15 @@ export class PieceRenderer {
     this.glowContainer.destroy({ children: true });
     this.container.destroy({ children: true });
     this.pieceContainers.clear();
+
+    // Clean up custom SVG textures and blob URLs
+    for (const texture of this.textureCache.values()) {
+      texture.destroy(true);
+    }
+    this.textureCache.clear();
+    for (const url of this.blobUrls) {
+      URL.revokeObjectURL(url);
+    }
+    this.blobUrls = [];
   }
 }

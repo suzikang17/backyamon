@@ -39,8 +39,9 @@ import {
   tryMatch,
 } from "./matchmaking.js";
 import { db } from "./db/index.js";
-import { guests, matches } from "./db/schema.js";
-import { isNotNull, sql } from "drizzle-orm";
+import { assets, assetReports, guests, matches } from "./db/schema.js";
+import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
+import { deleteObject, getPublicUrl, getUploadUrl } from "./r2.js";
 
 // Map socketId -> playerId for session tracking
 const socketToPlayer = new Map<string, { playerId: string; displayName: string }>();
@@ -760,6 +761,192 @@ io.on("connection", (socket) => {
 
     broadcastRoomList();
   });
+
+  // ── Asset Creation Station ────────────────────────────────────────────
+
+  socket.on(
+    "create-asset",
+    async (
+      data: {
+        type: "piece" | "sfx" | "music";
+        title: string;
+        metadata: string;
+        needsUpload: boolean;
+        contentType?: string;
+        fileSize?: number;
+      },
+      callback,
+    ) => {
+      const guest = socketToPlayer.get(socket.id);
+      if (!guest) return callback({ error: "Not registered" });
+
+      // Basic validation
+      if (!data.title || data.title.length > 100) return callback({ error: "Invalid title" });
+      if (!["piece", "sfx", "music"].includes(data.type)) return callback({ error: "Invalid type" });
+      if (data.metadata && data.metadata.length > 500_000) return callback({ error: "Metadata too large" });
+
+      const id = randomUUID();
+      const now = Date.now();
+      let r2Key: string | null = null;
+      let uploadUrl: string | null = null;
+
+      if (data.needsUpload && data.contentType && data.fileSize) {
+        r2Key = `${data.type}/${guest.playerId}/${id}`;
+        uploadUrl = await getUploadUrl(r2Key, data.contentType, data.fileSize);
+      }
+
+      db.insert(assets)
+        .values({
+          id,
+          creatorId: guest.playerId,
+          type: data.type,
+          title: data.title,
+          status: "private",
+          metadata: data.metadata,
+          r2Key,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .run();
+
+      callback({ id, uploadUrl });
+    },
+  );
+
+  socket.on(
+    "list-my-assets",
+    (data: { type?: string }, callback) => {
+      const guest = socketToPlayer.get(socket.id);
+      if (!guest) return callback({ error: "Not registered" });
+
+      const condition = data.type
+        ? and(eq(assets.creatorId, guest.playerId), eq(assets.type, data.type))
+        : eq(assets.creatorId, guest.playerId);
+
+      const results = db
+        .select()
+        .from(assets)
+        .where(condition)
+        .orderBy(desc(assets.createdAt))
+        .all();
+
+      const withUrls = results.map((a) => ({
+        ...a,
+        url: a.r2Key ? getPublicUrl(a.r2Key) : null,
+      }));
+
+      callback({ assets: withUrls });
+    },
+  );
+
+  socket.on("list-gallery", (data: { type?: string }, callback) => {
+    const condition = data.type
+      ? and(eq(assets.status, "published"), eq(assets.type, data.type))
+      : eq(assets.status, "published");
+
+    const results = db
+      .select()
+      .from(assets)
+      .where(condition)
+      .orderBy(desc(assets.createdAt))
+      .all();
+
+    const withUrls = results.map((a) => ({
+      ...a,
+      url: a.r2Key ? getPublicUrl(a.r2Key) : null,
+    }));
+
+    callback({ assets: withUrls });
+  });
+
+  socket.on(
+    "publish-asset",
+    (data: { assetId: string }, callback) => {
+      const guest = socketToPlayer.get(socket.id);
+      if (!guest) return callback({ error: "Not registered" });
+
+      db.update(assets)
+        .set({ status: "published", updatedAt: Date.now() })
+        .where(
+          and(eq(assets.id, data.assetId), eq(assets.creatorId, guest.playerId)),
+        )
+        .run();
+
+      callback({ ok: true });
+    },
+  );
+
+  socket.on(
+    "delete-asset",
+    async (data: { assetId: string }, callback) => {
+      const guest = socketToPlayer.get(socket.id);
+      if (!guest) return callback({ error: "Not registered" });
+
+      const [asset] = db
+        .select()
+        .from(assets)
+        .where(
+          and(eq(assets.id, data.assetId), eq(assets.creatorId, guest.playerId)),
+        )
+        .all();
+
+      if (!asset) return callback({ error: "Not found" });
+
+      if (asset.r2Key) {
+        await deleteObject(asset.r2Key);
+      }
+
+      db.delete(assets).where(eq(assets.id, data.assetId)).run();
+      callback({ ok: true });
+    },
+  );
+
+  socket.on(
+    "report-asset",
+    (data: { assetId: string; reason: string }, callback) => {
+      const guest = socketToPlayer.get(socket.id);
+      if (!guest) return callback({ error: "Not registered" });
+
+      // Check for duplicate report
+      const existingReport = db
+        .select()
+        .from(assetReports)
+        .where(
+          and(
+            eq(assetReports.assetId, data.assetId),
+            eq(assetReports.reporterId, guest.playerId),
+          ),
+        )
+        .all();
+      if (existingReport.length > 0) return callback({ error: "Already reported" });
+
+      db.insert(assetReports)
+        .values({
+          id: randomUUID(),
+          assetId: data.assetId,
+          reporterId: guest.playerId,
+          reason: data.reason,
+          createdAt: Date.now(),
+        })
+        .run();
+
+      // Auto-hide if 3+ reports
+      const reports = db
+        .select()
+        .from(assetReports)
+        .where(eq(assetReports.assetId, data.assetId))
+        .all();
+
+      if (reports.length >= 3) {
+        db.update(assets)
+          .set({ status: "removed", updatedAt: Date.now() })
+          .where(eq(assets.id, data.assetId))
+          .run();
+      }
+
+      callback({ ok: true });
+    },
+  );
 });
 
 const PORT = process.env.PORT || 3001;
