@@ -58,7 +58,11 @@ export function GameHUD({
     return () => clearInterval(interval);
   }, [soundManager]);
 
-  if (!state) return null;
+  if (!state) {
+    // State not yet available — render children (canvas container) so the
+    // ref can mount and the PixiJS init effect can run.
+    return <>{children}</>;
+  }
 
   const opponentColor =
     playerColor === Player.Gold ? Player.Red : Player.Gold;
