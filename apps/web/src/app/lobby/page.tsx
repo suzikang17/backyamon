@@ -30,6 +30,7 @@ export default function LobbyPage() {
   const [usernameInput, setUsernameInput] = useState("");
   const [usernameError, setUsernameError] = useState("");
   const [claimingUsername, setClaimingUsername] = useState(false);
+  const [editingUsername, setEditingUsername] = useState(false);
   const [rooms, setRooms] = useState<WaitingRoom[]>([]);
   const [players, setPlayers] = useState<PlayerInfo[]>([]);
   const [roomCode, setRoomCode] = useState("");
@@ -212,6 +213,8 @@ export default function LobbyPage() {
       setDisplayName(claimed);
       setUsername(claimed);
       setUsernameInput("");
+      setEditingUsername(false);
+      client.listPlayers();
     } catch (err) {
       setUsernameError(
         err instanceof Error ? err.message : "Failed to claim username"
@@ -254,19 +257,35 @@ export default function LobbyPage() {
         {displayName && (
           <span className="text-[#F4E1C1] text-sm ml-1 font-heading">
             as <span className="text-[#FFD700] font-bold font-heading">{displayName}</span>
+            {username && !editingUsername && (
+              <button
+                onClick={() => { setEditingUsername(true); setUsernameInput(""); }}
+                className="ml-1.5 text-[#D4A857]/40 hover:text-[#FFD700] text-xs cursor-pointer transition-colors"
+                title="Change username"
+              >
+                (edit)
+              </button>
+            )}
           </span>
         )}
       </div>
 
-      {/* Username claim — compact inline */}
-      {!connecting && connected && !username && (
+      {/* Username claim / edit — compact inline */}
+      {!connecting && connected && (!username || editingUsername) && (
         <div className="flex items-center gap-2 mb-6">
           <input
             type="text"
             value={usernameInput}
             onChange={(e) => setUsernameInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") handleClaimUsername(); }}
-            placeholder="Claim a username"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleClaimUsername();
+              if (e.key === "Escape" && editingUsername) {
+                setEditingUsername(false);
+                setUsernameInput("");
+                setUsernameError("");
+              }
+            }}
+            placeholder={username ? "New username" : "Claim a username"}
             maxLength={20}
             className="rounded-xl bg-[#1A1A0E] border border-[#8B4513] px-3 py-1.5 text-[#FFD700] font-heading text-sm text-center placeholder:text-[#D4A857]/40 focus:outline-none focus:border-[#FFD700] w-40"
           />
@@ -275,8 +294,16 @@ export default function LobbyPage() {
             disabled={claimingUsername || !usernameInput.trim()}
             className="rounded-xl wood-btn wood-btn-green px-4 py-1.5 text-sm font-bold text-[#FFD700] interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-heading"
           >
-            {claimingUsername ? "..." : "Claim"}
+            {claimingUsername ? "..." : username ? "Change" : "Claim"}
           </button>
+          {editingUsername && (
+            <button
+              onClick={() => { setEditingUsername(false); setUsernameInput(""); setUsernameError(""); }}
+              className="text-[#D4A857]/60 hover:text-[#D4A857] text-sm font-heading cursor-pointer"
+            >
+              Cancel
+            </button>
+          )}
           {usernameError && (
             <span className="text-[#CE1126] text-xs font-heading">{usernameError}</span>
           )}

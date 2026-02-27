@@ -132,7 +132,9 @@ export async function claimUsername(
     };
   }
 
-  if (await isUsernameTaken(trimmed)) {
+  // Allow keeping your own username (e.g. re-submit)
+  const currentUser = await db.select({ username: guests.username }).from(guests).where(eq(guests.id, playerId)).get();
+  if (currentUser?.username !== trimmed && await isUsernameTaken(trimmed)) {
     return { ok: false, error: "Username is already taken." };
   }
 
