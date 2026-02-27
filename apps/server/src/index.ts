@@ -167,6 +167,18 @@ io.on("connection", (socket) => {
   // ── Registration ──────────────────────────────────────────────────────
 
   socket.on("register", async (data?: { token?: string }) => {
+    // Wait for database to be ready before processing
+    if (!dbReady) {
+      // Poll until ready (max ~5s)
+      for (let i = 0; i < 50 && !dbReady; i++) {
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      if (!dbReady) {
+        socket.emit("error", { message: "Server is starting up. Please try again." });
+        return;
+      }
+    }
+
     const token = data?.token;
 
     // Try to restore session from token
@@ -951,13 +963,19 @@ io.on("connection", (socket) => {
 
 const PORT = process.env.PORT || 3001;
 
+// Track whether the database is ready
+let dbReady = false;
+
 // Start listening immediately so Render's port scan succeeds,
 // then initialize the database in the background
 httpServer.listen(PORT, () => {
   console.log(`Backyamon server running on port ${PORT}`);
   console.log("Initializing database...");
   initDatabase()
-    .then(() => console.log("Database initialized successfully"))
+    .then(() => {
+      dbReady = true;
+      console.log("Database initialized successfully");
+    })
     .catch((err: unknown) => {
       console.error("Failed to initialize database:", err);
       process.exit(1);
