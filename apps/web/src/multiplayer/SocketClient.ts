@@ -312,6 +312,48 @@ export class SocketClient {
     return () => this.socket.io.off("reconnect", callback);
   }
 
+  // ── Assets ──────────────────────────────────────────────────────────
+
+  private emitWithAck<T>(event: string, data: unknown): Promise<T> {
+    return new Promise((resolve, reject) => {
+      this.socket.emit(event, data, (res: { error?: string } & T) => {
+        if (res.error) reject(new Error(res.error));
+        else resolve(res);
+      });
+    });
+  }
+
+  createAsset(data: {
+    type: "piece" | "sfx" | "music";
+    title: string;
+    metadata: string;
+    needsUpload: boolean;
+    contentType?: string;
+    fileSize?: number;
+  }): Promise<{ id: string; uploadUrl?: string }> {
+    return this.emitWithAck("create-asset", data);
+  }
+
+  listMyAssets(type?: string): Promise<{ assets: unknown[] }> {
+    return this.emitWithAck("list-my-assets", { type });
+  }
+
+  listGallery(type?: string): Promise<{ assets: unknown[] }> {
+    return this.emitWithAck("list-gallery", { type });
+  }
+
+  publishAsset(assetId: string): Promise<void> {
+    return this.emitWithAck("publish-asset", { assetId });
+  }
+
+  deleteAsset(assetId: string): Promise<void> {
+    return this.emitWithAck("delete-asset", { assetId });
+  }
+
+  reportAsset(assetId: string, reason: string): Promise<void> {
+    return this.emitWithAck("report-asset", { assetId, reason });
+  }
+
   // ── Event Listeners ──────────────────────────────────────────────────
 
   on(event: string, callback: (...args: unknown[]) => void): void {
