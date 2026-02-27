@@ -151,13 +151,29 @@ export default function GalleryPage() {
     (asset: GalleryAsset) => {
       if (asset.type === "piece") {
         setAssetPreference("pieceSet", asset.id);
+        // Cache SVG data for use during gameplay
+        try {
+          const meta = JSON.parse(asset.metadata) as PieceMetadata;
+          if (meta.svg_gold && meta.svg_red) {
+            localStorage.setItem(
+              `backyamon_piece_${asset.id}`,
+              JSON.stringify({ svg_gold: meta.svg_gold, svg_red: meta.svg_red }),
+            );
+          }
+        } catch { /* ignore */ }
       } else if (asset.type === "music") {
         setAssetPreference("music", asset.id);
+        if (asset.url) {
+          localStorage.setItem(`backyamon_audio_${asset.id}`, asset.url);
+        }
       } else if (asset.type === "sfx") {
         try {
           const meta = JSON.parse(asset.metadata) as SfxMetadata;
           const currentSfx = prefs.sfx ?? {};
           setAssetPreference("sfx", { ...currentSfx, [meta.slot]: asset.id });
+          if (asset.url) {
+            localStorage.setItem(`backyamon_audio_${asset.id}`, asset.url);
+          }
         } catch {
           return;
         }

@@ -96,6 +96,11 @@ export abstract class BaseGameController {
 
   // ── Settings ──────────────────────────────────────────────────────
 
+  async loadCustomPieces(goldSvg: string, redSvg: string): Promise<void> {
+    await this.pieceRenderer.setCustomSvgs(goldSvg, redSvg);
+    if (this.state) this.pieceRenderer.render(this.state);
+  }
+
   setShowMoveArcs(show: boolean): void {
     if (this.moveLineRenderer) {
       this.moveLineRenderer.showFadedArcs = show;

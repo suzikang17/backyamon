@@ -5,7 +5,8 @@ import { Application } from "pixi.js";
 import { Player, type GameState, type WinType, canOfferDouble } from "@backyamon/engine";
 import { OnlineGameController } from "@/game/OnlineGameController";
 import { SocketClient } from "@/multiplayer/SocketClient";
-import { SoundManager } from "@/audio/SoundManager";
+import { getAssetPreferences } from "@/lib/assetPreferences";
+import { SoundManager, type SFXName } from "@/audio/SoundManager";
 import { useGameKeyboard } from "@/hooks/useGameKeyboard";
 import { GameHUD } from "./GameHUD";
 
@@ -140,6 +141,38 @@ export function OnlineGameCanvas({
       };
 
       controller.startGame(initialState, localPlayer);
+
+      // Load custom pieces if equipped
+      const prefs = getAssetPreferences();
+      if (prefs.pieceSet) {
+        const pieceData = localStorage.getItem(`backyamon_piece_${prefs.pieceSet}`);
+        if (pieceData) {
+          try {
+            const { svg_gold, svg_red } = JSON.parse(pieceData);
+            if (svg_gold && svg_red) {
+              await controller.loadCustomPieces(svg_gold, svg_red);
+            }
+          } catch { /* ignore invalid data */ }
+        }
+      }
+
+      // Load custom audio preferences
+      if (prefs.sfx) {
+        for (const [slot, assetId] of Object.entries(prefs.sfx)) {
+          if (assetId) {
+            const audioUrl = localStorage.getItem(`backyamon_audio_${assetId}`);
+            if (audioUrl) {
+              soundManager.loadCustomSFX(slot as SFXName, audioUrl);
+            }
+          }
+        }
+      }
+      if (prefs.music) {
+        const audioUrl = localStorage.getItem(`backyamon_audio_${prefs.music}`);
+        if (audioUrl) {
+          soundManager.loadCustomMusic(audioUrl);
+        }
+      }
 
       // Apply move arcs preference (default off in multiplayer)
       const storedArcs = localStorage.getItem("backyamon_show_arcs");

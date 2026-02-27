@@ -167,6 +167,16 @@ export default function MyStuffPage() {
           clearAssetPreference("pieceSet");
         } else {
           setAssetPreference("pieceSet", asset.id);
+          // Cache SVG data for use during gameplay
+          try {
+            const meta = JSON.parse(asset.metadata) as PieceMetadata;
+            if (meta.svg_gold && meta.svg_red) {
+              localStorage.setItem(
+                `backyamon_piece_${asset.id}`,
+                JSON.stringify({ svg_gold: meta.svg_gold, svg_red: meta.svg_red }),
+              );
+            }
+          } catch { /* ignore */ }
         }
       } else if (asset.type === "sfx") {
         try {
