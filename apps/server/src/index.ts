@@ -951,13 +951,15 @@ io.on("connection", (socket) => {
 
 const PORT = process.env.PORT || 3001;
 
-initDatabase()
-  .then(() => {
-    httpServer.listen(PORT, () => {
-      console.log(`Backyamon server running on port ${PORT}`);
+// Start listening immediately so Render's port scan succeeds,
+// then initialize the database in the background
+httpServer.listen(PORT, () => {
+  console.log(`Backyamon server running on port ${PORT}`);
+  console.log("Initializing database...");
+  initDatabase()
+    .then(() => console.log("Database initialized successfully"))
+    .catch((err: unknown) => {
+      console.error("Failed to initialize database:", err);
+      process.exit(1);
     });
-  })
-  .catch((err: unknown) => {
-    console.error("Failed to initialize database:", err);
-    process.exit(1);
-  });
+});
