@@ -54,6 +54,13 @@ export default function MainMenu() {
           Play Online
         </Link>
 
+        <Link
+          href="/create"
+          className="animate-fade-in-up animate-delay-350 w-full rounded-2xl border-2 border-[#D4A857] bg-[#2a2a1e] px-6 sm:px-8 py-3 sm:py-4 text-lg sm:text-xl font-bold text-[#D4A857] text-center shadow-lg interactive-btn hover:shadow-[0_0_20px_rgba(212,168,87,0.3)] hover:text-[#FFD700] hover:border-[#FFD700] transition-colors duration-200 font-heading"
+        >
+          Creation Station
+        </Link>
+
         <button
           disabled
           className="animate-fade-in-up animate-delay-400 w-full rounded-2xl bg-[#3a3a2e] px-6 sm:px-8 py-3 sm:py-4 text-lg sm:text-xl font-bold text-[#8B4513] shadow-lg cursor-not-allowed opacity-60 relative font-heading"
