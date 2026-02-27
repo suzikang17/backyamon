@@ -127,43 +127,73 @@ export class PieceRenderer {
       }
     }
 
-    // Render borne off as a compact count badge
+    // Render borne off as stacked chips (side view) in the Zion tray
     for (const player of [Player.Gold, Player.Red]) {
       const borneOff = state.borneOff[player];
       if (borneOff === 0) continue;
 
-      const pos = this.boardRenderer.getBearOffPosition(player);
       const color = player === Player.Gold ? GOLD_COLOR : RED_COLOR;
       const border = player === Player.Gold ? GOLD_BORDER : RED_BORDER;
+      const lightShade = player === Player.Gold ? 0xffee88 : 0xe84858;
 
-      const badgeContainer = new Container();
-      badgeContainer.x = pos.x;
-      badgeContainer.y = pos.y;
+      const zionWidth = this.boardRenderer.getZionWidth();
+      const playArea = this.boardRenderer.getPlayAreaBounds();
+      const chipWidth = zionWidth * 0.65;
+      const chipHeight = Math.max(3, radius * 0.3);
+      const zionCenterX = this.boardRenderer.getZionX() + zionWidth / 2;
 
-      // Background badge
-      const badgeW = radius * 1.6;
-      const badgeH = radius * 1.6;
-      const bg = new Graphics();
-      bg.roundRect(-badgeW / 2, -badgeH / 2, badgeW, badgeH, 6)
-        .fill({ color, alpha: 0.25 })
-        .roundRect(-badgeW / 2, -badgeH / 2, badgeW, badgeH, 6)
-        .stroke({ color: border, width: 1.5 });
-      badgeContainer.addChild(bg);
+      // Available stacking space: half the play area minus some padding
+      const halfHeight = playArea.height / 2;
+      const stackPadding = radius * 0.5;
+      const maxStackHeight = halfHeight - stackPadding * 2;
 
-      // Count number
-      const label = new Text({
-        text: `${borneOff}`,
-        style: {
-          fontSize: Math.max(12, Math.floor(radius * 0.9)),
-          fill: color,
-          fontFamily: "Inter, sans-serif",
-          fontWeight: "bold",
-        },
-      });
-      label.anchor.set(0.5, 0.5);
-      badgeContainer.addChild(label);
+      // Compress spacing if needed to fit all pieces
+      const idealSpacing = chipHeight + 1;
+      const neededHeight = borneOff * idealSpacing;
+      const spacing = neededHeight > maxStackHeight
+        ? maxStackHeight / borneOff
+        : idealSpacing;
 
-      this.container.addChild(badgeContainer);
+      for (let i = 0; i < borneOff; i++) {
+        const g = new Graphics();
+
+        // Gold stacks from bottom up, Red stacks from top down
+        let chipY: number;
+        if (player === Player.Gold) {
+          chipY = playArea.y + playArea.height - stackPadding - i * spacing;
+        } else {
+          chipY = playArea.y + stackPadding + i * spacing;
+        }
+
+        // Chip body (side view of disc)
+        g.roundRect(
+          zionCenterX - chipWidth / 2,
+          chipY - chipHeight / 2,
+          chipWidth,
+          chipHeight,
+          2
+        ).fill({ color });
+
+        // Top edge highlight for 3D depth
+        g.roundRect(
+          zionCenterX - chipWidth / 2 + 1,
+          chipY - chipHeight / 2,
+          chipWidth - 2,
+          Math.max(1, chipHeight * 0.3),
+          1
+        ).fill({ color: lightShade, alpha: 0.4 });
+
+        // Border
+        g.roundRect(
+          zionCenterX - chipWidth / 2,
+          chipY - chipHeight / 2,
+          chipWidth,
+          chipHeight,
+          2
+        ).stroke({ color: border, width: 0.8 });
+
+        this.container.addChild(g);
+      }
     }
   }
 
