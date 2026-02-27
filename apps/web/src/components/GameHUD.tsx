@@ -58,41 +58,39 @@ export function GameHUD({
     return () => clearInterval(interval);
   }, [soundManager]);
 
-  if (!state) {
-    // State not yet available — render children (canvas container) so the
-    // ref can mount and the PixiJS init effect can run.
-    return <>{children}</>;
-  }
+  const hasState = state !== null;
 
   const opponentColor =
-    playerColor === Player.Gold ? Player.Red : Player.Gold;
-  const isPlayerTurn = state.currentPlayer === playerColor;
-  const cubeValue = state.doublingCube.value;
-  const showDoubleButton = canDouble && canOfferDouble(state) && isPlayerTurn;
+    hasState ? (playerColor === Player.Gold ? Player.Red : Player.Gold) : Player.Red;
+  const isPlayerTurn = hasState && state.currentPlayer === playerColor;
+  const cubeValue = hasState ? state.doublingCube.value : 1;
+  const showDoubleButton = hasState && canDouble && canOfferDouble(state) && isPlayerTurn;
 
   // Turn indicator text
-  let turnText: string;
-  if (state.phase === "GAME_OVER") {
-    turnText =
-      state.winner === playerColor
-        ? "Ya Mon! You win!"
-        : `${opponentName} wins!`;
-  } else if (state.phase === "DOUBLING") {
-    turnText = `${opponentName} is considering...`;
-  } else if (isPlayerTurn) {
-    turnText = state.phase === "ROLLING" ? "Your turn - Roll!" : "Your turn";
-  } else {
-    turnText = `${opponentName} is thinking...`;
+  let turnText = "";
+  if (hasState) {
+    if (state.phase === "GAME_OVER") {
+      turnText =
+        state.winner === playerColor
+          ? "Ya Mon! You win!"
+          : `${opponentName} wins!`;
+    } else if (state.phase === "DOUBLING") {
+      turnText = `${opponentName} is considering...`;
+    } else if (isPlayerTurn) {
+      turnText = state.phase === "ROLLING" ? "Your turn - Roll!" : "Your turn";
+    } else {
+      turnText = `${opponentName} is thinking...`;
+    }
   }
 
   return (
     <>
     {/* Top bar: opponent name + controls — ABOVE the board */}
-    <div className="flex items-center justify-between px-1 pb-1">
+    <div className={`flex items-center justify-between px-1 pb-1${hasState ? "" : " invisible"}`}>
       <div className="flex items-center gap-2">
         <PlayerBadge name={opponentName} color={opponentColor} />
         {/* Score display (match play) */}
-        {state.matchLength > 1 && (
+        {state && state.matchLength > 1 && (
           <div className="bg-[#1A1A0E]/80 rounded-lg px-3 py-1 text-xs font-heading border border-[#8B4513]">
             <span className="text-[#D4A857]">Match to {state.matchLength}: </span>
             <span className="text-[#FFD700]">
@@ -165,7 +163,7 @@ export function GameHUD({
     {/* Board area — canvas (children) with overlay on top */}
     <div className="relative">
       {children}
-      <div className="absolute inset-0 pointer-events-none z-10">
+      <div className={`absolute inset-0 pointer-events-none z-10${hasState ? "" : " hidden"}`}>
       {/* Doubling cube - small passive indicator, only visible when value > 1 */}
       {cubeValue > 1 && (
         <div className="absolute left-3 top-1/2 -translate-y-1/2">
@@ -232,7 +230,7 @@ export function GameHUD({
     </div>
 
     {/* Bottom bar: player name — BELOW the board */}
-    <div className="flex items-center justify-between px-1 pt-1">
+    <div className={`flex items-center justify-between px-1 pt-1${hasState ? "" : " invisible"}`}>
       <PlayerBadge name="You" color={playerColor} />
     </div>
     </>
