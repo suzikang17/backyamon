@@ -11,12 +11,11 @@
     "@aws-sdk/client-s3": "^3.999.0",
     "@aws-sdk/s3-request-presigner": "^3.999.0",
     "@backyamon/engine": "*",
-    "better-sqlite3": "^11",
+    "@libsql/client": "^0.17.0",
     "drizzle-orm": "^0.38",
     "socket.io": "^4"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7",
     "drizzle-kit": "^0.30",
     "tsx": "^4"
   }

@@ -38,7 +38,7 @@ import {
   leaveQueueBySocketId,
   tryMatch,
 } from "./matchmaking.js";
-import { db } from "./db/index.js";
+import { db, initDatabase } from "./db/index.js";
 import { assets, assetReports, guests, matches } from "./db/schema.js";
 import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { deleteObject, getPublicUrl, getUploadUrl } from "./r2.js";
@@ -79,15 +79,15 @@ function movesEqual(a: Move, b: Move): boolean {
   return a.from === b.from && a.to === b.to;
 }
 
-function saveMatchResult(
+async function saveMatchResult(
   room: GameRoom,
   winnerId: string,
   winType: WinType,
   pointsWon: number,
-): void {
+): Promise<void> {
   if (!room.gold || !room.red) return;
   const now = new Date();
-  db.insert(matches)
+  await db.insert(matches)
     .values({
       id: randomUUID(),
       goldPlayerId: room.gold.playerId,
@@ -166,12 +166,12 @@ io.on("connection", (socket) => {
 
   // ── Registration ──────────────────────────────────────────────────────
 
-  socket.on("register", (data?: { token?: string }) => {
+  socket.on("register", async (data?: { token?: string }) => {
     const token = data?.token;
 
     // Try to restore session from token
     if (token) {
-      const existing = lookupByToken(token);
+      const existing = await lookupByToken(token);
       if (existing) {
         const displayName = existing.username ?? existing.displayName;
         socketToPlayer.set(socket.id, {
@@ -189,7 +189,7 @@ io.on("connection", (socket) => {
     }
 
     // No valid token: create new guest
-    const guest = createGuest();
+    const guest = await createGuest();
     socketToPlayer.set(socket.id, {
       playerId: guest.id,
       displayName: guest.displayName,
@@ -202,14 +202,14 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("claim-username", ({ username }: { username: string }) => {
+  socket.on("claim-username", async ({ username }: { username: string }) => {
     const playerInfo = socketToPlayer.get(socket.id);
     if (!playerInfo) {
       socket.emit("username-error", { message: "Not registered. Try refreshing." });
       return;
     }
 
-    const result = claimUsername(playerInfo.playerId, username);
+    const result = await claimUsername(playerInfo.playerId, username);
     if (!result.ok) {
       socket.emit("username-error", { message: result.error });
       return;
@@ -231,8 +231,8 @@ io.on("connection", (socket) => {
 
   // ── Player Listing ──────────────────────────────────────────────────
 
-  socket.on("list-players", () => {
-    const rows = db
+  socket.on("list-players", async () => {
+    const rows = await db
       .select({
         username: guests.username,
         createdAt: guests.createdAt,
@@ -795,7 +795,7 @@ io.on("connection", (socket) => {
         uploadUrl = await getUploadUrl(r2Key, data.contentType, data.fileSize);
       }
 
-      db.insert(assets)
+      await db.insert(assets)
         .values({
           id,
           creatorId: guest.playerId,
@@ -815,7 +815,7 @@ io.on("connection", (socket) => {
 
   socket.on(
     "list-my-assets",
-    (data: { type?: string }, callback) => {
+    async (data: { type?: string }, callback) => {
       const guest = socketToPlayer.get(socket.id);
       if (!guest) return callback({ error: "Not registered" });
 
@@ -823,7 +823,7 @@ io.on("connection", (socket) => {
         ? and(eq(assets.creatorId, guest.playerId), eq(assets.type, data.type))
         : eq(assets.creatorId, guest.playerId);
 
-      const results = db
+      const results = await db
         .select()
         .from(assets)
         .where(condition)
@@ -839,12 +839,12 @@ io.on("connection", (socket) => {
     },
   );
 
-  socket.on("list-gallery", (data: { type?: string }, callback) => {
+  socket.on("list-gallery", async (data: { type?: string }, callback) => {
     const condition = data.type
       ? and(eq(assets.status, "published"), eq(assets.type, data.type))
       : eq(assets.status, "published");
 
-    const results = db
+    const results = await db
       .select()
       .from(assets)
       .where(condition)
@@ -861,11 +861,11 @@ io.on("connection", (socket) => {
 
   socket.on(
     "publish-asset",
-    (data: { assetId: string }, callback) => {
+    async (data: { assetId: string }, callback) => {
       const guest = socketToPlayer.get(socket.id);
       if (!guest) return callback({ error: "Not registered" });
 
-      db.update(assets)
+      await db.update(assets)
         .set({ status: "published", updatedAt: Date.now() })
         .where(
           and(eq(assets.id, data.assetId), eq(assets.creatorId, guest.playerId)),
@@ -882,7 +882,7 @@ io.on("connection", (socket) => {
       const guest = socketToPlayer.get(socket.id);
       if (!guest) return callback({ error: "Not registered" });
 
-      const [asset] = db
+      const [asset] = await db
         .select()
         .from(assets)
         .where(
@@ -896,19 +896,19 @@ io.on("connection", (socket) => {
         await deleteObject(asset.r2Key);
       }
 
-      db.delete(assets).where(eq(assets.id, data.assetId)).run();
+      await db.delete(assets).where(eq(assets.id, data.assetId)).run();
       callback({ ok: true });
     },
   );
 
   socket.on(
     "report-asset",
-    (data: { assetId: string; reason: string }, callback) => {
+    async (data: { assetId: string; reason: string }, callback) => {
       const guest = socketToPlayer.get(socket.id);
       if (!guest) return callback({ error: "Not registered" });
 
       // Check for duplicate report
-      const existingReport = db
+      const existingReport = await db
         .select()
         .from(assetReports)
         .where(
@@ -920,7 +920,7 @@ io.on("connection", (socket) => {
         .all();
       if (existingReport.length > 0) return callback({ error: "Already reported" });
 
-      db.insert(assetReports)
+      await db.insert(assetReports)
         .values({
           id: randomUUID(),
           assetId: data.assetId,
@@ -931,14 +931,14 @@ io.on("connection", (socket) => {
         .run();
 
       // Auto-hide if 3+ reports
-      const reports = db
+      const reports = await db
         .select()
         .from(assetReports)
         .where(eq(assetReports.assetId, data.assetId))
         .all();
 
       if (reports.length >= 3) {
-        db.update(assets)
+        await db.update(assets)
           .set({ status: "removed", updatedAt: Date.now() })
           .where(eq(assets.id, data.assetId))
           .run();
@@ -950,6 +950,14 @@ io.on("connection", (socket) => {
 });
 
 const PORT = process.env.PORT || 3001;
-httpServer.listen(PORT, () => {
-  console.log(`Backyamon server running on port ${PORT}`);
-});
+
+initDatabase()
+  .then(() => {
+    httpServer.listen(PORT, () => {
+      console.log(`Backyamon server running on port ${PORT}`);
+    });
+  })
+  .catch((err: unknown) => {
+    console.error("Failed to initialize database:", err);
+    process.exit(1);
+  });

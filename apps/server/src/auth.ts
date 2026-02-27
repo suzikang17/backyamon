@@ -78,13 +78,13 @@ export interface GuestAccount {
   token: string;
 }
 
-export function createGuest(): GuestAccount {
+export async function createGuest(): Promise<GuestAccount> {
   const id = randomUUID();
   const displayName = generateDisplayName();
   const token = generateToken();
   const now = new Date();
 
-  db.insert(guests)
+  await db.insert(guests)
     .values({
       id,
       displayName,
@@ -96,8 +96,8 @@ export function createGuest(): GuestAccount {
   return { id, displayName, username: null, token };
 }
 
-export function lookupByToken(token: string): GuestAccount | null {
-  const row = db.select().from(guests).where(eq(guests.token, token)).get();
+export async function lookupByToken(token: string): Promise<GuestAccount | null> {
+  const row = await db.select().from(guests).where(eq(guests.token, token)).get();
   if (!row) return null;
   return {
     id: row.id,
@@ -107,8 +107,8 @@ export function lookupByToken(token: string): GuestAccount | null {
   };
 }
 
-export function isUsernameTaken(username: string): boolean {
-  const row = db
+export async function isUsernameTaken(username: string): Promise<boolean> {
+  const row = await db
     .select({ id: guests.id })
     .from(guests)
     .where(eq(guests.username, username))
@@ -116,10 +116,10 @@ export function isUsernameTaken(username: string): boolean {
   return !!row;
 }
 
-export function claimUsername(
+export async function claimUsername(
   playerId: string,
   username: string
-): { ok: true } | { ok: false; error: string } {
+): Promise<{ ok: true } | { ok: false; error: string }> {
   // Validate username format
   const trimmed = username.trim();
   if (trimmed.length < 2 || trimmed.length > 20) {
@@ -132,11 +132,11 @@ export function claimUsername(
     };
   }
 
-  if (isUsernameTaken(trimmed)) {
+  if (await isUsernameTaken(trimmed)) {
     return { ok: false, error: "Username is already taken." };
   }
 
-  db.update(guests)
+  await db.update(guests)
     .set({ username: trimmed, displayName: trimmed })
     .where(eq(guests.id, playerId))
     .run();
