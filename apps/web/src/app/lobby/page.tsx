@@ -261,9 +261,9 @@ export default function LobbyPage() {
               <button
                 onClick={() => { setEditingUsername(true); setUsernameInput(""); }}
                 className="ml-1.5 text-[#D4A857]/40 hover:text-[#FFD700] text-xs cursor-pointer transition-colors"
-                title="Change username"
+                title="Switch username"
               >
-                (edit)
+                (switch)
               </button>
             )}
           </span>
@@ -285,7 +285,7 @@ export default function LobbyPage() {
                 setUsernameError("");
               }
             }}
-            placeholder={username ? "New username" : "Claim a username"}
+            placeholder={username ? "Switch username" : "Pick a username"}
             maxLength={20}
             className="rounded-xl bg-[#1A1A0E] border border-[#8B4513] px-3 py-1.5 text-[#FFD700] font-heading text-sm text-center placeholder:text-[#D4A857]/40 focus:outline-none focus:border-[#FFD700] w-40"
           />
@@ -294,7 +294,7 @@ export default function LobbyPage() {
             disabled={claimingUsername || !usernameInput.trim()}
             className="rounded-xl wood-btn wood-btn-green px-4 py-1.5 text-sm font-bold text-[#FFD700] interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-heading"
           >
-            {claimingUsername ? "..." : username ? "Change" : "Claim"}
+            {claimingUsername ? "..." : "Go"}
           </button>
           {editingUsername && (
             <button
