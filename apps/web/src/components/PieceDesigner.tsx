@@ -6,6 +6,11 @@ import "tldraw/tldraw.css";
 
 const Tldraw = dynamic(() => import("tldraw").then((m) => m.Tldraw), {
   ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-full w-full bg-[#1A1A0E]">
+      <span className="text-[#D4A857] text-sm font-heading animate-pulse">Loading canvas...</span>
+    </div>
+  ),
 });
 
 type Variant = "gold" | "red";
@@ -17,7 +22,7 @@ interface PieceDesignerProps {
 interface EditorInstance {
   getCurrentPageShapeIds: () => Set<unknown>;
   getSvgString: (
-    ids: Set<unknown>
+    ids: unknown[]
   ) => Promise<{ svg: string } | undefined>;
 }
 
@@ -31,10 +36,15 @@ export function PieceDesigner({ onSave }: PieceDesignerProps) {
 
   const extractSvg = useCallback(
     async (editor: EditorInstance): Promise<string | null> => {
-      const ids = editor.getCurrentPageShapeIds();
-      if (ids.size === 0) return null;
-      const result = await editor.getSvgString(ids);
-      return result?.svg ?? null;
+      try {
+        const ids = editor.getCurrentPageShapeIds();
+        if (ids.size === 0) return null;
+        // getSvgString expects an array, not a Set
+        const result = await editor.getSvgString([...ids]);
+        return result?.svg ?? null;
+      } catch {
+        return null;
+      }
     },
     []
   );
