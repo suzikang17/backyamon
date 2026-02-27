@@ -205,7 +205,11 @@ export default function SoundUploadPage() {
       const result = await client.createAsset({
         type: "sfx",
         title: soundTitle,
-        metadata: JSON.stringify({ slot: sfxSlot }),
+        metadata: JSON.stringify({
+          slot: sfxSlot,
+          duration_ms: Math.round((duration ?? 0) * 1000),
+          file_size: file.size,
+        }),
         needsUpload: true,
         contentType: file.type,
         fileSize: file.size,
@@ -215,6 +219,7 @@ export default function SoundUploadPage() {
         const uploadResponse = await fetch(result.uploadUrl, {
           method: "PUT",
           body: file,
+          headers: { "Content-Type": file.type },
         });
 
         if (!uploadResponse.ok) {

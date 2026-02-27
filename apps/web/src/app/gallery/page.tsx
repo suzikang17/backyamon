@@ -233,15 +233,17 @@ export default function GalleryPage() {
         return (
           <div className="w-full h-24 flex items-center justify-center gap-3 bg-[#1A1A0E]/50 rounded-lg overflow-hidden">
             {meta.svg_gold && (
-              <div
-                className="w-12 h-12 flex items-center justify-center"
-                dangerouslySetInnerHTML={{ __html: meta.svg_gold }}
+              <img
+                src={`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(meta.svg_gold)))}`}
+                alt="Gold piece"
+                className="w-12 h-12 object-contain"
               />
             )}
             {meta.svg_red && (
-              <div
-                className="w-12 h-12 flex items-center justify-center"
-                dangerouslySetInnerHTML={{ __html: meta.svg_red }}
+              <img
+                src={`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(meta.svg_red)))}`}
+                alt="Red piece"
+                className="w-12 h-12 object-contain"
               />
             )}
           </div>

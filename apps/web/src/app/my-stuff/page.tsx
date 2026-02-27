@@ -18,6 +18,7 @@ interface Asset {
   status: "private" | "published" | "removed";
   metadata: string;
   r2Key: string | null;
+  url: string | null;
   createdAt: number;
   updatedAt: number;
 }
@@ -192,6 +193,9 @@ export default function MyStuffPage() {
             }
           } else {
             setAssetPreference("sfx", { ...currentSfx, [meta.slot]: asset.id });
+            if (asset.url) {
+              localStorage.setItem(`backyamon_audio_${asset.id}`, asset.url);
+            }
           }
         } catch {
           return;
@@ -201,6 +205,9 @@ export default function MyStuffPage() {
           clearAssetPreference("music");
         } else {
           setAssetPreference("music", asset.id);
+          if (asset.url) {
+            localStorage.setItem(`backyamon_audio_${asset.id}`, asset.url);
+          }
         }
       }
 
@@ -250,10 +257,13 @@ export default function MyStuffPage() {
       try {
         const meta = JSON.parse(asset.metadata) as PieceMetadata;
         return (
-          <div
-            className="w-full h-24 flex items-center justify-center bg-[#1A1A0E]/50 rounded-lg overflow-hidden"
-            dangerouslySetInnerHTML={{ __html: meta.svg_gold }}
-          />
+          <div className="w-full h-24 flex items-center justify-center bg-[#1A1A0E]/50 rounded-lg overflow-hidden">
+            <img
+              src={`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(meta.svg_gold)))}`}
+              alt="Piece preview"
+              className="w-16 h-16 object-contain"
+            />
+          </div>
         );
       } catch {
         return (

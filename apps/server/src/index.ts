@@ -780,6 +780,11 @@ io.on("connection", (socket) => {
       const guest = socketToPlayer.get(socket.id);
       if (!guest) return callback({ error: "Not registered" });
 
+      // Basic validation
+      if (!data.title || data.title.length > 100) return callback({ error: "Invalid title" });
+      if (!["piece", "sfx", "music"].includes(data.type)) return callback({ error: "Invalid type" });
+      if (data.metadata && data.metadata.length > 500_000) return callback({ error: "Metadata too large" });
+
       const id = randomUUID();
       const now = Date.now();
       let r2Key: string | null = null;
@@ -825,7 +830,12 @@ io.on("connection", (socket) => {
         .orderBy(desc(assets.createdAt))
         .all();
 
-      callback({ assets: results });
+      const withUrls = results.map((a) => ({
+        ...a,
+        url: a.r2Key ? getPublicUrl(a.r2Key) : null,
+      }));
+
+      callback({ assets: withUrls });
     },
   );
 
@@ -896,6 +906,19 @@ io.on("connection", (socket) => {
     (data: { assetId: string; reason: string }, callback) => {
       const guest = socketToPlayer.get(socket.id);
       if (!guest) return callback({ error: "Not registered" });
+
+      // Check for duplicate report
+      const existingReport = db
+        .select()
+        .from(assetReports)
+        .where(
+          and(
+            eq(assetReports.assetId, data.assetId),
+            eq(assetReports.reporterId, guest.playerId),
+          ),
+        )
+        .all();
+      if (existingReport.length > 0) return callback({ error: "Already reported" });
 
       db.insert(assetReports)
         .values({
