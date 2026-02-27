@@ -20,7 +20,7 @@ import {
   type Move,
   type WinType,
 } from "@backyamon/engine";
-import { createGuest, lookupByToken, claimUsername } from "./auth.js";
+import { createGuest, lookupByToken, signInAs } from "./auth.js";
 import {
   createRoom,
   joinRoom,
@@ -221,18 +221,22 @@ io.on("connection", (socket) => {
       return;
     }
 
-    const result = await claimUsername(playerInfo.playerId, username);
+    const result = await signInAs(playerInfo.playerId, username);
     if (!result.ok) {
       socket.emit("username-error", { message: result.error });
       return;
     }
 
-    // Update in-memory tracking
-    const trimmed = username.trim();
-    playerInfo.displayName = trimmed;
-    socketToPlayer.set(socket.id, playerInfo);
+    // Update in-memory tracking (guest ID may have changed if switching to existing username)
+    socketToPlayer.set(socket.id, {
+      playerId: result.guest.id,
+      displayName: result.guest.displayName,
+    });
 
-    socket.emit("username-claimed", { username: trimmed });
+    socket.emit("username-claimed", {
+      username: result.guest.username,
+      token: result.guest.token,
+    });
   });
 
   // ── Room Listing ─────────────────────────────────────────────────────

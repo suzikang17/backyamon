@@ -107,20 +107,16 @@ export async function lookupByToken(token: string): Promise<GuestAccount | null>
   };
 }
 
-export async function isUsernameTaken(username: string): Promise<boolean> {
-  const row = await db
-    .select({ id: guests.id })
-    .from(guests)
-    .where(eq(guests.username, username))
-    .get();
-  return !!row;
-}
-
-export async function claimUsername(
-  playerId: string,
+/**
+ * Sign in as a username — arcade style, no ownership.
+ * If the username already exists, switch to that guest row.
+ * If not, set it on the current guest row.
+ * Returns the guest account to use going forward.
+ */
+export async function signInAs(
+  currentGuestId: string,
   username: string
-): Promise<{ ok: true } | { ok: false; error: string }> {
-  // Validate username format
+): Promise<{ ok: true; guest: GuestAccount } | { ok: false; error: string }> {
   const trimmed = username.trim();
   if (trimmed.length < 2 || trimmed.length > 20) {
     return { ok: false, error: "Username must be 2-20 characters." };
@@ -132,16 +128,34 @@ export async function claimUsername(
     };
   }
 
-  // Allow keeping your own username (e.g. re-submit)
-  const currentUser = await db.select({ username: guests.username }).from(guests).where(eq(guests.id, playerId)).get();
-  if (currentUser?.username !== trimmed && await isUsernameTaken(trimmed)) {
-    return { ok: false, error: "Username is already taken." };
+  // Check if this username already exists
+  const existing = await db.select().from(guests).where(eq(guests.username, trimmed)).get();
+
+  if (existing) {
+    // Switch to the existing profile — copy our token so this browser remembers it
+    const current = await db.select().from(guests).where(eq(guests.id, currentGuestId)).get();
+    const token = current?.token || existing.token;
+    await db.update(guests).set({ token }).where(eq(guests.id, existing.id)).run();
+    return {
+      ok: true,
+      guest: { id: existing.id, displayName: trimmed, username: trimmed, token },
+    };
   }
 
+  // Username is new — set it on the current guest row
   await db.update(guests)
     .set({ username: trimmed, displayName: trimmed })
-    .where(eq(guests.id, playerId))
+    .where(eq(guests.id, currentGuestId))
     .run();
 
-  return { ok: true };
+  const updated = await db.select().from(guests).where(eq(guests.id, currentGuestId)).get();
+  return {
+    ok: true,
+    guest: {
+      id: currentGuestId,
+      displayName: trimmed,
+      username: trimmed,
+      token: updated?.token || "",
+    },
+  };
 }

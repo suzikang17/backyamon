@@ -183,11 +183,12 @@ export class SocketClient {
         reject(new Error("Claim username timed out"));
       }, 10_000);
 
-      this.socket.once("username-claimed", (data: { username: string }) => {
+      this.socket.once("username-claimed", (data: { username: string; token?: string }) => {
         clearTimeout(timeout);
         if (this.identity) {
           this.identity.username = data.username;
           this.identity.displayName = data.username;
+          if (data.token) this.identity.token = data.token;
           saveGuestIdentity(this.identity);
         }
         resolve(data.username);
