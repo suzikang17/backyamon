@@ -417,6 +417,59 @@ io.on("connection", (socket) => {
     },
   );
 
+  // ── Recent Matches (lobby feed) ────────────────────────────────────
+
+  socket.on(
+    "get-recent-matches",
+    async (data: { limit?: number }, callback) => {
+      // 1. Clamp limit to max 50, default 10
+      const limit = Math.min(Math.max(data.limit ?? 10, 1), 50);
+
+      // 2. Query last N completed matches (winnerId IS NOT NULL), ordered by completedAt desc
+      const recentRows = await db
+        .select()
+        .from(matches)
+        .where(isNotNull(matches.winnerId))
+        .orderBy(desc(matches.completedAt))
+        .limit(limit)
+        .all();
+
+      // 3. Collect all player IDs (gold, red, winner) for batch lookup
+      const playerIds = new Set<string>();
+      for (const m of recentRows) {
+        playerIds.add(m.goldPlayerId);
+        playerIds.add(m.redPlayerId);
+        if (m.winnerId) playerIds.add(m.winnerId);
+      }
+
+      // 4. Batch-fetch guest usernames
+      const playerMap = new Map<string, string>();
+      if (playerIds.size > 0) {
+        const playerRows = await db
+          .select({ id: guests.id, username: guests.username, displayName: guests.displayName })
+          .from(guests)
+          .where(sql`${guests.id} IN (${sql.join([...playerIds].map(id => sql`${id}`), sql`, `)})`)
+          .all();
+        for (const row of playerRows) {
+          playerMap.set(row.id, row.username ?? row.displayName);
+        }
+      }
+
+      // 5. Build response
+      const recentMatches = recentRows.map((m) => ({
+        id: m.id,
+        goldPlayer: playerMap.get(m.goldPlayerId) ?? "Unknown",
+        redPlayer: playerMap.get(m.redPlayerId) ?? "Unknown",
+        winner: m.winnerId ? (playerMap.get(m.winnerId) ?? "Unknown") : null,
+        winType: m.winType,
+        pointsWon: m.pointsWon,
+        completedAt: m.completedAt,
+      }));
+
+      callback({ matches: recentMatches });
+    },
+  );
+
   // ── Room Creation ─────────────────────────────────────────────────────
 
   socket.on("create-room", (data?: { roomName?: string }) => {
