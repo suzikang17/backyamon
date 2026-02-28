@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { SocketClient } from "@/multiplayer/SocketClient";
+import { PlayerLink } from "@/components/PlayerLink";
 
 interface WaitingRoom {
   id: string;
@@ -33,6 +34,17 @@ export default function LobbyPage() {
   const [editingUsername, setEditingUsername] = useState(false);
   const [rooms, setRooms] = useState<WaitingRoom[]>([]);
   const [players, setPlayers] = useState<PlayerInfo[]>([]);
+  const [recentMatches, setRecentMatches] = useState<
+    {
+      id: string;
+      goldPlayer: string;
+      redPlayer: string;
+      winner: string;
+      winType: string;
+      pointsWon: number;
+      completedAt: string;
+    }[]
+  >([]);
   const [roomCode, setRoomCode] = useState("");
   const [customRoomName, setCustomRoomName] = useState("");
   const [error, setError] = useState("");
@@ -61,6 +73,9 @@ export default function LobbyPage() {
 
       client.listRooms();
       client.listPlayers();
+      client.getRecentMatches(10).then((data) => {
+        setRecentMatches(data.matches);
+      }).catch(() => {});
     } catch (err) {
       setRetryInfo(null);
       setError(
@@ -480,9 +495,10 @@ export default function LobbyPage() {
                   key={p.username}
                   className="rounded-xl bg-[#1A1A0E]/80 border border-[#8B4513]/40 px-3 py-2 text-center"
                 >
-                  <span className="text-[#FFD700] font-heading text-sm block">
-                    {p.username}
-                  </span>
+                  <PlayerLink
+                    username={p.username}
+                    className="text-[#FFD700] font-heading text-sm block"
+                  />
                   {(p.wins > 0 || p.losses > 0) && (
                     <span className="text-[#D4A857]/50 font-heading text-xs">
                       {p.wins}W - {p.losses}L
@@ -492,6 +508,44 @@ export default function LobbyPage() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Recent Matches Feed */}
+      {view === "lobby" && recentMatches.length > 0 && (
+        <div className="w-full max-w-3xl mt-8">
+          <p className="text-[#D4A857] text-xs font-heading text-center tracking-wider uppercase mb-3">
+            Recent Matches
+          </p>
+          <div className="flex flex-col gap-1.5">
+            {recentMatches.map((m) => (
+              <div
+                key={m.id}
+                className="rounded-lg bg-[#1A1A0E]/60 border border-[#8B4513]/30 px-3 py-2 flex items-center justify-center gap-2 text-sm font-heading"
+              >
+                <PlayerLink
+                  username={m.winner}
+                  className="text-[#FFD700] font-heading text-sm"
+                />
+                <span className="text-[#D4A857]/50">beat</span>
+                <PlayerLink
+                  username={m.winner === m.goldPlayer ? m.redPlayer : m.goldPlayer}
+                  className="text-[#D4A857] font-heading text-sm"
+                />
+                <span className="text-[#D4A857]/30">&mdash;</span>
+                <span className="text-[#D4A857]/40 text-xs">
+                  {m.winType === "ya_mon"
+                    ? "Ya Mon"
+                    : m.winType === "big_ya_mon"
+                      ? "Big Ya Mon"
+                      : "Massive Ya Mon"}
+                </span>
+                <span className="text-[#D4A857]/40 text-xs">
+                  {m.pointsWon} pts
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
