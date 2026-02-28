@@ -267,153 +267,144 @@ io.on("connection", (socket) => {
   socket.on(
     "get-player-profile",
     async (data: { username: string }, callback) => {
-      // 1. Look up the guest by username
-      const [guest] = await db
-        .select()
-        .from(guests)
-        .where(eq(guests.username, data.username))
-        .all();
+      try {
+        if (!data?.username) return callback({ error: "Username required" });
 
-      if (!guest) return callback({ error: "Player not found" });
-
-      const playerId = guest.id;
-
-      // 2. Query wins (matches where winnerId = playerId)
-      const [{ count: wins }] = await db
-        .select({ count: sql<number>`COUNT(*)` })
-        .from(matches)
-        .where(eq(matches.winnerId, playerId))
-        .all();
-
-      // 3. Query losses (player participated AND winnerId != playerId AND winnerId IS NOT NULL)
-      const [{ count: losses }] = await db
-        .select({ count: sql<number>`COUNT(*)` })
-        .from(matches)
-        .where(
-          and(
-            or(
-              eq(matches.goldPlayerId, playerId),
-              eq(matches.redPlayerId, playerId),
-            ),
-            isNotNull(matches.winnerId),
-            sql`${matches.winnerId} != ${playerId}`,
-          ),
-        )
-        .all();
-
-      // 4. Calculate winPct
-      const total = wins + losses;
-      const winPct = total > 0 ? Math.round((wins / total) * 100) : 0;
-
-      // 5. Get last 20 matches where this player participated, ordered by completedAt desc
-      const recentMatchRows = await db
-        .select()
-        .from(matches)
-        .where(
-          and(
-            or(
-              eq(matches.goldPlayerId, playerId),
-              eq(matches.redPlayerId, playerId),
-            ),
-            isNotNull(matches.completedAt),
-          ),
-        )
-        .orderBy(desc(matches.completedAt))
-        .limit(20)
-        .all();
-
-      // 6. Resolve opponent usernames by looking up guest IDs
-      const opponentIds = new Set<string>();
-      for (const m of recentMatchRows) {
-        const opId = m.goldPlayerId === playerId ? m.redPlayerId : m.goldPlayerId;
-        opponentIds.add(opId);
-      }
-
-      const opponentMap = new Map<string, string>();
-      if (opponentIds.size > 0) {
-        const opponentRows = await db
-          .select({ id: guests.id, username: guests.username, displayName: guests.displayName })
+        const [guest] = await db
+          .select()
           .from(guests)
-          .where(sql`${guests.id} IN (${sql.join([...opponentIds].map(id => sql`${id}`), sql`, `)})`)
+          .where(eq(guests.username, data.username))
           .all();
-        for (const row of opponentRows) {
-          opponentMap.set(row.id, row.username ?? row.displayName);
-        }
-      }
 
-      const recentMatches = recentMatchRows.map((m) => {
-        const opId = m.goldPlayerId === playerId ? m.redPlayerId : m.goldPlayerId;
-        return {
-          id: m.id,
-          opponent: opponentMap.get(opId) ?? "Unknown",
-          result: m.winnerId === playerId ? "win" : m.winnerId ? "loss" : "incomplete",
-          winType: m.winType,
-          pointsWon: m.pointsWon,
-          completedAt: m.completedAt,
-        };
-      });
+        if (!guest) return callback({ error: "Player not found" });
 
-      // 7. Build head-to-head aggregation from ALL matches (not just recent 20)
-      const allMatchRows = await db
-        .select()
-        .from(matches)
-        .where(
-          and(
-            or(
-              eq(matches.goldPlayerId, playerId),
-              eq(matches.redPlayerId, playerId),
+        const playerId = guest.id;
+
+        // Wins & losses
+        const [{ count: wins }] = await db
+          .select({ count: sql<number>`COUNT(*)` })
+          .from(matches)
+          .where(eq(matches.winnerId, playerId))
+          .all();
+
+        const [{ count: losses }] = await db
+          .select({ count: sql<number>`COUNT(*)` })
+          .from(matches)
+          .where(
+            and(
+              or(
+                eq(matches.goldPlayerId, playerId),
+                eq(matches.redPlayerId, playerId),
+              ),
+              isNotNull(matches.winnerId),
+              sql`${matches.winnerId} != ${playerId}`,
             ),
-            isNotNull(matches.winnerId),
-          ),
-        )
-        .all();
-
-      // Also resolve opponent IDs from all matches for head-to-head
-      const allOpponentIds = new Set<string>();
-      for (const m of allMatchRows) {
-        const opId = m.goldPlayerId === playerId ? m.redPlayerId : m.goldPlayerId;
-        allOpponentIds.add(opId);
-      }
-
-      // Fetch any opponent names we don't already have
-      const missingIds = [...allOpponentIds].filter(id => !opponentMap.has(id));
-      if (missingIds.length > 0) {
-        const extraRows = await db
-          .select({ id: guests.id, username: guests.username, displayName: guests.displayName })
-          .from(guests)
-          .where(sql`${guests.id} IN (${sql.join(missingIds.map(id => sql`${id}`), sql`, `)})`)
+          )
           .all();
-        for (const row of extraRows) {
-          opponentMap.set(row.id, row.username ?? row.displayName);
+
+        const total = wins + losses;
+        const winPct = total > 0 ? Math.round((wins / total) * 100) : 0;
+
+        // Recent 20 matches
+        const recentMatchRows = await db
+          .select()
+          .from(matches)
+          .where(
+            and(
+              or(
+                eq(matches.goldPlayerId, playerId),
+                eq(matches.redPlayerId, playerId),
+              ),
+              isNotNull(matches.winnerId),
+            ),
+          )
+          .orderBy(desc(matches.completedAt))
+          .limit(20)
+          .all();
+
+        // Resolve opponent usernames
+        const opponentIds = new Set<string>();
+        for (const m of recentMatchRows) {
+          opponentIds.add(m.goldPlayerId === playerId ? m.redPlayerId : m.goldPlayerId);
         }
+
+        const opponentMap = new Map<string, string>();
+        if (opponentIds.size > 0) {
+          const opponentRows = await db
+            .select({ id: guests.id, username: guests.username, displayName: guests.displayName })
+            .from(guests)
+            .where(sql`${guests.id} IN (${sql.join([...opponentIds].map(id => sql`${id}`), sql`, `)})`)
+            .all();
+          for (const row of opponentRows) {
+            opponentMap.set(row.id, row.username ?? row.displayName);
+          }
+        }
+
+        const recentMatches = recentMatchRows.map((m) => {
+          const opId = m.goldPlayerId === playerId ? m.redPlayerId : m.goldPlayerId;
+          return {
+            id: m.id,
+            opponent: opponentMap.get(opId) ?? "Unknown",
+            result: m.winnerId === playerId ? "win" : "loss",
+            winType: m.winType,
+            pointsWon: m.pointsWon,
+            completedAt: m.completedAt,
+          };
+        });
+
+        // Head-to-head via SQL GROUP BY (all matches, not just recent 20)
+        const h2hRows = await db
+          .select({
+            opponentId: sql<string>`CASE WHEN gold_player_id = ${playerId} THEN red_player_id ELSE gold_player_id END`,
+            wins: sql<number>`SUM(CASE WHEN winner_id = ${playerId} THEN 1 ELSE 0 END)`,
+            losses: sql<number>`SUM(CASE WHEN winner_id != ${playerId} THEN 1 ELSE 0 END)`,
+          })
+          .from(matches)
+          .where(
+            and(
+              or(
+                eq(matches.goldPlayerId, playerId),
+                eq(matches.redPlayerId, playerId),
+              ),
+              isNotNull(matches.winnerId),
+            ),
+          )
+          .groupBy(sql`CASE WHEN gold_player_id = ${playerId} THEN red_player_id ELSE gold_player_id END`)
+          .all();
+
+        // Resolve h2h opponent names (fetch any we don't already have)
+        const h2hIds = h2hRows.map(r => r.opponentId).filter(id => !opponentMap.has(id));
+        if (h2hIds.length > 0) {
+          const extraRows = await db
+            .select({ id: guests.id, username: guests.username, displayName: guests.displayName })
+            .from(guests)
+            .where(sql`${guests.id} IN (${sql.join(h2hIds.map(id => sql`${id}`), sql`, `)})`)
+            .all();
+          for (const row of extraRows) {
+            opponentMap.set(row.id, row.username ?? row.displayName);
+          }
+        }
+
+        const headToHead = h2hRows
+          .map(r => ({
+            opponent: opponentMap.get(r.opponentId) ?? "Unknown",
+            wins: r.wins,
+            losses: r.losses,
+          }))
+          .sort((a, b) => (b.wins + b.losses) - (a.wins + a.losses));
+
+        callback({
+          username: guest.username,
+          wins,
+          losses,
+          winPct,
+          recentMatches,
+          headToHead,
+        });
+      } catch (err) {
+        console.error("get-player-profile error:", err);
+        callback({ error: "Internal server error" });
       }
-
-      const h2hMap = new Map<string, { opponent: string; wins: number; losses: number }>();
-      for (const m of allMatchRows) {
-        const opId = m.goldPlayerId === playerId ? m.redPlayerId : m.goldPlayerId;
-        const opName = opponentMap.get(opId) ?? "Unknown";
-        if (!h2hMap.has(opId)) {
-          h2hMap.set(opId, { opponent: opName, wins: 0, losses: 0 });
-        }
-        const record = h2hMap.get(opId)!;
-        if (m.winnerId === playerId) {
-          record.wins++;
-        } else {
-          record.losses++;
-        }
-      }
-
-      const headToHead = [...h2hMap.values()];
-
-      // 8. Return via callback
-      callback({
-        username: guest.username,
-        wins,
-        losses,
-        winPct,
-        recentMatches,
-        headToHead,
-      });
     },
   );
 
