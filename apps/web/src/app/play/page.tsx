@@ -7,6 +7,7 @@ import { Player, type GameState, type WinType } from "@backyamon/engine";
 import { GameCanvas } from "@/components/GameCanvas";
 import { OnlineGameCanvas } from "@/components/OnlineGameCanvas";
 import { SocketClient } from "@/multiplayer/SocketClient";
+import { PlayerLink } from "@/components/PlayerLink";
 
 const aiNames: Record<string, string> = {
   easy: "Beach Bum",
@@ -381,7 +382,10 @@ function OnlinePlayContent({ roomId }: { roomId: string }) {
         <div className="mb-3 sm:mb-4 text-center animate-fade-in">
           <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl mb-1 tracking-wide">
             <span className="text-[#F4E1C1]">vs </span>
-            <span className="text-[#CE1126]">{opponentName}</span>
+            <PlayerLink
+              username={opponentName}
+              className="text-[#CE1126] font-heading"
+            />
           </h1>
           <div className="flex items-center justify-center gap-2">
             <div

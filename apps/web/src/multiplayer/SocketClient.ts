@@ -274,6 +274,42 @@ export class SocketClient {
     this.socket.emit("list-rooms");
   }
 
+  getPlayerProfile(username: string): Promise<{
+    username: string;
+    wins: number;
+    losses: number;
+    winPct: number;
+    recentMatches: {
+      id: string;
+      opponent: string;
+      result: "win" | "loss";
+      winType: string;
+      pointsWon: number;
+      completedAt: string;
+    }[];
+    headToHead: {
+      opponent: string;
+      wins: number;
+      losses: number;
+    }[];
+  }> {
+    return this.emitWithAck("get-player-profile", { username });
+  }
+
+  getRecentMatches(limit?: number): Promise<{
+    matches: {
+      id: string;
+      goldPlayer: string;
+      redPlayer: string;
+      winner: string;
+      winType: string;
+      pointsWon: number;
+      completedAt: string;
+    }[];
+  }> {
+    return this.emitWithAck("get-recent-matches", { limit });
+  }
+
   // ── Game Actions ─────────────────────────────────────────────────────
 
   rollDice(): void {
