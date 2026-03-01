@@ -17,6 +17,7 @@ interface PlayerInfo {
   createdAt: string;
   wins: number;
   losses: number;
+  points: number;
 }
 
 type LobbyView = "lobby" | "quick-match" | "waiting";
@@ -478,34 +479,58 @@ export default function LobbyPage() {
         )}
       </div>
 
-      {/* Players list */}
+      {/* Leaderboard */}
       {view === "lobby" && (
         <div className="w-full max-w-3xl mt-8">
           <p className="text-[#D4A857] text-xs font-heading text-center tracking-wider uppercase mb-3">
-            Registered Players
+            Leaderboard
           </p>
           {players.length === 0 ? (
             <p className="text-[#D4A857]/40 text-sm text-center font-heading">
               No players yet — claim a username to get listed!
             </p>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-              {players.map((p) => (
-                <div
-                  key={p.username}
-                  className="rounded-xl bg-[#1A1A0E]/80 border border-[#8B4513]/40 px-3 py-2 text-center"
-                >
-                  <PlayerLink
-                    username={p.username}
-                    className="text-[#FFD700] font-heading text-sm block"
-                  />
-                  {(p.wins > 0 || p.losses > 0) && (
-                    <span className="text-[#D4A857]/50 font-heading text-xs">
+            <div className="flex flex-col gap-1.5">
+              {[...players]
+                .sort((a, b) => b.points - a.points)
+                .map((p, i) => (
+                  <div
+                    key={p.username}
+                    className={`rounded-xl bg-[#1A1A0E]/80 border px-4 py-2.5 flex items-center gap-3 ${
+                      i === 0
+                        ? "border-[#FFD700]/60"
+                        : i === 1
+                          ? "border-[#C0C0C0]/40"
+                          : i === 2
+                            ? "border-[#CD7F32]/40"
+                            : "border-[#8B4513]/30"
+                    }`}
+                  >
+                    <span
+                      className={`font-heading text-sm font-bold w-6 text-center ${
+                        i === 0
+                          ? "text-[#FFD700]"
+                          : i === 1
+                            ? "text-[#C0C0C0]"
+                            : i === 2
+                              ? "text-[#CD7F32]"
+                              : "text-[#D4A857]/40"
+                      }`}
+                    >
+                      {i + 1}
+                    </span>
+                    <PlayerLink
+                      username={p.username}
+                      className="text-[#FFD700] font-heading text-sm flex-1"
+                    />
+                    <span className="text-[#D4A857] font-heading text-sm font-bold">
+                      {p.points} pts
+                    </span>
+                    <span className="text-[#D4A857]/40 font-heading text-xs w-12 text-right">
                       {p.wins}-{p.losses}
                     </span>
-                  )}
-                </div>
-              ))}
+                  </div>
+                ))}
             </div>
           )}
         </div>

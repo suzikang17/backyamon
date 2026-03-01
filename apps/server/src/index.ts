@@ -254,6 +254,7 @@ io.on("connection", (socket) => {
         createdAt: guests.createdAt,
         wins: sql<number>`(SELECT COUNT(*) FROM matches WHERE winner_id = ${guests.id})`,
         losses: sql<number>`(SELECT COUNT(*) FROM matches WHERE (gold_player_id = ${guests.id} OR red_player_id = ${guests.id}) AND winner_id IS NOT NULL AND winner_id != ${guests.id})`,
+        points: sql<number>`(SELECT COALESCE(SUM(points_won), 0) FROM matches WHERE winner_id = ${guests.id})`,
       })
       .from(guests)
       .where(isNotNull(guests.username))
