@@ -501,7 +501,7 @@ export default function LobbyPage() {
                   />
                   {(p.wins > 0 || p.losses > 0) && (
                     <span className="text-[#D4A857]/50 font-heading text-xs">
-                      {p.wins}W - {p.losses}L
+                      {p.wins}-{p.losses}
                     </span>
                   )}
                 </div>

@@ -134,7 +134,7 @@ export default function PlayerProfilePage() {
                 {profile.username}
               </h1>
               <p className="mt-2 font-heading text-lg text-[#D4A857]">
-                {profile.wins}W - {profile.losses}L
+                {profile.wins}-{profile.losses}
                 {profile.wins + profile.losses > 0 && (
                   <span className="text-[#D4A857]/50 ml-2">
                     ({profile.winPct}%)
@@ -211,7 +211,7 @@ export default function PlayerProfilePage() {
                         className="text-[#FFD700] font-heading text-sm"
                       />
                       <span className="text-[#D4A857]/50 font-heading text-xs">
-                        {h.wins}W - {h.losses}L
+                        {h.wins}-{h.losses}
                       </span>
                     </div>
                   ))}
