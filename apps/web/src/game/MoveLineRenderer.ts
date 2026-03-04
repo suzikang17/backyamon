@@ -1,5 +1,5 @@
 import { Application, Container, Graphics, Text } from "pixi.js";
-import { Player, type GameState, type Move } from "@backyamon/engine";
+import { Player, POINTS_COUNT, type GameState, type Move } from "@backyamon/engine";
 import { BoardRenderer } from "./BoardRenderer";
 
 const FADE_ALPHA = 0.4;
@@ -9,6 +9,23 @@ const LINE_WIDTH_ACTIVE = 4;
 const OPPONENT_ARC_COLOR = 0xf0a070;
 const OPPONENT_ARC_ALPHA = 0.45;
 const OPPONENT_ARC_WIDTH = 2;
+
+/**
+ * Compute which die value a move consumes, mirroring engine logic.
+ */
+function computeDieValue(move: Move, player: Player, remaining: number[]): number {
+  if (move.to === "off") {
+    const from = move.from as number;
+    const distance = player === Player.Gold ? POINTS_COUNT - from : from + 1;
+    if (remaining.includes(distance)) return distance;
+    const sorted = [...remaining].sort((a, b) => a - b);
+    return sorted.find((d) => d > distance) ?? distance;
+  }
+  if (move.from === "bar") {
+    return player === Player.Gold ? (move.to as number) + 1 : POINTS_COUNT - (move.to as number);
+  }
+  return Math.abs((move.to as number) - (move.from as number));
+}
 
 /**
  * Renders curved arcs from moveable pieces to their legal targets.
@@ -72,23 +89,14 @@ export class MoveLineRenderer {
     const player = state.currentPlayer;
     const radius = this.boardRenderer.getPieceRadius();
 
-    // Group moves by source
-    const movesByFrom = new Map<string, Move[]>();
-    for (const move of legalMoves) {
-      const key = String(move.from);
-      if (!movesByFrom.has(key)) movesByFrom.set(key, []);
-      movesByFrom.get(key)!.push(move);
-    }
-
     // Create line data for each move
     for (const move of legalMoves) {
       const start = this.getPosition(move.from, player, state);
       const end = this.getPosition(move.to, player, state);
       if (!start || !end) continue;
 
-      // Assign a label index within its group
-      const groupMoves = movesByFrom.get(String(move.from))!;
-      const labelIdx = groupMoves.indexOf(move) + 1;
+      // Label with the die value this move consumes
+      const labelIdx = computeDieValue(move, player, state.dice!.remaining);
 
       const lineData: MoveLineData = {
         move,
@@ -141,15 +149,12 @@ export class MoveLineRenderer {
   /**
    * Get the move for a given label index on the currently highlighted piece.
    */
-  getMoveByLabel(labelIdx: number): Move | null {
+  getMoveByLabel(dieValue: number): Move | null {
     if (this.highlightedFrom === null) return null;
-    const activeLines = this.moveLines.filter(
-      (l) => l.move.from === this.highlightedFrom
+    const match = this.moveLines.find(
+      (l) => l.move.from === this.highlightedFrom && l.label === dieValue
     );
-    if (labelIdx >= 1 && labelIdx <= activeLines.length) {
-      return activeLines[labelIdx - 1].move;
-    }
-    return null;
+    return match?.move ?? null;
   }
 
   /**
