@@ -104,7 +104,7 @@ export class GameController extends BaseGameController {
 
     // Start with opening roll ceremony
     this.onMessage?.("Opening roll - click to roll!");
-    this.onWaitingForRoll?.(true);
+    this.setWaitingForRoll(true);
   }
 
   /**
@@ -137,7 +137,7 @@ export class GameController extends BaseGameController {
     this.sound.resumeContext();
     this.sound.playSFX("double-offered");
 
-    this.onWaitingForRoll?.(false);
+    this.setWaitingForRoll(false);
     this.state = offerDouble(this.state);
     this.emitStateChange();
 
@@ -212,7 +212,7 @@ export class GameController extends BaseGameController {
 
   private async performOpeningRoll(): Promise<void> {
     if (this.destroyed) return;
-    this.onWaitingForRoll?.(false);
+    this.setWaitingForRoll(false);
 
     let goldDie: number;
     let redDie: number;
@@ -228,7 +228,7 @@ export class GameController extends BaseGameController {
 
       if (goldDie === redDie) {
         this.onMessage?.(`Tied ${goldDie}-${redDie}! Roll again...`);
-        this.onWaitingForRoll?.(true);
+        this.setWaitingForRoll(true);
         // Wait for player to click again to re-roll
         return;
       }
@@ -325,20 +325,29 @@ export class GameController extends BaseGameController {
     this.endCurrentTurn();
   }
 
+  private setWaitingForRoll(waiting: boolean): void {
+    this.onWaitingForRoll?.(waiting);
+    if (waiting) {
+      this.diceRenderer.showCup();
+    } else {
+      this.diceRenderer.hideCup();
+    }
+  }
+
   private async startHumanTurn(): Promise<void> {
     if (this.destroyed) return;
 
     this.sound.playSFX("turn-start");
 
     // Signal that we're waiting for a roll
-    this.onWaitingForRoll?.(true);
+    this.setWaitingForRoll(true);
     this.onMessage?.(turnStartMessage());
   }
 
   private async doHumanRoll(): Promise<void> {
     if (this.destroyed) return;
 
-    this.onWaitingForRoll?.(false);
+    this.setWaitingForRoll(false);
 
     // Clear opponent move arcs from previous AI turn
     this.moveLineRenderer.clearOpponentMoves();

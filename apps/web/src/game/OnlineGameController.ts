@@ -58,7 +58,7 @@ export class OnlineGameController extends BaseGameController {
 
     // Handle initial phase
     if (this.state.phase === "OPENING_ROLL") {
-      this.onWaitingForRoll?.(true);
+      this.setWaitingForRoll(true);
       this.onMessage?.("Opening roll — click to roll!");
     } else if (this.state.currentPlayer === this.localPlayer && this.state.phase === "ROLLING") {
       this.startLocalTurn();
@@ -75,7 +75,7 @@ export class OnlineGameController extends BaseGameController {
 
     // Opening roll — either player can trigger it
     if (this.state.phase === "OPENING_ROLL") {
-      this.onWaitingForRoll?.(false);
+      this.setWaitingForRoll(false);
       this.onMessage?.("Rolling...");
       this.socketClient.rollDice();
       return;
@@ -84,7 +84,7 @@ export class OnlineGameController extends BaseGameController {
     if (this.state.phase !== "ROLLING") return;
     if (this.state.currentPlayer !== this.localPlayer) return;
 
-    this.onWaitingForRoll?.(false);
+    this.setWaitingForRoll(false);
     this.onMessage?.("Rolling...");
     this.moveLineRenderer.clearOpponentMoves();
     this.socketClient.rollDice();
@@ -92,10 +92,19 @@ export class OnlineGameController extends BaseGameController {
 
   // ── Private Helpers ─────────────────────────────────────────────────
 
+  private setWaitingForRoll(waiting: boolean): void {
+    this.onWaitingForRoll?.(waiting);
+    if (waiting) {
+      this.diceRenderer.showCup();
+    } else {
+      this.diceRenderer.hideCup();
+    }
+  }
+
   private startLocalTurn(): void {
     if (this.destroyed) return;
     this.sound.playSFX("turn-start");
-    this.onWaitingForRoll?.(true);
+    this.setWaitingForRoll(true);
     this.onMessage?.("Your turn - click to roll!");
   }
 
@@ -230,7 +239,7 @@ export class OnlineGameController extends BaseGameController {
     this.onMessage?.(`Tied ${data.goldDie}-${data.redDie}! Roll again...`);
     setTimeout(() => {
       if (this.destroyed) return;
-      this.onWaitingForRoll?.(true);
+      this.setWaitingForRoll(true);
       this.onMessage?.("Opening roll — click to roll!");
     }, 1500);
   }

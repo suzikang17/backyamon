@@ -49,6 +49,8 @@ export class DiceRenderer {
   private dieContainers: Container[] = [];
   private dieValues: number[] = [];
   private dieOrigPositions: { x: number; y: number }[] = [];
+  private cupContainer: Container | null = null;
+  private cupTickFn: ((dt: unknown) => void) | null = null;
   private dieSize: number;
   private trayHeight: number;
 
@@ -72,6 +74,76 @@ export class DiceRenderer {
       x: bounds.x + bounds.width / 2,
       y: boardH + this.trayHeight / 2,
     };
+  }
+
+  showCup(): void {
+    this.hideCup();
+
+    const center = this.getTrayCenter();
+    const cupH = Math.min(this.trayHeight * 0.85, this.dieSize * 1.6);
+    const cupW = cupH * 0.72;
+    const hw = cupW / 2;
+    const rimH = cupH * 0.2;
+
+    this.cupContainer = new Container();
+    this.cupContainer.x = center.x;
+    this.cupContainer.y = center.y;
+    this.cupContainer.zIndex = 520;
+
+    const g = new Graphics();
+
+    // Cup body (trapezoid)
+    g.moveTo(-hw * 0.9, -cupH / 2 + rimH)
+      .lineTo(hw * 0.9, -cupH / 2 + rimH)
+      .lineTo(hw * 0.65, cupH / 2)
+      .quadraticCurveTo(0, cupH / 2 + cupH * 0.05, -hw * 0.65, cupH / 2)
+      .closePath()
+      .fill({ color: 0x7a3c10 })
+      .stroke({ color: 0x4a2008, width: 2 });
+
+    // Leather rim
+    g.roundRect(-hw, -cupH / 2, cupW, rimH * 1.1, 4)
+      .fill({ color: 0x9a5020 })
+      .stroke({ color: 0x7a3c10, width: 1.5 });
+
+    // Leather strap band
+    const bandY = -cupH / 2 + rimH + cupH * 0.35;
+    g.rect(-hw * 0.8, bandY, cupW * 0.8, cupH * 0.07)
+      .fill({ color: 0x4a2008, alpha: 0.55 });
+
+    this.cupContainer.addChild(g);
+
+    // Two small dice peeking above rim
+    const miniScale = 0.5;
+    for (let i = 0; i < 2; i++) {
+      const miniDie = this.createDie(i === 0 ? 1 : 6);
+      miniDie.scale.set(miniScale);
+      miniDie.x = (i === 0 ? -1 : 1) * hw * 0.28;
+      miniDie.y = -cupH / 2 - this.dieSize * miniScale * 0.25;
+      this.cupContainer.addChild(miniDie);
+    }
+
+    this.container.addChild(this.cupContainer);
+
+    // Gentle wobble
+    const startTime = performance.now();
+    this.cupTickFn = () => {
+      if (!this.cupContainer) return;
+      const t = (performance.now() - startTime) / 900;
+      this.cupContainer.rotation = Math.sin(t * Math.PI * 2) * (8 * Math.PI / 180);
+    };
+    this.app.ticker.add(this.cupTickFn);
+  }
+
+  hideCup(): void {
+    if (this.cupTickFn) {
+      this.app.ticker.remove(this.cupTickFn);
+      this.cupTickFn = null;
+    }
+    if (this.cupContainer) {
+      this.cupContainer.destroy({ children: true });
+      this.cupContainer = null;
+    }
   }
 
   /**
@@ -339,6 +411,7 @@ export class DiceRenderer {
   }
 
   hide(): void {
+    this.hideCup();
     this.container.removeChildren();
     this.dieContainers = [];
     this.dieValues = [];
@@ -346,6 +419,7 @@ export class DiceRenderer {
   }
 
   destroy(): void {
+    this.hideCup();
     this.container.destroy({ children: true });
     this.dieContainers = [];
     this.dieValues = [];
