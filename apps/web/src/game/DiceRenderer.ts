@@ -105,6 +105,8 @@ export class DiceRenderer {
    * Show opening roll with each die on its own side of the board.
    * Left die = opponent's roll, right die = local player's roll.
    */
+  // Note: dieValues and dieOrigPositions are intentionally not populated here.
+  // Opening-roll dice render inside the board and are never draggable.
   async showOpeningRoll(leftValue: number, rightValue: number): Promise<void> {
     this.hide();
 
