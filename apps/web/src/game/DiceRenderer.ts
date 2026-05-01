@@ -51,6 +51,8 @@ export class DiceRenderer {
   private dieOrigPositions: { x: number; y: number }[] = [];
   private cupContainer: Container | null = null;
   private cupTickFn: ((dt: unknown) => void) | null = null;
+  private rollTickFn: ((dt: unknown) => void) | null = null;
+  private highlightTickFn: ((dt: unknown) => void) | null = null;
   private dieSize: number;
   private trayHeight: number;
 
@@ -223,7 +225,7 @@ export class DiceRenderer {
       const startTime = performance.now();
       const duration = 500;
 
-      const tickFn = () => {
+      this.highlightTickFn = () => {
         const elapsed = performance.now() - startTime;
         const t = Math.min(elapsed / duration, 1);
         // Ease out cubic
@@ -241,12 +243,13 @@ export class DiceRenderer {
         glow.scale.set(0.6 + ease * 0.4);
 
         if (t >= 1) {
-          this.app.ticker.remove(tickFn);
+          this.app.ticker.remove(this.highlightTickFn!);
+          this.highlightTickFn = null;
           resolve();
         }
       };
 
-      this.app.ticker.add(tickFn);
+      this.app.ticker.add(this.highlightTickFn);
     });
   }
 
@@ -262,7 +265,7 @@ export class DiceRenderer {
         scale: 1,
       }));
 
-      const tickFn = () => {
+      this.rollTickFn = () => {
         const elapsed = performance.now() - startTime;
         const t = Math.min(elapsed / duration, 1);
 
@@ -280,7 +283,8 @@ export class DiceRenderer {
         });
 
         if (t >= 1) {
-          this.app.ticker.remove(tickFn);
+          this.app.ticker.remove(this.rollTickFn!);
+          this.rollTickFn = null;
           // Reset to exact positions
           this.dieContainers.forEach((die, i) => {
             die.rotation = 0;
@@ -292,7 +296,7 @@ export class DiceRenderer {
         }
       };
 
-      this.app.ticker.add(tickFn);
+      this.app.ticker.add(this.rollTickFn);
     });
   }
 
@@ -412,6 +416,17 @@ export class DiceRenderer {
 
   hide(): void {
     this.hideCup();
+    if (this.rollTickFn) {
+      this.app.ticker.remove(this.rollTickFn);
+      this.rollTickFn = null;
+    }
+    if (this.highlightTickFn) {
+      this.app.ticker.remove(this.highlightTickFn);
+      this.highlightTickFn = null;
+    }
+    for (const dc of this.dieContainers) {
+      dc.destroy({ children: true });
+    }
     this.container.removeChildren();
     this.dieContainers = [];
     this.dieValues = [];
@@ -420,6 +435,14 @@ export class DiceRenderer {
 
   destroy(): void {
     this.hideCup();
+    if (this.rollTickFn) {
+      this.app.ticker.remove(this.rollTickFn);
+      this.rollTickFn = null;
+    }
+    if (this.highlightTickFn) {
+      this.app.ticker.remove(this.highlightTickFn);
+      this.highlightTickFn = null;
+    }
     this.container.destroy({ children: true });
     this.dieContainers = [];
     this.dieValues = [];
