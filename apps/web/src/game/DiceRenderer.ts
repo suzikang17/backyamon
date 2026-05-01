@@ -80,22 +80,24 @@ export class DiceRenderer {
   async showRoll(dice: Dice): Promise<void> {
     this.hide();
 
-    const center = this.boardRenderer.getDiceCenterPosition();
+    const center = this.getTrayCenter();
     const gap = this.dieSize * 0.3;
-
-    // Always show exactly 2 dice
     const totalWidth = 2 * this.dieSize + gap;
     const startX = center.x - totalWidth / 2 + this.dieSize / 2;
+
+    this.dieValues = [dice.values[0], dice.values[1]];
+    this.dieOrigPositions = [];
 
     for (let i = 0; i < 2; i++) {
       const die = this.createDie(dice.values[i]);
       die.x = startX + i * (this.dieSize + gap);
       die.y = center.y;
+      die.eventMode = "static";
+      this.dieOrigPositions.push({ x: die.x, y: die.y });
       this.container.addChild(die);
       this.dieContainers.push(die);
     }
 
-    // Animate: quick spin + bounce
     await this.animateRoll();
   }
 
@@ -295,13 +297,56 @@ export class DiceRenderer {
     }
   }
 
+  /** Returns draggable info for each die currently in the tray. */
+  getDieInfo(): Array<{ container: Container; value: number; origX: number; origY: number }> {
+    return this.dieContainers.map((c, i) => ({
+      container: c,
+      value: this.dieValues[i] ?? 0,
+      origX: this.dieOrigPositions[i]?.x ?? 0,
+      origY: this.dieOrigPositions[i]?.y ?? 0,
+    }));
+  }
+
+  /** Animate a die back to its resting tray position. */
+  snapDieBack(index: number): Promise<void> {
+    const die = this.dieContainers[index];
+    const orig = this.dieOrigPositions[index];
+    if (!die || !orig) return Promise.resolve();
+
+    return new Promise<void>((resolve) => {
+      const startX = die.x;
+      const startY = die.y;
+      const startScale = die.scale.x;
+      const startTime = performance.now();
+      const duration = 200;
+
+      const tick = () => {
+        const t = Math.min((performance.now() - startTime) / duration, 1);
+        const ease = 1 - Math.pow(1 - t, 3);
+        die.x = startX + (orig.x - startX) * ease;
+        die.y = startY + (orig.y - startY) * ease;
+        die.scale.set(startScale + (1 - startScale) * ease);
+        if (t >= 1) {
+          this.app.ticker.remove(tick);
+          die.zIndex = 0;
+          resolve();
+        }
+      };
+      this.app.ticker.add(tick);
+    });
+  }
+
   hide(): void {
     this.container.removeChildren();
     this.dieContainers = [];
+    this.dieValues = [];
+    this.dieOrigPositions = [];
   }
 
   destroy(): void {
     this.container.destroy({ children: true });
     this.dieContainers = [];
+    this.dieValues = [];
+    this.dieOrigPositions = [];
   }
 }
