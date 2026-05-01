@@ -511,6 +511,10 @@ export class BoardRenderer {
     return this.zionX;
   }
 
+  getBoardHeight(): number {
+    return this.boardHeight;
+  }
+
   getPlayAreaBounds(): {
     x: number;
     y: number;

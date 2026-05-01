@@ -42,11 +42,14 @@ export abstract class BaseGameController {
   protected initRenderers(pieceSet?: PieceSet): void {
     const w = this.app.screen.width;
     const h = this.app.screen.height;
+    // Board occupies top 8:5 portion; tray is the rest
+    const boardH = Math.floor(w / (8 / 5));
+    const trayH = h - boardH;
 
-    this.boardRenderer = new BoardRenderer(this.app, w, h);
-    this.ambienceLayer = new AmbienceLayer(this.app, w, h);
+    this.boardRenderer = new BoardRenderer(this.app, w, boardH);
+    this.ambienceLayer = new AmbienceLayer(this.app, w, boardH);
     this.pieceRenderer = new PieceRenderer(this.app, this.boardRenderer, pieceSet);
-    this.diceRenderer = new DiceRenderer(this.app, this.boardRenderer);
+    this.diceRenderer = new DiceRenderer(this.app, this.boardRenderer, trayH);
     this.moveLineRenderer = new MoveLineRenderer(this.app, this.boardRenderer);
     this.inputHandler = new InputHandler(
       this.app,

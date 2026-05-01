@@ -47,15 +47,28 @@ export class DiceRenderer {
   private boardRenderer: BoardRenderer;
   private container: Container;
   private dieContainers: Container[] = [];
+  private dieValues: number[] = [];
+  private dieOrigPositions: { x: number; y: number }[] = [];
   private dieSize: number;
+  private trayHeight: number;
 
-  constructor(app: Application, boardRenderer: BoardRenderer) {
+  constructor(app: Application, boardRenderer: BoardRenderer, trayHeight: number) {
     this.app = app;
     this.boardRenderer = boardRenderer;
+    this.trayHeight = trayHeight;
     this.container = new Container();
     this.container.zIndex = 500;
     app.stage.addChild(this.container);
-    this.dieSize = Math.floor(boardRenderer.getPieceRadius() * 2.2);
+    this.dieSize = Math.max(Math.floor(boardRenderer.getPieceRadius() * 3), 40);
+  }
+
+  private getTrayCenter(): { x: number; y: number } {
+    const boardH = this.boardRenderer.getBoardHeight();
+    const bounds = this.boardRenderer.getPlayAreaBounds();
+    return {
+      x: bounds.x + bounds.width / 2,
+      y: boardH + this.trayHeight / 2,
+    };
   }
 
   /**
