@@ -450,6 +450,7 @@ export class GameController extends BaseGameController {
     };
 
     this.inputHandler.enable(this.state, legalMoves);
+    this.inputHandler.enableDieDrag();
   }
 
   private async startAITurn(): Promise<void> {

@@ -13,7 +13,7 @@ const OPPONENT_ARC_WIDTH = 2;
 /**
  * Compute which die value a move consumes, mirroring engine logic.
  */
-function computeDieValue(move: Move, player: Player, remaining: number[]): number {
+export function computeDieValue(move: Move, player: Player, remaining: number[]): number {
   if (move.to === "off") {
     const from = move.from as number;
     const distance = player === Player.Gold ? POINTS_COUNT - from : from + 1;

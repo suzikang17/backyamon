@@ -3,6 +3,8 @@ import { Player, type GameState, type Move } from "@backyamon/engine";
 import { BoardRenderer } from "./BoardRenderer";
 import { PieceRenderer } from "./PieceRenderer";
 import { MoveLineRenderer } from "./MoveLineRenderer";
+import { computeDieValue } from "./MoveLineRenderer";
+import { DiceRenderer } from "./DiceRenderer";
 
 export class InputHandler {
   private app: Application;
@@ -39,6 +41,17 @@ export class InputHandler {
   private swipeDownHandler: ((e: FederatedPointerEvent) => void) | null = null;
   private swipeMoveHandler: ((e: FederatedPointerEvent) => void) | null = null;
   private swipeUpHandler: ((e: FederatedPointerEvent) => void) | null = null;
+
+  // Die-drag state
+  private diceRenderer: DiceRenderer | null = null;
+  private dieDragActive = false;
+  private dieDragIndex = -1;
+  private dieDragValue = 0;
+  private dieDragContainer: Container | null = null;
+  private dieDragHoveredFrom: number | "bar" | null = null;
+  private dieDragHoveredPiece: Container | null = null;
+  private dieMoveHandler: ((e: FederatedPointerEvent) => void) | null = null;
+  private dieUpHandler: ((e: FederatedPointerEvent) => void) | null = null;
 
   constructor(
     app: Application,
@@ -169,6 +182,7 @@ export class InputHandler {
   disable(): void {
     this.enabled = false;
     this.deselect();
+    this.disableDieDrag();
     this.pieceRenderer.clearMoveableGlow();
     this.moveLineRenderer.clear();
     this.updateCursors();
@@ -663,6 +677,10 @@ export class InputHandler {
     }
   }
 
+  setDiceRenderer(dr: DiceRenderer): void {
+    this.diceRenderer = dr;
+  }
+
   enableSwipeToRoll(onRoll: () => void): void {
     this.disableSwipeToRoll();
     this.swipeCallback = onRoll;
@@ -716,6 +734,173 @@ export class InputHandler {
       this.app.stage.off("pointerup", this.swipeUpHandler);
       this.app.stage.off("pointerupoutside", this.swipeUpHandler);
       this.swipeUpHandler = null;
+    }
+  }
+
+  private getEligiblePieceAtPosition(
+    x: number,
+    y: number,
+    dieValue: number
+  ): number | "bar" | null {
+    if (!this.state || !this.state.dice) return null;
+    const player = this.state.currentPlayer;
+    const remaining = this.state.dice.remaining;
+    const hitRadius = this.boardRenderer.getPieceRadius() * 1.6;
+
+    const eligibleFroms = new Set(
+      this.legalMoves
+        .filter((m) => computeDieValue(m, player, remaining) === dieValue)
+        .map((m) => m.from)
+    );
+
+    for (const from of eligibleFroms) {
+      let pos: { x: number; y: number };
+      if (from === "bar") {
+        const b = this.boardRenderer.getBarBounds();
+        pos = { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+      } else {
+        pos = this.boardRenderer.getPointPosition(from as number);
+      }
+      if (Math.hypot(x - pos.x, y - pos.y) < hitRadius) return from;
+    }
+
+    return null;
+  }
+
+  enableDieDrag(): void {
+    this.disableDieDrag();
+    if (!this.diceRenderer || !this.state) return;
+
+    const dieInfo = this.diceRenderer.getDieInfo();
+
+    dieInfo.forEach(({ container, value }, index) => {
+      container.eventMode = "static";
+      container.cursor = "grab";
+
+      const onDieDown = (e: FederatedPointerEvent) => {
+        if (!this.enabled || container.alpha < 0.5) return; // skip used dice
+        e.stopPropagation();
+
+        this.dieDragActive = true;
+        this.dieDragIndex = index;
+        this.dieDragValue = value;
+        this.dieDragContainer = container;
+        this.dieDragHoveredFrom = null;
+        this.dieDragHoveredPiece = null;
+
+        container.zIndex = 900;
+        container.scale.set(1.2);
+
+        this.dieMoveHandler = (moveE: FederatedPointerEvent) => {
+          if (!this.dieDragActive || !this.dieDragContainer) return;
+
+          this.dieDragContainer.x = moveE.global.x;
+          this.dieDragContainer.y = moveE.global.y;
+
+          const hitFrom = this.getEligiblePieceAtPosition(
+            moveE.global.x,
+            moveE.global.y,
+            this.dieDragValue
+          );
+
+          if (hitFrom !== this.dieDragHoveredFrom) {
+            // Clear previous hover
+            if (this.dieDragHoveredPiece) {
+              this.dieDragHoveredPiece.scale.set(1);
+              this.dieDragHoveredPiece.zIndex = 0;
+              this.dieDragHoveredPiece = null;
+            }
+            this.moveLineRenderer.clearHighlight();
+
+            this.dieDragHoveredFrom = hitFrom;
+
+            if (hitFrom !== null) {
+              const player = this.state!.currentPlayer;
+              const piece = this.pieceRenderer.getPieceAt(hitFrom, player);
+              if (piece) {
+                this.dieDragHoveredPiece = piece;
+                piece.scale.set(1.15);
+                piece.zIndex = 800;
+              }
+              this.moveLineRenderer.highlightFrom(hitFrom);
+            }
+          }
+        };
+
+        this.dieUpHandler = () => {
+          if (!this.dieDragActive) return;
+          this.app.stage.off("pointermove", this.dieMoveHandler!);
+          this.app.stage.off("pointerup", this.dieUpHandler!);
+          this.app.stage.off("pointerupoutside", this.dieUpHandler!);
+
+          const fromHit = this.dieDragHoveredFrom;
+
+          // Clear hover visuals
+          if (this.dieDragHoveredPiece) {
+            this.dieDragHoveredPiece.scale.set(1);
+            this.dieDragHoveredPiece.zIndex = 0;
+            this.dieDragHoveredPiece = null;
+          }
+          this.moveLineRenderer.clearHighlight();
+          this.dieDragActive = false;
+          this.dieDragHoveredFrom = null;
+
+          if (fromHit !== null && this.state && this.state.dice) {
+            const player = this.state.currentPlayer;
+            const remaining = this.state.dice.remaining;
+            const targetMove = this.legalMoves.find(
+              (m) =>
+                m.from === fromHit &&
+                computeDieValue(m, player, remaining) === this.dieDragValue
+            );
+            if (targetMove) {
+              this.executeMove(targetMove);
+              return;
+            }
+          }
+
+          // No valid drop — snap die back
+          this.diceRenderer?.snapDieBack(this.dieDragIndex);
+        };
+
+        this.app.stage.on("pointermove", this.dieMoveHandler);
+        this.app.stage.on("pointerup", this.dieUpHandler);
+        this.app.stage.on("pointerupoutside", this.dieUpHandler);
+      };
+
+      container.on("pointerdown", onDieDown);
+      // Store cleanup reference via tag
+      (container as any).__dieDragCleanup = () => {
+        container.off("pointerdown", onDieDown);
+        container.eventMode = "none";
+        container.cursor = "default";
+      };
+    });
+  }
+
+  disableDieDrag(): void {
+    this.dieDragActive = false;
+    this.dieDragHoveredFrom = null;
+    if (this.dieDragHoveredPiece) {
+      this.dieDragHoveredPiece.scale.set(1);
+      this.dieDragHoveredPiece.zIndex = 0;
+      this.dieDragHoveredPiece = null;
+    }
+    if (this.dieMoveHandler) {
+      this.app.stage.off("pointermove", this.dieMoveHandler);
+      this.dieMoveHandler = null;
+    }
+    if (this.dieUpHandler) {
+      this.app.stage.off("pointerup", this.dieUpHandler);
+      this.app.stage.off("pointerupoutside", this.dieUpHandler);
+      this.dieUpHandler = null;
+    }
+    // Clean up per-die listeners
+    if (this.diceRenderer) {
+      for (const { container } of this.diceRenderer.getDieInfo()) {
+        const cleanup = (container as any).__dieDragCleanup;
+        if (cleanup) { cleanup(); delete (container as any).__dieDragCleanup; }
+      }
     }
   }
 

@@ -57,6 +57,7 @@ export abstract class BaseGameController {
       this.pieceRenderer,
       this.moveLineRenderer
     );
+    this.inputHandler.setDiceRenderer(this.diceRenderer);
   }
 
   // ── Keyboard Navigation Delegation ─────────────────────────────────
