@@ -329,8 +329,10 @@ export class GameController extends BaseGameController {
     this.onWaitingForRoll?.(waiting);
     if (waiting) {
       this.diceRenderer.showCup();
+      this.inputHandler.enableSwipeToRoll(() => this.rollForHuman());
     } else {
       this.diceRenderer.hideCup();
+      this.inputHandler.disableSwipeToRoll();
     }
   }
 

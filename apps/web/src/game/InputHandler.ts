@@ -32,6 +32,14 @@ export class InputHandler {
   // Callback
   onMoveSelected: ((move: Move) => void) | null = null;
 
+  // Swipe-to-roll state
+  private swipeCallback: (() => void) | null = null;
+  private swipeStart: { x: number; y: number } | null = null;
+  private swipePending = false;
+  private swipeDownHandler: ((e: FederatedPointerEvent) => void) | null = null;
+  private swipeMoveHandler: ((e: FederatedPointerEvent) => void) | null = null;
+  private swipeUpHandler: ((e: FederatedPointerEvent) => void) | null = null;
+
   constructor(
     app: Application,
     boardRenderer: BoardRenderer,
@@ -655,7 +663,60 @@ export class InputHandler {
     }
   }
 
+  enableSwipeToRoll(onRoll: () => void): void {
+    this.disableSwipeToRoll();
+    this.swipeCallback = onRoll;
+
+    this.swipeDownHandler = (e: FederatedPointerEvent) => {
+      // Only detect swipes on the board area, not the tray
+      if (e.global.y < this.boardRenderer.getBoardHeight()) {
+        this.swipeStart = { x: e.global.x, y: e.global.y };
+        this.swipePending = false;
+      }
+    };
+
+    this.swipeMoveHandler = (e: FederatedPointerEvent) => {
+      if (!this.swipeStart) return;
+      const dist = Math.hypot(
+        e.global.x - this.swipeStart.x,
+        e.global.y - this.swipeStart.y
+      );
+      if (dist >= 30) this.swipePending = true;
+    };
+
+    this.swipeUpHandler = () => {
+      if (this.swipePending) this.swipeCallback?.();
+      this.swipeStart = null;
+      this.swipePending = false;
+    };
+
+    this.app.stage.on("pointerdown", this.swipeDownHandler);
+    this.app.stage.on("pointermove", this.swipeMoveHandler);
+    this.app.stage.on("pointerup", this.swipeUpHandler);
+    this.app.stage.on("pointerupoutside", this.swipeUpHandler);
+  }
+
+  disableSwipeToRoll(): void {
+    this.swipeStart = null;
+    this.swipePending = false;
+    this.swipeCallback = null;
+    if (this.swipeDownHandler) {
+      this.app.stage.off("pointerdown", this.swipeDownHandler);
+      this.swipeDownHandler = null;
+    }
+    if (this.swipeMoveHandler) {
+      this.app.stage.off("pointermove", this.swipeMoveHandler);
+      this.swipeMoveHandler = null;
+    }
+    if (this.swipeUpHandler) {
+      this.app.stage.off("pointerup", this.swipeUpHandler);
+      this.app.stage.off("pointerupoutside", this.swipeUpHandler);
+      this.swipeUpHandler = null;
+    }
+  }
+
   destroy(): void {
+    this.disableSwipeToRoll();
     this.disable();
     this.hitAreaContainer.destroy({ children: true });
     this.pointHitAreas.clear();
