@@ -681,7 +681,11 @@ export class InputHandler {
         e.global.x - this.swipeStart.x,
         e.global.y - this.swipeStart.y
       );
-      if (dist >= 30) this.swipePending = true;
+      if (dist >= 40) {
+        this.swipePending = true;
+      } else if (dist < 10) {
+        this.swipePending = false;
+      }
     };
 
     this.swipeUpHandler = () => {
