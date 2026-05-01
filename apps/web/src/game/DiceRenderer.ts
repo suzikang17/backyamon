@@ -59,7 +59,10 @@ export class DiceRenderer {
     this.container = new Container();
     this.container.zIndex = 500;
     app.stage.addChild(this.container);
-    this.dieSize = Math.max(Math.floor(boardRenderer.getPieceRadius() * 3), 40);
+    this.dieSize = Math.min(
+      Math.max(Math.floor(boardRenderer.getPieceRadius() * 3), 40),
+      Math.floor(trayHeight * 0.85)
+    );
   }
 
   private getTrayCenter(): { x: number; y: number } {
