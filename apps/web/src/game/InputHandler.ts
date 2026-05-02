@@ -860,6 +860,11 @@ export class InputHandler {
           }
 
           // No valid drop — snap die back
+          if (this.dieDragContainer) {
+            this.dieDragContainer.scale.set(1);
+            this.dieDragContainer.zIndex = 0;
+            this.dieDragContainer = null;
+          }
           this.diceRenderer?.snapDieBack(this.dieDragIndex);
         };
 
