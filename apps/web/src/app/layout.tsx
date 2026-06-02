@@ -29,6 +29,11 @@ const bungeeSpice = Bungee_Spice({
 export const metadata: Metadata = {
   title: "Back Ya'Mon!",
   description: "Play backgammon with Rastafarian vibes",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Back Ya'Mon!",
+  },
   openGraph: {
     title: "Back Ya'Mon!",
     description: "Play backgammon with Rastafarian vibes",

@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@backyamon/engine": "*",
+    "@serwist/next": "^9.5.11",
     "howler": "^2.2",
     "next": "^15",
     "pixi.js": "^8",
@@ -23,6 +24,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "postcss": "^8",
+    "serwist": "^9.5.11",
     "tailwindcss": "^4"
   }
 }
