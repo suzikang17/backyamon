@@ -105,3 +105,11 @@ Reconnect: a client that drops can re-`register` with its saved `token`, then
   unchanged. Clients should surface the message and re-sync from the last `state`.
 - **Source of truth:** the server in `apps/server/src/index.ts`. If this doc and the
   code disagree, the code wins — fix this doc.
+
+> ⚠️ **GameState/Move sync (the real drift risk).** Every gameplay event carries
+> `state: GameState` (and `make-move` carries a `Move`). These types are defined in
+> `packages/engine` and consumed by the web client for free, but the **iOS app has
+> its own Swift `Codable` models** for them. When you add/rename/retype a field in
+> `GameState` or `Move`, update the Swift models in `backyamon-swift` in the **same
+> change** — otherwise iOS silently drops the field or fails to decode. The event
+> names rarely change; these payload shapes are where web and iOS quietly diverge.
