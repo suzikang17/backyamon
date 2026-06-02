@@ -170,18 +170,21 @@ export function GameHUD({
     <div className="relative">
       {children}
       <div className={`absolute inset-0 pointer-events-none z-10${hasState ? "" : " hidden"}`}>
-        {cubeValue > 1 && (
+        {(cubeValue > 1 || showDoubleButton) && (
           <div className="absolute left-3 top-1/2 -translate-y-1/2">
-            <div className="w-8 h-8 rounded bg-night/80 border border-wood flex items-center justify-center">
-              <span className="font-heading text-xs text-gold-dim">{cubeValue}x</span>
-            </div>
+            <DoublingCube
+              value={cubeValue}
+              canDouble={showDoubleButton}
+              onDouble={onOfferDouble}
+            />
           </div>
         )}
       </div>
     </div>
 
-    {/* Dice tray — below board */}
-    <div className={`flex items-center justify-between px-3 pt-2 pb-1${hasState ? "" : " invisible"}`}>
+    {/* Dice tray — below board (px-1 to align Undo/Roll with the top-bar
+        controls and board edges) */}
+    <div className={`flex items-center justify-between px-1 pt-2 pb-1${hasState ? "" : " invisible"}`}>
       <div>
         {canUndo && onUndo && (
           <button

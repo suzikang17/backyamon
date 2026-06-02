@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { SocketClient } from "@/multiplayer/SocketClient";
 import {
@@ -8,6 +8,7 @@ import {
   setAssetPreference,
   type AssetPreferences,
 } from "@/lib/assetPreferences";
+import { svgToDataUri } from "@/lib/svgPreview";
 
 // ── Types ────────────────────────────────────────────────────────────────
 
@@ -146,6 +147,25 @@ export default function GalleryPage() {
   const filteredAssets =
     activeTab === "all" ? assets : assets.filter((a) => a.type === activeTab);
 
+  // ── Precompute piece preview data URIs (only when assets change, not on
+  //    every tab switch / audio toggle re-render) ─────────────────────────
+  const piecePreviews = useMemo(() => {
+    const map = new Map<string, { gold?: string; red?: string }>();
+    for (const asset of assets) {
+      if (asset.type !== "piece") continue;
+      try {
+        const meta = JSON.parse(asset.metadata) as PieceMetadata;
+        map.set(asset.id, {
+          gold: meta.svg_gold ? svgToDataUri(meta.svg_gold) : undefined,
+          red: meta.svg_red ? svgToDataUri(meta.svg_red) : undefined,
+        });
+      } catch {
+        /* leave unset → falls back to placeholder */
+      }
+    }
+    return map;
+  }, [assets]);
+
   // ── Equip handler ─────────────────────────────────────────────────────
   const handleEquip = useCallback(
     (asset: GalleryAsset) => {
@@ -228,21 +248,21 @@ export default function GalleryPage() {
   // ── Render asset preview (matches My Stuff style) ─────────────────────
   const renderAssetPreview = (asset: GalleryAsset) => {
     if (asset.type === "piece") {
-      try {
-        const meta = JSON.parse(asset.metadata) as PieceMetadata;
+      const preview = piecePreviews.get(asset.id);
+      if (preview && (preview.gold || preview.red)) {
         return (
           <div className="w-full h-24 flex items-center justify-center gap-3 bg-night/50 rounded-lg overflow-hidden">
-            {meta.svg_gold && (
+            {preview.gold && (
               <img
-                src={`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(meta.svg_gold)))}`}
+                src={preview.gold}
                 alt="Gold piece"
                 className="w-12 h-12 object-contain"
                 loading="lazy"
               />
             )}
-            {meta.svg_red && (
+            {preview.red && (
               <img
-                src={`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(meta.svg_red)))}`}
+                src={preview.red}
                 alt="Red piece"
                 className="w-12 h-12 object-contain"
                 loading="lazy"
@@ -250,7 +270,8 @@ export default function GalleryPage() {
             )}
           </div>
         );
-      } catch {
+      }
+      {
         return (
           <div className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-night/50 rounded-lg">
             {/* Checker/piece outline icon */}

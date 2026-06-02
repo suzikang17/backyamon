@@ -2,13 +2,32 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useState, useCallback, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Player, type GameState, type WinType } from "@backyamon/engine";
-import { GameCanvas } from "@/components/GameCanvas";
-import { OnlineGameCanvas } from "@/components/OnlineGameCanvas";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SocketClient } from "@/multiplayer/SocketClient";
 import { PlayerLink } from "@/components/PlayerLink";
+
+// Board placeholder shown while the Pixi-backed canvas chunk loads.
+function BoardLoading() {
+  return (
+    <div className="aspect-[3/2] w-full flex items-center justify-center rounded-2xl bg-surface border-2 border-wood">
+      <div className="rasta-spinner" />
+    </div>
+  );
+}
+
+// Pixi.js is heavy (~120 kB) and only ever runs on /play. Split it into its
+// own chunk so the page shell + HUD paint immediately and Pixi streams in.
+const GameCanvas = dynamic(
+  () => import("@/components/GameCanvas").then((m) => m.GameCanvas),
+  { ssr: false, loading: () => <BoardLoading /> },
+);
+const OnlineGameCanvas = dynamic(
+  () => import("@/components/OnlineGameCanvas").then((m) => m.OnlineGameCanvas),
+  { ssr: false, loading: () => <BoardLoading /> },
+);
 
 const aiNames: Record<string, string> = {
   easy: "Beach Bum",

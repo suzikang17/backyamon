@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { SocketClient } from "@/multiplayer/SocketClient";
 import {
@@ -9,6 +9,7 @@ import {
   clearAssetPreference,
   type AssetPreferences,
 } from "@/lib/assetPreferences";
+import { svgToDataUri } from "@/lib/svgPreview";
 
 interface Asset {
   id: string;
@@ -252,21 +253,38 @@ export default function MyStuffPage() {
   const filteredAssets =
     activeTab === "all" ? assets : assets.filter((a) => a.type === activeTab);
 
-  const renderAssetPreview = (asset: Asset) => {
-    if (asset.type === "piece") {
+  // Precompute piece preview data URIs once per asset list, so re-renders
+  // (tab switches, connection-status changes) don't re-encode every SVG.
+  const piecePreviews = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const asset of assets) {
+      if (asset.type !== "piece") continue;
       try {
         const meta = JSON.parse(asset.metadata) as PieceMetadata;
+        if (meta.svg_gold) map.set(asset.id, svgToDataUri(meta.svg_gold));
+      } catch {
+        /* leave unset → falls back to placeholder */
+      }
+    }
+    return map;
+  }, [assets]);
+
+  const renderAssetPreview = (asset: Asset) => {
+    if (asset.type === "piece") {
+      const preview = piecePreviews.get(asset.id);
+      if (preview) {
         return (
           <div className="w-full h-24 flex items-center justify-center bg-night/50 rounded-lg overflow-hidden">
             <img
-              src={`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(meta.svg_gold)))}`}
+              src={preview}
               alt="Piece preview"
               loading="lazy"
               className="w-16 h-16 object-contain"
             />
           </div>
         );
-      } catch {
+      }
+      {
         return (
           <div className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-night/50 rounded-lg">
             {/* Checker/piece outline icon */}
