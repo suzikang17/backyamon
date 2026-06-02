@@ -95,7 +95,7 @@ function GameOverOverlay({
 
   return (
     <div
-      className={`absolute inset-0 flex items-center justify-center bg-[#1A1A0E]/85 rounded-2xl z-50 ${overlayClass}`}
+      className={`absolute inset-0 flex items-center justify-center bg-night/85 rounded-2xl z-50 ${overlayClass}`}
     >
       {/* Win celebration effects */}
       {isPlayerWin && winType === "ya_mon" && <YaMonParticles />}
@@ -108,34 +108,34 @@ function GameOverOverlay({
             isPlayerWin ? "title-glow" : ""
           }`}
           style={{
-            color: winner === Player.Gold ? "#FFD700" : "#CE1126",
+            color: winner === Player.Gold ? "var(--color-gold)" : "var(--color-red)",
           }}
         >
           {winnerName}
         </h2>
-        <p className="text-[#D4A857] text-lg sm:text-xl mb-6 font-heading">
+        <p className="text-gold-dim text-lg sm:text-xl mb-6 font-heading">
           {winTypeLabels[winType]}
         </p>
 
         {/* Rasta divider */}
         <div className="flex w-36 sm:w-48 mx-auto mb-6 rounded overflow-hidden">
-          <div className="h-1 flex-1 bg-[#006B3F]" />
-          <div className="h-1 flex-1 bg-[#FFD700]" />
-          <div className="h-1 flex-1 bg-[#CE1126]" />
+          <div className="h-1 flex-1 bg-green" />
+          <div className="h-1 flex-1 bg-gold" />
+          <div className="h-1 flex-1 bg-red" />
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center w-full sm:w-auto">
           {onPlayAgain && (
             <button
               onClick={onPlayAgain}
-              className="rounded-2xl bg-[#006B3F] wood-btn wood-btn-green px-6 py-3 text-lg font-bold text-[#FFD700] shadow-lg interactive-btn cursor-pointer min-h-[44px] font-heading"
+              className="rounded-2xl bg-green wood-btn wood-btn-green px-6 py-3 text-lg font-bold text-gold shadow-lg interactive-btn cursor-pointer min-h-[44px] font-heading"
             >
               Play Again
             </button>
           )}
           <button
             onClick={onBackAction}
-            className="rounded-2xl bg-[#D4A857] wood-btn wood-btn-bamboo px-6 py-3 text-lg font-bold text-[#1A1A0E] shadow-lg interactive-btn cursor-pointer min-h-[44px] font-heading"
+            className="rounded-2xl bg-gold-dim wood-btn wood-btn-bamboo px-6 py-3 text-lg font-bold text-night shadow-lg interactive-btn cursor-pointer min-h-[44px] font-heading"
           >
             {backLabel}
           </button>
@@ -177,18 +177,22 @@ function AIPlayContent({
   };
 
   return (
-    <div className="animated-bg flex min-h-screen flex-col items-center justify-center px-2 sm:px-4 py-4">
+    <div className="animated-bg flex h-dvh overflow-hidden flex-col items-center justify-start sm:justify-center px-2 sm:px-4 pt-4 pb-2 sm:py-4">
       {/* Rasta stripe decoration */}
       <div className="rasta-stripe-bar fixed top-0 left-0 right-0 flex h-2 z-50">
-        <div className="rasta-segment flex-1 bg-[#006B3F] origin-top" />
-        <div className="rasta-segment flex-1 bg-[#FFD700] origin-top" />
-        <div className="rasta-segment flex-1 bg-[#CE1126] origin-top" />
+        <div className="rasta-segment flex-1 bg-green origin-top" />
+        <div className="rasta-segment flex-1 bg-gold origin-top" />
+        <div className="rasta-segment flex-1 bg-red origin-top" />
       </div>
 
-      <h1 className="animate-fade-in font-heading text-3xl sm:text-4xl md:text-5xl mb-3 sm:mb-4 tracking-wide">
-        <span className="text-[#F4E1C1]">Playing vs </span>
-        <span style={{ color: accentColor }}>{aiName}</span>
-      </h1>
+      <div className="w-full max-w-[900px] mb-1 px-2 sm:px-0">
+        <Link
+          href="/"
+          className="text-gold-dim hover:text-gold transition-colors duration-200 text-sm min-h-[44px] flex items-center interactive-btn font-heading"
+        >
+          &larr; Back to Menu
+        </Link>
+      </div>
 
       {/* Game canvas */}
       <div className="relative w-full max-w-[900px] animate-fade-in-scale">
@@ -216,18 +220,11 @@ function AIPlayContent({
         )}
       </div>
 
-      <Link
-        href="/"
-        className="mt-6 sm:mt-8 text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-base sm:text-lg min-h-[44px] flex items-center interactive-btn font-heading"
-      >
-        &larr; Back to Menu
-      </Link>
-
       {/* Bottom rasta stripe decoration */}
       <div className="rasta-stripe-bar fixed bottom-0 left-0 right-0 flex h-2 z-50">
-        <div className="rasta-segment flex-1 bg-[#006B3F] origin-bottom" />
-        <div className="rasta-segment flex-1 bg-[#FFD700] origin-bottom" />
-        <div className="rasta-segment flex-1 bg-[#CE1126] origin-bottom" />
+        <div className="rasta-segment flex-1 bg-green origin-bottom" />
+        <div className="rasta-segment flex-1 bg-gold origin-bottom" />
+        <div className="rasta-segment flex-1 bg-red origin-bottom" />
       </div>
     </div>
   );
@@ -369,75 +366,48 @@ function OnlinePlayContent({ roomId }: { roomId: string }) {
   }, [roomId]);
 
   return (
-    <div className="animated-bg flex min-h-screen flex-col items-center justify-center px-2 sm:px-4 py-4">
+    <div className="animated-bg flex h-dvh overflow-hidden flex-col items-center justify-start sm:justify-center px-2 sm:px-4 pt-4 pb-2 sm:py-4">
       {/* Rasta stripe decoration */}
       <div className="rasta-stripe-bar fixed top-0 left-0 right-0 flex h-2 z-50">
-        <div className="rasta-segment flex-1 bg-[#006B3F] origin-top" />
-        <div className="rasta-segment flex-1 bg-[#FFD700] origin-top" />
-        <div className="rasta-segment flex-1 bg-[#CE1126] origin-top" />
+        <div className="rasta-segment flex-1 bg-green origin-top" />
+        <div className="rasta-segment flex-1 bg-gold origin-top" />
+        <div className="rasta-segment flex-1 bg-red origin-top" />
       </div>
 
-      {/* Header */}
-      {status === "playing" && (
-        <div className="mb-3 sm:mb-4 text-center animate-fade-in">
-          <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl mb-1 tracking-wide">
-            <span className="text-[#F4E1C1]">vs </span>
-            <PlayerLink
-              username={opponentName}
-              className="text-[#CE1126] font-heading"
-            />
-          </h1>
-          <div className="flex items-center justify-center gap-2">
-            <div
-              className={`w-2 h-2 rounded-full ${
-                connected ? "bg-[#006B3F]" : "bg-[#CE1126]"
-              }`}
-            />
-            <span className="text-[#D4A857] text-xs font-heading">
-              {connected ? "Connected" : "Reconnecting..."}
-            </span>
-            <span className="text-[#F4E1C1]/50 text-xs font-heading">|</span>
-            <span className="text-[#D4A857] text-xs font-heading">
-              You are{" "}
-              <span
-                className="font-bold font-heading"
-                style={{
-                  color:
-                    localPlayer === Player.Gold ? "#FFD700" : "#CE1126",
-                }}
-              >
-                {localPlayer === Player.Gold ? "Gold" : "Red"}
-              </span>
-            </span>
-          </div>
-        </div>
-      )}
+      <div className="w-full max-w-[900px] mb-1 px-2 sm:px-0">
+        <Link
+          href={status === "playing" ? "/lobby" : "/"}
+          className="text-gold-dim hover:text-gold transition-colors duration-200 text-sm min-h-[44px] flex items-center interactive-btn font-heading"
+        >
+          &larr; {status === "playing" ? "Leave Game" : "Back to Menu"}
+        </Link>
+      </div>
 
       {/* Loading / Waiting state */}
       {(status === "connecting" || status === "waiting") && (
-        <div className="animate-fade-in-scale rounded-2xl bg-[#2a2a1e] border-2 border-[#8B4513] px-8 sm:px-12 py-8 sm:py-10 text-center shadow-lg">
+        <div className="animate-fade-in-scale rounded-2xl bg-surface border-2 border-wood px-8 sm:px-12 py-8 sm:py-10 text-center shadow-lg">
           <div className="flex justify-center mb-4">
             <div className="rasta-spinner" />
           </div>
-          <p className="text-[#FFD700] font-heading text-xl sm:text-2xl mb-2">
+          <p className="text-gold font-heading text-xl sm:text-2xl mb-2">
             {status === "connecting"
               ? "Connecting to server..."
               : "Joining game..."}
           </p>
-          <p className="text-[#D4A857] text-sm font-heading">Room: {roomId}</p>
+          <p className="text-gold-dim text-sm font-heading">Room: {roomId}</p>
         </div>
       )}
 
       {/* Error state */}
       {status === "error" && (
-        <div className="animate-fade-in-scale rounded-2xl bg-[#2a2a1e] border-2 border-[#CE1126] px-8 sm:px-12 py-8 sm:py-10 text-center shadow-lg">
-          <p className="text-[#CE1126] font-heading text-xl sm:text-2xl mb-2">
+        <div className="animate-fade-in-scale rounded-2xl bg-surface border-2 border-red px-8 sm:px-12 py-8 sm:py-10 text-center shadow-lg">
+          <p className="text-red font-heading text-xl sm:text-2xl mb-2">
             Connection Error
           </p>
-          <p className="text-[#D4A857] text-sm mb-6 font-heading">{error}</p>
+          <p className="text-gold-dim text-sm mb-6 font-heading">{error}</p>
           <button
             onClick={handleBackToLobby}
-            className="rounded-2xl bg-[#006B3F] wood-btn wood-btn-green px-6 py-3 text-lg font-bold text-[#FFD700] shadow-lg interactive-btn cursor-pointer min-h-[44px] font-heading"
+            className="rounded-2xl bg-green wood-btn wood-btn-green px-6 py-3 text-lg font-bold text-gold shadow-lg interactive-btn cursor-pointer min-h-[44px] font-heading"
           >
             Back to Lobby
           </button>
@@ -454,6 +424,12 @@ function OnlinePlayContent({ roomId }: { roomId: string }) {
             initialState={initialState}
             opponentName={opponentName}
             onGameOver={handleGameOver}
+            title={
+              <span className="font-heading text-base sm:text-lg tracking-wide">
+                <span className="text-cream">vs </span>
+                <PlayerLink username={opponentName} className="text-red font-heading" />
+              </span>
+            }
           />
 
           {/* Game Over overlay */}
@@ -474,18 +450,11 @@ function OnlinePlayContent({ roomId }: { roomId: string }) {
         </div>
       )}
 
-      <Link
-        href={status === "playing" ? "/lobby" : "/"}
-        className="mt-6 sm:mt-8 text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-base sm:text-lg min-h-[44px] flex items-center interactive-btn font-heading"
-      >
-        &larr; {status === "playing" ? "Leave Game" : "Back to Menu"}
-      </Link>
-
       {/* Bottom rasta stripe decoration */}
       <div className="rasta-stripe-bar fixed bottom-0 left-0 right-0 flex h-2 z-50">
-        <div className="rasta-segment flex-1 bg-[#006B3F] origin-bottom" />
-        <div className="rasta-segment flex-1 bg-[#FFD700] origin-bottom" />
-        <div className="rasta-segment flex-1 bg-[#CE1126] origin-bottom" />
+        <div className="rasta-segment flex-1 bg-green origin-bottom" />
+        <div className="rasta-segment flex-1 bg-gold origin-bottom" />
+        <div className="rasta-segment flex-1 bg-red origin-bottom" />
       </div>
     </div>
   );
@@ -515,7 +484,7 @@ export default function PlayPage() {
           <div className="flex min-h-screen items-center justify-center">
             <div className="flex flex-col items-center gap-4">
               <div className="rasta-spinner" />
-              <p className="text-[#FFD700] text-xl sm:text-2xl font-heading rasta-pulse">
+              <p className="text-gold text-xl sm:text-2xl font-heading rasta-pulse">
                 Loading...
               </p>
             </div>

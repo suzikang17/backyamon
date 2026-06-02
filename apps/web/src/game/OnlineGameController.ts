@@ -141,6 +141,7 @@ export class OnlineGameController extends BaseGameController {
     };
 
     this.inputHandler.enable(this.state, legalMoves);
+    this.inputHandler.enableDieDrag();
   }
 
   // ── Server Event Bindings ────────────────────────────────────────────

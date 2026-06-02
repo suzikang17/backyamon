@@ -240,24 +240,24 @@ export default function SoundUploadPage() {
     <div className="animated-bg flex min-h-screen flex-col items-center px-4 py-16">
       {/* Rasta stripe decoration - top */}
       <div className="rasta-stripe-bar fixed top-0 left-0 right-0 flex h-2 z-50">
-        <div className="rasta-segment flex-1 bg-[#006B3F]" />
-        <div className="rasta-segment flex-1 bg-[#FFD700]" />
-        <div className="rasta-segment flex-1 bg-[#CE1126]" />
+        <div className="rasta-segment flex-1 bg-green" />
+        <div className="rasta-segment flex-1 bg-gold" />
+        <div className="rasta-segment flex-1 bg-red" />
       </div>
 
       {/* Title */}
-      <h1 className="title-glow font-spice text-3xl sm:text-5xl text-[#FFD700] mb-2 tracking-wide">
+      <h1 className="title-glow font-spice text-3xl sm:text-5xl text-gold mb-2 tracking-wide">
         Upload Sound Effect
       </h1>
-      <p className="text-[#D4A857] text-sm mb-8 font-heading">
+      <p className="text-gold-dim text-sm mb-8 font-heading">
         Add your own sounds to the game
       </p>
 
       {/* Connection status */}
       {status === "connecting" && (
         <div className="flex items-center gap-2 mb-6">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#FFD700] animate-pulse" />
-          <span className="text-[#D4A857] text-sm font-heading">
+          <div className="w-2.5 h-2.5 rounded-full bg-gold animate-pulse" />
+          <span className="text-gold-dim text-sm font-heading">
             Connecting to server...
           </span>
         </div>
@@ -265,23 +265,23 @@ export default function SoundUploadPage() {
 
       {/* Error message */}
       {status === "error" && errorMessage && (
-        <div className="bg-[#CE1126]/20 border border-[#CE1126] rounded-xl px-6 py-3 mb-6 max-w-md text-center">
-          <p className="text-[#CE1126] text-sm font-heading">{errorMessage}</p>
+        <div className="bg-red/20 border border-red rounded-xl px-6 py-3 mb-6 max-w-md text-center">
+          <p className="text-red text-sm font-heading">{errorMessage}</p>
         </div>
       )}
 
       {/* Success message */}
       {status === "saved" && (
         <div className="flex flex-col items-center gap-4 mb-6">
-          <div className="bg-[#006B3F]/20 border border-[#006B3F] rounded-xl px-6 py-3 max-w-md text-center">
-            <p className="text-[#006B3F] text-sm font-heading">
+          <div className="bg-green/20 border border-green rounded-xl px-6 py-3 max-w-md text-center">
+            <p className="text-green text-sm font-heading">
               Sound effect saved! Bless up.
             </p>
           </div>
           <button
             type="button"
             onClick={() => router.push("/create")}
-            className="rounded-2xl wood-btn wood-btn-bamboo px-8 py-3 text-lg font-bold text-[#1A1A0E] shadow-lg interactive-btn cursor-pointer font-heading"
+            className="rounded-2xl wood-btn wood-btn-bamboo px-8 py-3 text-lg font-bold text-night shadow-lg interactive-btn cursor-pointer font-heading"
           >
             Back to Creation Station
           </button>
@@ -295,7 +295,7 @@ export default function SoundUploadPage() {
           <div className="mb-6">
             <label
               htmlFor="sound-title"
-              className="text-[#D4A857] text-xs font-heading tracking-wider uppercase mb-2 block"
+              className="text-gold-dim text-xs font-heading tracking-wider uppercase mb-2 block"
             >
               Sound Name
             </label>
@@ -306,7 +306,7 @@ export default function SoundUploadPage() {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Island Drum, Steel Pan Hit..."
               maxLength={40}
-              className="w-full rounded-xl bg-[#1A1A0E] border border-[#8B4513] px-4 py-2.5 text-[#FFD700] font-heading text-base placeholder:text-[#D4A857]/30 focus:outline-none focus:border-[#FFD700] transition-colors"
+              className="w-full rounded-xl bg-night border border-wood px-4 py-2.5 text-gold font-heading text-base placeholder:text-gold-dim/30 focus:outline-none focus:border-gold transition-colors"
             />
           </div>
 
@@ -314,7 +314,7 @@ export default function SoundUploadPage() {
           <div className="mb-6">
             <label
               htmlFor="sfx-slot"
-              className="text-[#D4A857] text-xs font-heading tracking-wider uppercase mb-2 block"
+              className="text-gold-dim text-xs font-heading tracking-wider uppercase mb-2 block"
             >
               Sound Slot
             </label>
@@ -322,7 +322,7 @@ export default function SoundUploadPage() {
               id="sfx-slot"
               value={sfxSlot}
               onChange={(e) => setSfxSlot(e.target.value)}
-              className="w-full rounded-xl bg-[#1A1A0E] border border-[#8B4513] px-4 py-2.5 text-[#FFD700] font-heading text-base focus:outline-none focus:border-[#FFD700] transition-colors cursor-pointer"
+              className="w-full rounded-xl bg-night border border-wood px-4 py-2.5 text-gold font-heading text-base focus:outline-none focus:border-gold transition-colors cursor-pointer"
             >
               {SFX_SLOTS.map((slot) => (
                 <option key={slot.value} value={slot.value}>
@@ -334,7 +334,7 @@ export default function SoundUploadPage() {
 
           {/* Drag and drop zone */}
           <div className="mb-6">
-            <label className="text-[#D4A857] text-xs font-heading tracking-wider uppercase mb-2 block">
+            <label className="text-gold-dim text-xs font-heading tracking-wider uppercase mb-2 block">
               Audio File
             </label>
             <div
@@ -344,8 +344,8 @@ export default function SoundUploadPage() {
               onClick={() => fileInputRef.current?.click()}
               className={`relative rounded-xl border-2 border-dashed px-6 py-10 text-center cursor-pointer transition-colors duration-200 ${
                 isDragging
-                  ? "border-[#FFD700] bg-[#FFD700]/10"
-                  : "border-[#8B4513] bg-[#1A1A0E] hover:border-[#D4A857]"
+                  ? "border-gold bg-gold/10"
+                  : "border-wood bg-night hover:border-gold-dim"
               }`}
             >
               <input
@@ -358,25 +358,25 @@ export default function SoundUploadPage() {
 
               {file ? (
                 <div className="flex flex-col items-center gap-2">
-                  <div className="text-[#FFD700] text-2xl">&#9835;</div>
-                  <p className="text-[#F4E1C1] text-sm font-heading">
+                  <div className="text-gold text-2xl">&#9835;</div>
+                  <p className="text-cream text-sm font-heading">
                     {file.name}
                   </p>
-                  <p className="text-[#D4A857] text-xs font-heading">
+                  <p className="text-gold-dim text-xs font-heading">
                     {(file.size / 1024).toFixed(0)} KB &middot;{" "}
                     {duration?.toFixed(1)}s
                   </p>
-                  <p className="text-[#D4A857]/50 text-xs font-heading mt-1">
+                  <p className="text-gold-dim/50 text-xs font-heading mt-1">
                     Click or drop to replace
                   </p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-2">
-                  <div className="text-[#D4A857] text-3xl">&#9835;</div>
-                  <p className="text-[#F4E1C1] text-sm font-heading">
+                  <div className="text-gold-dim text-3xl">&#9835;</div>
+                  <p className="text-cream text-sm font-heading">
                     Drop an audio file here or click to browse
                   </p>
-                  <p className="text-[#D4A857]/50 text-xs font-heading">
+                  <p className="text-gold-dim/50 text-xs font-heading">
                     .mp3 or .wav &middot; Max 2 MB &middot; Max 5 seconds
                   </p>
                 </div>
@@ -385,7 +385,7 @@ export default function SoundUploadPage() {
 
             {/* File validation error */}
             {fileError && (
-              <p className="text-[#CE1126] text-xs font-heading mt-2">
+              <p className="text-red text-xs font-heading mt-2">
                 {fileError}
               </p>
             )}
@@ -397,7 +397,7 @@ export default function SoundUploadPage() {
               <button
                 type="button"
                 onClick={handlePreview}
-                className="rounded-xl bg-[#2a2a1e] border border-[#8B4513] px-6 py-2.5 text-[#FFD700] font-heading text-sm hover:border-[#FFD700] transition-colors cursor-pointer interactive-btn"
+                className="rounded-xl bg-surface border border-wood px-6 py-2.5 text-gold font-heading text-sm hover:border-gold transition-colors cursor-pointer interactive-btn"
               >
                 {isPlaying ? "Stop Preview" : "Preview Sound"}
               </button>
@@ -409,7 +409,7 @@ export default function SoundUploadPage() {
             type="button"
             onClick={handleSave}
             disabled={!file || !title.trim() || status === "saving"}
-            className="w-full rounded-2xl wood-btn wood-btn-bamboo px-8 py-3 text-lg font-bold text-[#1A1A0E] shadow-lg interactive-btn cursor-pointer font-heading disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full rounded-2xl wood-btn wood-btn-bamboo px-8 py-3 text-lg font-bold text-night shadow-lg interactive-btn cursor-pointer font-heading disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {status === "saving" ? "Saving..." : "Save Sound Effect"}
           </button>
@@ -417,8 +417,8 @@ export default function SoundUploadPage() {
           {/* Saving overlay */}
           {status === "saving" && (
             <div className="flex items-center justify-center gap-2 mt-4">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#FFD700] animate-pulse" />
-              <span className="text-[#D4A857] text-sm font-heading">
+              <div className="w-2.5 h-2.5 rounded-full bg-gold animate-pulse" />
+              <span className="text-gold-dim text-sm font-heading">
                 Uploading...
               </span>
             </div>
@@ -429,16 +429,16 @@ export default function SoundUploadPage() {
       {/* Back link */}
       <Link
         href="/create"
-        className="mt-10 text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-lg font-heading interactive-btn"
+        className="mt-10 text-gold-dim hover:text-gold transition-colors duration-200 text-lg font-heading interactive-btn"
       >
         &larr; Back to Creation Station
       </Link>
 
       {/* Rasta stripe decoration - bottom */}
       <div className="rasta-stripe-bar fixed bottom-0 left-0 right-0 flex h-2 z-50">
-        <div className="rasta-segment flex-1 bg-[#006B3F]" />
-        <div className="rasta-segment flex-1 bg-[#FFD700]" />
-        <div className="rasta-segment flex-1 bg-[#CE1126]" />
+        <div className="rasta-segment flex-1 bg-green" />
+        <div className="rasta-segment flex-1 bg-gold" />
+        <div className="rasta-segment flex-1 bg-red" />
       </div>
     </div>
   );

@@ -257,7 +257,7 @@ export default function MyStuffPage() {
       try {
         const meta = JSON.parse(asset.metadata) as PieceMetadata;
         return (
-          <div className="w-full h-24 flex items-center justify-center bg-[#1A1A0E]/50 rounded-lg overflow-hidden">
+          <div className="w-full h-24 flex items-center justify-center bg-night/50 rounded-lg overflow-hidden">
             <img
               src={`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(meta.svg_gold)))}`}
               alt="Piece preview"
@@ -267,8 +267,8 @@ export default function MyStuffPage() {
         );
       } catch {
         return (
-          <div className="w-full h-24 flex items-center justify-center bg-[#1A1A0E]/50 rounded-lg">
-            <span className="text-[#D4A857]/40 text-sm font-heading">
+          <div className="w-full h-24 flex items-center justify-center bg-night/50 rounded-lg">
+            <span className="text-gold-dim/40 text-sm font-heading">
               Preview unavailable
             </span>
           </div>
@@ -280,25 +280,25 @@ export default function MyStuffPage() {
       try {
         const meta = JSON.parse(asset.metadata) as SfxMetadata;
         return (
-          <div className="w-full h-24 flex flex-col items-center justify-center bg-[#1A1A0E]/50 rounded-lg gap-1">
-            <div className="w-10 h-10 rounded-full border-2 border-[#006B3F] flex items-center justify-center">
+          <div className="w-full h-24 flex flex-col items-center justify-center bg-night/50 rounded-lg gap-1">
+            <div className="w-10 h-10 rounded-full border-2 border-green flex items-center justify-center">
               <svg
                 viewBox="0 0 24 24"
-                className="w-5 h-5 text-[#006B3F]"
+                className="w-5 h-5 text-green"
                 fill="currentColor"
               >
                 <path d="M8 5v14l11-7z" />
               </svg>
             </div>
-            <span className="text-[#D4A857] text-xs font-heading">
+            <span className="text-gold-dim text-xs font-heading">
               {formatDuration(meta.duration_ms)} &middot; {meta.slot}
             </span>
           </div>
         );
       } catch {
         return (
-          <div className="w-full h-24 flex items-center justify-center bg-[#1A1A0E]/50 rounded-lg">
-            <span className="text-[#D4A857]/40 text-sm font-heading">
+          <div className="w-full h-24 flex items-center justify-center bg-night/50 rounded-lg">
+            <span className="text-gold-dim/40 text-sm font-heading">
               Audio
             </span>
           </div>
@@ -310,25 +310,25 @@ export default function MyStuffPage() {
       try {
         const meta = JSON.parse(asset.metadata) as MusicMetadata;
         return (
-          <div className="w-full h-24 flex flex-col items-center justify-center bg-[#1A1A0E]/50 rounded-lg gap-1">
-            <div className="w-10 h-10 rounded-full border-2 border-[#CE1126] flex items-center justify-center">
+          <div className="w-full h-24 flex flex-col items-center justify-center bg-night/50 rounded-lg gap-1">
+            <div className="w-10 h-10 rounded-full border-2 border-red flex items-center justify-center">
               <svg
                 viewBox="0 0 24 24"
-                className="w-5 h-5 text-[#CE1126]"
+                className="w-5 h-5 text-red"
                 fill="currentColor"
               >
                 <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
               </svg>
             </div>
-            <span className="text-[#D4A857] text-xs font-heading">
+            <span className="text-gold-dim text-xs font-heading">
               {formatDuration(meta.duration_ms)}
             </span>
           </div>
         );
       } catch {
         return (
-          <div className="w-full h-24 flex items-center justify-center bg-[#1A1A0E]/50 rounded-lg">
-            <span className="text-[#D4A857]/40 text-sm font-heading">
+          <div className="w-full h-24 flex items-center justify-center bg-night/50 rounded-lg">
+            <span className="text-gold-dim/40 text-sm font-heading">
               Music
             </span>
           </div>
@@ -343,19 +343,19 @@ export default function MyStuffPage() {
     <div className="animated-bg flex min-h-screen flex-col items-center px-4 py-16">
       {/* Rasta stripe decoration - top */}
       <div className="rasta-stripe-bar fixed top-0 left-0 right-0 flex h-2 z-50">
-        <div className="rasta-segment flex-1 bg-[#006B3F] origin-top" />
-        <div className="rasta-segment flex-1 bg-[#FFD700] origin-top" />
-        <div className="rasta-segment flex-1 bg-[#CE1126] origin-top" />
+        <div className="rasta-segment flex-1 bg-green origin-top" />
+        <div className="rasta-segment flex-1 bg-gold origin-top" />
+        <div className="rasta-segment flex-1 bg-red origin-top" />
       </div>
 
       {/* Title */}
       <div className="text-center mb-4 animate-fade-in-up">
-        <h1 className="title-glow font-spice text-4xl sm:text-6xl md:text-7xl text-[#FFD700] tracking-wide">
+        <h1 className="title-glow font-spice text-4xl sm:text-6xl md:text-7xl text-gold tracking-wide">
           My Stuff
         </h1>
       </div>
 
-      <p className="animate-fade-in animate-delay-100 text-[#D4A857] text-lg mb-6 font-heading">
+      <p className="animate-fade-in animate-delay-100 text-gold-dim text-lg mb-6 font-heading">
         Your personal collection
       </p>
 
@@ -364,13 +364,13 @@ export default function MyStuffPage() {
         <div
           className={`w-2.5 h-2.5 rounded-full ${
             connected
-              ? "bg-[#006B3F]"
+              ? "bg-green"
               : retryInfo || connecting
-                ? "bg-[#FFD700] animate-pulse"
-                : "bg-[#CE1126]"
+                ? "bg-gold animate-pulse"
+                : "bg-red"
           }`}
         />
-        <span className="text-[#D4A857] text-sm font-heading">
+        <span className="text-gold-dim text-sm font-heading">
           {retryInfo
             ? `Server waking up... (${retryInfo.attempt}/${retryInfo.max})`
             : connecting
@@ -383,8 +383,8 @@ export default function MyStuffPage() {
 
       {/* Error */}
       {error && (
-        <div className="bg-[#CE1126]/20 border border-[#CE1126] rounded-xl px-6 py-3 mb-4 max-w-md text-center">
-          <p className="text-[#CE1126] text-sm font-heading">{error}</p>
+        <div className="bg-red/20 border border-red rounded-xl px-6 py-3 mb-4 max-w-md text-center">
+          <p className="text-red text-sm font-heading">{error}</p>
         </div>
       )}
 
@@ -396,8 +396,8 @@ export default function MyStuffPage() {
             onClick={() => setActiveTab(tab.key)}
             className={`px-5 py-2 rounded-full text-sm font-heading font-bold transition-all duration-200 cursor-pointer ${
               activeTab === tab.key
-                ? "bg-[#FFD700] text-[#1A1A0E] shadow-[0_0_12px_rgba(255,215,0,0.3)]"
-                : "bg-[#2a2a1e] text-[#D4A857] border border-[#8B4513]/50 hover:border-[#FFD700]/50"
+                ? "bg-gold text-night shadow-[0_0_12px_rgba(255,215,0,0.3)]"
+                : "bg-surface text-gold-dim border border-wood/50 hover:border-gold/50"
             }`}
           >
             {tab.label}
@@ -411,23 +411,23 @@ export default function MyStuffPage() {
           <div className="flex flex-col items-center gap-4 py-16">
             <div className="flex gap-2">
               <div
-                className="w-3 h-3 rounded-full bg-[#006B3F] animate-bounce"
+                className="w-3 h-3 rounded-full bg-green animate-bounce"
                 style={{ animationDelay: "0ms" }}
               />
               <div
-                className="w-3 h-3 rounded-full bg-[#FFD700] animate-bounce"
+                className="w-3 h-3 rounded-full bg-gold animate-bounce"
                 style={{ animationDelay: "150ms" }}
               />
               <div
-                className="w-3 h-3 rounded-full bg-[#CE1126] animate-bounce"
+                className="w-3 h-3 rounded-full bg-red animate-bounce"
                 style={{ animationDelay: "300ms" }}
               />
             </div>
-            <p className="text-[#D4A857] font-heading">Loading your stuff...</p>
+            <p className="text-gold-dim font-heading">Loading your stuff...</p>
           </div>
         ) : filteredAssets.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-16">
-            <p className="text-[#D4A857]/60 text-lg font-heading text-center">
+            <p className="text-gold-dim/60 text-lg font-heading text-center">
               {assets.length === 0
                 ? "No creations yet \u2014 head to the Creation Station!"
                 : "No assets in this category."}
@@ -435,7 +435,7 @@ export default function MyStuffPage() {
             {assets.length === 0 && (
               <Link
                 href="/create"
-                className="rounded-2xl wood-btn wood-btn-bamboo px-6 py-3 text-lg font-bold text-[#1A1A0E] shadow-lg interactive-btn cursor-pointer font-heading"
+                className="rounded-2xl wood-btn wood-btn-bamboo px-6 py-3 text-lg font-bold text-night shadow-lg interactive-btn cursor-pointer font-heading"
               >
                 Create Something
               </Link>
@@ -448,16 +448,16 @@ export default function MyStuffPage() {
               return (
                 <div
                   key={asset.id}
-                  className={`game-card rounded-2xl bg-[#2a2a1e] p-4 flex flex-col gap-3 transition-all duration-200 ${
+                  className={`game-card rounded-2xl bg-surface p-4 flex flex-col gap-3 transition-all duration-200 ${
                     equipped
-                      ? "border-2 border-[#FFD700] shadow-[0_0_16px_rgba(255,215,0,0.25)]"
-                      : "border border-[#8B4513]/50"
+                      ? "border-2 border-gold shadow-[0_0_16px_rgba(255,215,0,0.25)]"
+                      : "border border-wood/50"
                   }`}
                 >
                   {/* Equipped badge */}
                   {equipped && (
                     <div className="flex justify-end -mt-1 -mr-1">
-                      <span className="bg-[#FFD700] text-[#1A1A0E] text-xs font-heading font-bold px-2 py-0.5 rounded-full">
+                      <span className="bg-gold text-night text-xs font-heading font-bold px-2 py-0.5 rounded-full">
                         Equipped
                       </span>
                     </div>
@@ -468,24 +468,24 @@ export default function MyStuffPage() {
 
                   {/* Info */}
                   <div className="flex flex-col gap-1">
-                    <h3 className="text-[#FFD700] font-heading text-base truncate">
+                    <h3 className="text-gold font-heading text-base truncate">
                       {asset.title}
                     </h3>
                     <div className="flex items-center gap-2">
-                      <span className="text-[#D4A857]/50 text-xs font-heading">
+                      <span className="text-gold-dim/50 text-xs font-heading">
                         {asset.type === "piece"
                           ? "Piece"
                           : asset.type === "sfx"
                             ? "Sound Effect"
                             : "Music"}
                       </span>
-                      <span className="text-[#D4A857]/30 text-xs">&middot;</span>
-                      <span className="text-[#D4A857]/50 text-xs font-heading">
+                      <span className="text-gold-dim/30 text-xs">&middot;</span>
+                      <span className="text-gold-dim/50 text-xs font-heading">
                         {formatDate(asset.createdAt)}
                       </span>
                     </div>
                     {asset.status === "published" && (
-                      <span className="text-[#006B3F] text-xs font-heading font-bold">
+                      <span className="text-green text-xs font-heading font-bold">
                         Published
                       </span>
                     )}
@@ -497,8 +497,8 @@ export default function MyStuffPage() {
                       onClick={() => handleEquipToggle(asset)}
                       className={`flex-1 min-w-[70px] rounded-xl px-3 py-1.5 text-xs font-heading font-bold transition-all duration-200 cursor-pointer ${
                         equipped
-                          ? "bg-[#FFD700] text-[#1A1A0E]"
-                          : "bg-[#1A1A0E] text-[#FFD700] border border-[#FFD700]/40 hover:border-[#FFD700]"
+                          ? "bg-gold text-night"
+                          : "bg-night text-gold border border-gold/40 hover:border-gold"
                       }`}
                     >
                       {equipped ? "Unequip" : "Equip"}
@@ -507,7 +507,7 @@ export default function MyStuffPage() {
                     {asset.status === "private" && (
                       <button
                         onClick={() => handlePublish(asset.id)}
-                        className="flex-1 min-w-[70px] rounded-xl px-3 py-1.5 text-xs font-heading font-bold bg-[#1A1A0E] text-[#006B3F] border border-[#006B3F]/40 hover:border-[#006B3F] transition-all duration-200 cursor-pointer"
+                        className="flex-1 min-w-[70px] rounded-xl px-3 py-1.5 text-xs font-heading font-bold bg-night text-green border border-green/40 hover:border-green transition-all duration-200 cursor-pointer"
                       >
                         Publish
                       </button>
@@ -517,13 +517,13 @@ export default function MyStuffPage() {
                       <div className="flex gap-1 flex-1 min-w-[70px]">
                         <button
                           onClick={() => handleDelete(asset.id)}
-                          className="flex-1 rounded-xl px-2 py-1.5 text-xs font-heading font-bold bg-[#CE1126] text-white cursor-pointer"
+                          className="flex-1 rounded-xl px-2 py-1.5 text-xs font-heading font-bold bg-red text-white cursor-pointer"
                         >
                           Yes
                         </button>
                         <button
                           onClick={() => setConfirmDeleteId(null)}
-                          className="flex-1 rounded-xl px-2 py-1.5 text-xs font-heading font-bold bg-[#1A1A0E] text-[#D4A857] border border-[#8B4513]/40 cursor-pointer"
+                          className="flex-1 rounded-xl px-2 py-1.5 text-xs font-heading font-bold bg-night text-gold-dim border border-wood/40 cursor-pointer"
                         >
                           No
                         </button>
@@ -531,7 +531,7 @@ export default function MyStuffPage() {
                     ) : (
                       <button
                         onClick={() => setConfirmDeleteId(asset.id)}
-                        className="flex-1 min-w-[70px] rounded-xl px-3 py-1.5 text-xs font-heading font-bold bg-[#1A1A0E] text-[#CE1126] border border-[#CE1126]/40 hover:border-[#CE1126] transition-all duration-200 cursor-pointer"
+                        className="flex-1 min-w-[70px] rounded-xl px-3 py-1.5 text-xs font-heading font-bold bg-night text-red border border-red/40 hover:border-red transition-all duration-200 cursor-pointer"
                       >
                         Delete
                       </button>
@@ -548,13 +548,13 @@ export default function MyStuffPage() {
       <div className="flex gap-6 mt-10">
         <Link
           href="/create"
-          className="text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-base font-heading interactive-btn"
+          className="text-gold-dim hover:text-gold transition-colors duration-200 text-base font-heading interactive-btn"
         >
           Creation Station
         </Link>
         <Link
           href="/gallery"
-          className="text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-base font-heading interactive-btn"
+          className="text-gold-dim hover:text-gold transition-colors duration-200 text-base font-heading interactive-btn"
         >
           Gallery
         </Link>
@@ -562,16 +562,16 @@ export default function MyStuffPage() {
 
       <Link
         href="/"
-        className="mt-6 text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-lg min-h-[44px] flex items-center interactive-btn font-heading"
+        className="mt-6 text-gold-dim hover:text-gold transition-colors duration-200 text-lg min-h-[44px] flex items-center interactive-btn font-heading"
       >
         &larr; Back to Menu
       </Link>
 
       {/* Rasta stripe decoration - bottom */}
       <div className="rasta-stripe-bar fixed bottom-0 left-0 right-0 flex h-2 z-50">
-        <div className="rasta-segment flex-1 bg-[#006B3F] origin-bottom" />
-        <div className="rasta-segment flex-1 bg-[#FFD700] origin-bottom" />
-        <div className="rasta-segment flex-1 bg-[#CE1126] origin-bottom" />
+        <div className="rasta-segment flex-1 bg-green origin-bottom" />
+        <div className="rasta-segment flex-1 bg-gold origin-bottom" />
+        <div className="rasta-segment flex-1 bg-red origin-bottom" />
       </div>
     </div>
   );

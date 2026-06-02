@@ -12,24 +12,27 @@ const opponents = [
     difficulty: "easy" as const,
     badge: "Easy",
     flavor: "Just vibes, no stress",
-    accent: "#006B3F",
+    accent: "var(--color-green)",
     accentGlow: "rgba(0,107,63,0.3)",
+    badgeText: "var(--color-gold)",
   },
   {
     name: "Selecta",
     difficulty: "medium" as const,
     badge: "Medium",
     flavor: "Knows the riddim",
-    accent: "#FFD700",
+    accent: "var(--color-gold)",
     accentGlow: "rgba(255,215,0,0.3)",
+    badgeText: "var(--color-night)",
   },
   {
     name: "King Tubby",
     difficulty: "hard" as const,
     badge: "Hard",
     flavor: "Dub master general",
-    accent: "#CE1126",
+    accent: "var(--color-red)",
     accentGlow: "rgba(206,17,38,0.3)",
+    badgeText: "var(--color-cream)",
   },
 ];
 
@@ -37,18 +40,18 @@ export default function DifficultySelect({ onBack }: DifficultySelectProps) {
   const router = useRouter();
 
   return (
-    <div className="animated-bg flex min-h-screen flex-col items-center justify-center px-4">
+    <div className="animated-bg flex min-h-dvh flex-col items-center justify-center px-4">
       {/* Rasta stripe decoration */}
       <div className="rasta-stripe-bar fixed top-0 left-0 right-0 flex h-2 z-50">
-        <div className="rasta-segment flex-1 bg-[#006B3F] origin-top" />
-        <div className="rasta-segment flex-1 bg-[#FFD700] origin-top" />
-        <div className="rasta-segment flex-1 bg-[#CE1126] origin-top" />
+        <div className="rasta-segment flex-1 bg-green origin-top" />
+        <div className="rasta-segment flex-1 bg-gold origin-top" />
+        <div className="rasta-segment flex-1 bg-red origin-top" />
       </div>
 
-      <h2 className="animate-fade-in-up font-display text-3xl sm:text-4xl md:text-5xl text-[#FFD700] mb-2 tracking-wide title-glow">
+      <h2 className="animate-fade-in-up font-display text-3xl sm:text-4xl md:text-5xl text-gold mb-2 tracking-wide title-glow">
         Choose Your Opponent
       </h2>
-      <p className="animate-fade-in animate-delay-100 text-[#D4A857] text-lg mb-10 font-heading">
+      <p className="animate-fade-in animate-delay-100 text-gold-dim text-lg mb-4 sm:mb-10 font-heading">
         Who you wan fi challenge?
       </p>
 
@@ -59,7 +62,7 @@ export default function DifficultySelect({ onBack }: DifficultySelectProps) {
             onClick={() =>
               router.push(`/play?mode=ai&difficulty=${opp.difficulty}`)
             }
-            className={`animate-fade-in-up animate-delay-${(index + 1) * 100} group rounded-2xl bg-[#2a2a1e] p-6 text-left shadow-lg game-card cursor-pointer`}
+            className={`animate-fade-in-up animate-delay-${(index + 1) * 100} group rounded-2xl bg-surface p-4 sm:p-6 text-left shadow-lg game-card cursor-pointer`}
             style={{
               borderWidth: "2px",
               borderStyle: "solid",
@@ -78,13 +81,13 @@ export default function DifficultySelect({ onBack }: DifficultySelectProps) {
                 className="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider font-heading"
                 style={{
                   backgroundColor: opp.accent,
-                  color: opp.accent === "#FFD700" ? "#1A1A0E" : "#F4E1C1",
+                  color: opp.badgeText,
                 }}
               >
                 {opp.badge}
               </span>
             </div>
-            <p className="text-[#F4E1C1] text-sm italic font-heading">&ldquo;{opp.flavor}&rdquo;</p>
+            <p className="text-cream text-sm italic font-heading">&ldquo;{opp.flavor}&rdquo;</p>
             <div
               className="mt-4 h-1 rounded-full opacity-60 transition-opacity duration-200 group-hover:opacity-100"
               style={{ backgroundColor: opp.accent }}
@@ -95,16 +98,16 @@ export default function DifficultySelect({ onBack }: DifficultySelectProps) {
 
       <button
         onClick={onBack}
-        className="mt-10 text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-lg cursor-pointer min-h-[44px] flex items-center interactive-btn font-heading"
+        className="mt-10 text-gold-dim hover:text-gold transition-colors duration-200 text-lg cursor-pointer min-h-[44px] flex items-center interactive-btn font-heading"
       >
         &larr; Back to Menu
       </button>
 
       {/* Bottom rasta stripe decoration */}
       <div className="rasta-stripe-bar fixed bottom-0 left-0 right-0 flex h-2 z-50">
-        <div className="rasta-segment flex-1 bg-[#006B3F] origin-bottom" />
-        <div className="rasta-segment flex-1 bg-[#FFD700] origin-bottom" />
-        <div className="rasta-segment flex-1 bg-[#CE1126] origin-bottom" />
+        <div className="rasta-segment flex-1 bg-green origin-bottom" />
+        <div className="rasta-segment flex-1 bg-gold origin-bottom" />
+        <div className="rasta-segment flex-1 bg-red origin-bottom" />
       </div>
     </div>
   );

@@ -7,8 +7,8 @@ import "tldraw/tldraw.css";
 const Tldraw = dynamic(() => import("tldraw").then((m) => m.Tldraw), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center h-full w-full bg-[#1A1A0E]">
-      <span className="text-[#D4A857] text-sm font-heading animate-pulse">Loading canvas...</span>
+    <div className="flex items-center justify-center h-full w-full bg-night">
+      <span className="text-gold-dim text-sm font-heading animate-pulse">Loading canvas...</span>
     </div>
   ),
 });
@@ -131,8 +131,8 @@ export function PieceDesigner({ onSave }: PieceDesignerProps) {
           onClick={() => handleTabSwitch("gold")}
           className={`rounded-xl px-6 py-2 font-heading text-sm font-bold transition-all cursor-pointer ${
             activeVariant === "gold"
-              ? "bg-[#FFD700] text-[#1A1A0E] shadow-[0_0_12px_rgba(255,215,0,0.3)]"
-              : "bg-[#1A1A0E] text-[#FFD700] border border-[#FFD700]/40 hover:border-[#FFD700]"
+              ? "bg-gold text-night shadow-[0_0_12px_rgba(255,215,0,0.3)]"
+              : "bg-night text-gold border border-gold/40 hover:border-gold"
           }`}
         >
           Gold Variant {hasGold ? " (drawn)" : ""}
@@ -142,8 +142,8 @@ export function PieceDesigner({ onSave }: PieceDesignerProps) {
           onClick={() => handleTabSwitch("red")}
           className={`rounded-xl px-6 py-2 font-heading text-sm font-bold transition-all cursor-pointer ${
             activeVariant === "red"
-              ? "bg-[#CE1126] text-white shadow-[0_0_12px_rgba(206,17,38,0.3)]"
-              : "bg-[#1A1A0E] text-[#CE1126] border border-[#CE1126]/40 hover:border-[#CE1126]"
+              ? "bg-red text-white shadow-[0_0_12px_rgba(206,17,38,0.3)]"
+              : "bg-night text-red border border-red/40 hover:border-red"
           }`}
         >
           Red Variant {hasRed ? " (drawn)" : ""}
@@ -166,7 +166,7 @@ export function PieceDesigner({ onSave }: PieceDesignerProps) {
 
           {/* Tldraw canvas - Gold */}
           <div
-            className="h-[400px] w-full rounded-xl overflow-hidden border border-[#8B4513]/60"
+            className="h-[400px] w-full rounded-xl overflow-hidden border border-wood/60"
             style={{
               display: activeVariant === "gold" ? "block" : "none",
             }}
@@ -180,7 +180,7 @@ export function PieceDesigner({ onSave }: PieceDesignerProps) {
 
           {/* Tldraw canvas - Red */}
           <div
-            className="h-[400px] w-full rounded-xl overflow-hidden border border-[#8B4513]/60"
+            className="h-[400px] w-full rounded-xl overflow-hidden border border-wood/60"
             style={{
               display: activeVariant === "red" ? "block" : "none",
             }}
@@ -195,7 +195,7 @@ export function PieceDesigner({ onSave }: PieceDesignerProps) {
 
         {/* Preview section */}
         <div className="flex flex-col gap-4">
-          <p className="text-[#D4A857] text-xs font-heading tracking-wider uppercase">
+          <p className="text-gold-dim text-xs font-heading tracking-wider uppercase">
             Preview at Game Sizes
           </p>
 
@@ -222,14 +222,14 @@ export function PieceDesigner({ onSave }: PieceDesignerProps) {
                     />
                   ) : (
                     <span
-                      className="text-[#D4A857]/30"
+                      className="text-gold-dim/30"
                       style={{ fontSize: size * 0.4 }}
                     >
                       ?
                     </span>
                   )}
                 </div>
-                <span className="text-[#D4A857]/50 text-xs font-heading">
+                <span className="text-gold-dim/50 text-xs font-heading">
                   {size}px
                 </span>
               </div>
@@ -240,17 +240,17 @@ export function PieceDesigner({ onSave }: PieceDesignerProps) {
           <div className="mt-4 flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <div
-                className={`w-2 h-2 rounded-full ${hasGold ? "bg-[#006B3F]" : "bg-[#D4A857]/30"}`}
+                className={`w-2 h-2 rounded-full ${hasGold ? "bg-green" : "bg-gold-dim/30"}`}
               />
-              <span className="text-[#D4A857] text-xs font-heading">
+              <span className="text-gold-dim text-xs font-heading">
                 Gold variant {hasGold ? "ready" : "not drawn"}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <div
-                className={`w-2 h-2 rounded-full ${hasRed ? "bg-[#006B3F]" : "bg-[#D4A857]/30"}`}
+                className={`w-2 h-2 rounded-full ${hasRed ? "bg-green" : "bg-gold-dim/30"}`}
               />
-              <span className="text-[#D4A857] text-xs font-heading">
+              <span className="text-gold-dim text-xs font-heading">
                 Red variant {hasRed ? "ready" : "not drawn"}
               </span>
             </div>
@@ -260,7 +260,7 @@ export function PieceDesigner({ onSave }: PieceDesignerProps) {
             type="button"
             onClick={handleSave}
             disabled={!hasGold || !hasRed}
-            className="mt-2 rounded-2xl wood-btn wood-btn-green px-8 py-3 text-lg font-bold text-[#FFD700] shadow-lg interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-heading hover:shadow-[0_0_20px_rgba(0,107,63,0.4)]"
+            className="mt-2 rounded-2xl wood-btn wood-btn-green px-8 py-3 text-lg font-bold text-gold shadow-lg interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-heading hover:shadow-[0_0_20px_rgba(0,107,63,0.4)]"
           >
             Save Piece
           </button>

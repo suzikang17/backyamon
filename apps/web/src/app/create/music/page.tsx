@@ -300,24 +300,24 @@ export default function MusicUploadPage() {
     <div className="animated-bg flex min-h-screen flex-col items-center px-4 py-16">
       {/* Rasta stripe decoration - top */}
       <div className="rasta-stripe-bar fixed top-0 left-0 right-0 flex h-2 z-50">
-        <div className="rasta-segment flex-1 bg-[#006B3F]" />
-        <div className="rasta-segment flex-1 bg-[#FFD700]" />
-        <div className="rasta-segment flex-1 bg-[#CE1126]" />
+        <div className="rasta-segment flex-1 bg-green" />
+        <div className="rasta-segment flex-1 bg-gold" />
+        <div className="rasta-segment flex-1 bg-red" />
       </div>
 
       {/* Title */}
-      <h1 className="title-glow font-spice text-3xl sm:text-5xl text-[#FFD700] mb-2 tracking-wide">
+      <h1 className="title-glow font-spice text-3xl sm:text-5xl text-gold mb-2 tracking-wide">
         Upload Music
       </h1>
-      <p className="text-[#D4A857] text-sm mb-8 font-heading">
+      <p className="text-gold-dim text-sm mb-8 font-heading">
         Add your own riddims to the board
       </p>
 
       {/* Connection status */}
       {status === "connecting" && (
         <div className="flex items-center gap-2 mb-6">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#FFD700] animate-pulse" />
-          <span className="text-[#D4A857] text-sm font-heading">
+          <div className="w-2.5 h-2.5 rounded-full bg-gold animate-pulse" />
+          <span className="text-gold-dim text-sm font-heading">
             Connecting to server...
           </span>
         </div>
@@ -325,23 +325,23 @@ export default function MusicUploadPage() {
 
       {/* Error message */}
       {status === "error" && errorMessage && (
-        <div className="bg-[#CE1126]/20 border border-[#CE1126] rounded-xl px-6 py-3 mb-6 max-w-md text-center">
-          <p className="text-[#CE1126] text-sm font-heading">{errorMessage}</p>
+        <div className="bg-red/20 border border-red rounded-xl px-6 py-3 mb-6 max-w-md text-center">
+          <p className="text-red text-sm font-heading">{errorMessage}</p>
         </div>
       )}
 
       {/* Success message */}
       {status === "saved" && (
         <div className="flex flex-col items-center gap-4 mb-6">
-          <div className="bg-[#006B3F]/20 border border-[#006B3F] rounded-xl px-6 py-3 max-w-md text-center">
-            <p className="text-[#006B3F] text-sm font-heading">
+          <div className="bg-green/20 border border-green rounded-xl px-6 py-3 max-w-md text-center">
+            <p className="text-green text-sm font-heading">
               Track uploaded! Bless up.
             </p>
           </div>
           <button
             type="button"
             onClick={() => router.push("/create")}
-            className="rounded-2xl wood-btn wood-btn-bamboo px-8 py-3 text-lg font-bold text-[#1A1A0E] shadow-lg interactive-btn cursor-pointer font-heading"
+            className="rounded-2xl wood-btn wood-btn-bamboo px-8 py-3 text-lg font-bold text-night shadow-lg interactive-btn cursor-pointer font-heading"
           >
             Back to Creation Station
           </button>
@@ -355,7 +355,7 @@ export default function MusicUploadPage() {
           <div className="mb-6">
             <label
               htmlFor="music-title"
-              className="text-[#D4A857] text-xs font-heading tracking-wider uppercase mb-2 block"
+              className="text-gold-dim text-xs font-heading tracking-wider uppercase mb-2 block"
             >
               Track Title
             </label>
@@ -366,7 +366,7 @@ export default function MusicUploadPage() {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Island Vibes, Reggae Sunrise..."
               maxLength={60}
-              className="w-full rounded-xl bg-[#1A1A0E] border border-[#8B4513] px-4 py-2.5 text-[#FFD700] font-heading text-base placeholder:text-[#D4A857]/30 focus:outline-none focus:border-[#FFD700] transition-colors"
+              className="w-full rounded-xl bg-night border border-wood px-4 py-2.5 text-gold font-heading text-base placeholder:text-gold-dim/30 focus:outline-none focus:border-gold transition-colors"
             />
           </div>
 
@@ -379,8 +379,8 @@ export default function MusicUploadPage() {
               onClick={() => fileInputRef.current?.click()}
               className={`relative rounded-2xl border-2 border-dashed p-10 text-center cursor-pointer transition-colors duration-200 ${
                 dragOver
-                  ? "border-[#FFD700] bg-[#FFD700]/10"
-                  : "border-[#8B4513] bg-[#1A1A0E] hover:border-[#D4A857]"
+                  ? "border-gold bg-gold/10"
+                  : "border-wood bg-night hover:border-gold-dim"
               }`}
             >
               <input
@@ -391,27 +391,27 @@ export default function MusicUploadPage() {
                 className="hidden"
               />
               <div className="text-4xl mb-3">
-                <span className="text-[#D4A857]" aria-hidden="true">
+                <span className="text-gold-dim" aria-hidden="true">
                   &#9835;
                 </span>
               </div>
-              <p className="text-[#F4E1C1] font-heading text-base mb-2">
+              <p className="text-cream font-heading text-base mb-2">
                 Drag and drop an .mp3 file here
               </p>
-              <p className="text-[#D4A857]/60 font-heading text-xs">
+              <p className="text-gold-dim/60 font-heading text-xs">
                 or click to browse &middot; Max 3 minutes &middot; Max 10 MB
               </p>
             </div>
           ) : (
             /* File preview / player */
-            <div className="rounded-2xl border-2 border-[#8B4513] bg-[#1A1A0E] p-6">
+            <div className="rounded-2xl border-2 border-wood bg-night p-6">
               {/* File info */}
               <div className="flex items-center justify-between mb-4">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[#F4E1C1] font-heading text-sm truncate">
+                  <p className="text-cream font-heading text-sm truncate">
                     {file.name}
                   </p>
-                  <p className="text-[#D4A857]/60 font-heading text-xs mt-1">
+                  <p className="text-gold-dim/60 font-heading text-xs mt-1">
                     {(file.size / 1024 / 1024).toFixed(1)} MB &middot;{" "}
                     {formatTime(duration)}
                   </p>
@@ -419,7 +419,7 @@ export default function MusicUploadPage() {
                 <button
                   type="button"
                   onClick={removeFile}
-                  className="ml-3 text-[#CE1126] hover:text-[#CE1126]/80 transition-colors text-xs font-heading cursor-pointer"
+                  className="ml-3 text-red hover:text-red/80 transition-colors text-xs font-heading cursor-pointer"
                 >
                   Remove
                 </button>
@@ -430,7 +430,7 @@ export default function MusicUploadPage() {
                 <button
                   type="button"
                   onClick={togglePlayback}
-                  className="flex-shrink-0 w-10 h-10 rounded-full bg-[#FFD700] hover:bg-[#D4A857] transition-colors flex items-center justify-center cursor-pointer"
+                  className="flex-shrink-0 w-10 h-10 rounded-full bg-gold hover:bg-gold-dim transition-colors flex items-center justify-center cursor-pointer"
                   aria-label={isPlaying ? "Pause" : "Play"}
                 >
                   {isPlaying ? (
@@ -456,7 +456,7 @@ export default function MusicUploadPage() {
                 </button>
 
                 <div className="flex-1 flex items-center gap-2">
-                  <span className="text-[#D4A857]/60 text-xs font-heading w-10 text-right">
+                  <span className="text-gold-dim/60 text-xs font-heading w-10 text-right">
                     {formatTime(currentTime)}
                   </span>
                   <input
@@ -466,9 +466,9 @@ export default function MusicUploadPage() {
                     step={0.1}
                     value={currentTime}
                     onChange={handleSeek}
-                    className="flex-1 h-1.5 rounded-full appearance-none bg-[#8B4513] cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#FFD700] [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#FFD700] [&::-moz-range-thumb]:border-0"
+                    className="flex-1 h-1.5 rounded-full appearance-none bg-wood cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gold [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-gold [&::-moz-range-thumb]:border-0"
                   />
-                  <span className="text-[#D4A857]/60 text-xs font-heading w-10">
+                  <span className="text-gold-dim/60 text-xs font-heading w-10">
                     {formatTime(duration)}
                   </span>
                 </div>
@@ -482,7 +482,7 @@ export default function MusicUploadPage() {
               type="button"
               onClick={handleSave}
               disabled={!file || !title.trim() || status === "saving"}
-              className="rounded-2xl wood-btn wood-btn-bamboo px-10 py-3 text-lg font-bold text-[#1A1A0E] shadow-lg interactive-btn cursor-pointer font-heading disabled:opacity-40 disabled:cursor-not-allowed"
+              className="rounded-2xl wood-btn wood-btn-bamboo px-10 py-3 text-lg font-bold text-night shadow-lg interactive-btn cursor-pointer font-heading disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {status === "saving" ? "Uploading..." : "Upload Track"}
             </button>
@@ -491,8 +491,8 @@ export default function MusicUploadPage() {
           {/* Saving indicator */}
           {status === "saving" && (
             <div className="flex items-center justify-center gap-2 mt-4">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#FFD700] animate-pulse" />
-              <span className="text-[#D4A857] text-sm font-heading">
+              <div className="w-2.5 h-2.5 rounded-full bg-gold animate-pulse" />
+              <span className="text-gold-dim text-sm font-heading">
                 Uploading...
               </span>
             </div>
@@ -503,16 +503,16 @@ export default function MusicUploadPage() {
       {/* Back link */}
       <Link
         href="/create"
-        className="mt-10 text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-lg font-heading interactive-btn"
+        className="mt-10 text-gold-dim hover:text-gold transition-colors duration-200 text-lg font-heading interactive-btn"
       >
         &larr; Back to Creation Station
       </Link>
 
       {/* Rasta stripe decoration - bottom */}
       <div className="rasta-stripe-bar fixed bottom-0 left-0 right-0 flex h-2 z-50">
-        <div className="rasta-segment flex-1 bg-[#006B3F]" />
-        <div className="rasta-segment flex-1 bg-[#FFD700]" />
-        <div className="rasta-segment flex-1 bg-[#CE1126]" />
+        <div className="rasta-segment flex-1 bg-green" />
+        <div className="rasta-segment flex-1 bg-gold" />
+        <div className="rasta-segment flex-1 bg-red" />
       </div>
     </div>
   );

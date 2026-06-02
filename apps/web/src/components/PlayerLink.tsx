@@ -9,7 +9,7 @@ export function PlayerLink({ username, className }: PlayerLinkProps) {
   return (
     <Link
       href={`/player/${encodeURIComponent(username)}`}
-      className={`hover:underline cursor-pointer ${className ?? "text-[#FFD700] font-heading"}`}
+      className={`hover:underline cursor-pointer ${className ?? "text-gold font-heading"}`}
     >
       {username}
     </Link>

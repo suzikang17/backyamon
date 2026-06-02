@@ -20,6 +20,12 @@ const aiNames: Record<string, string> = {
   hard: "King Tubby",
 };
 
+const aiColors: Record<string, string> = {
+  easy: "#006B3F",
+  medium: "#FFD700",
+  hard: "#CE1126",
+};
+
 export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<GameController | null>(null);
@@ -39,6 +45,7 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
   const soundManager = useMemo(() => SoundManager.getInstance(), []);
 
   const opponentName = aiNames[difficulty] ?? "Beach Bum";
+  const accentColor = aiColors[difficulty] ?? "#FFD700";
 
   const handleRollClick = useCallback(() => {
     if (waitingForRoll && controllerRef.current) {
@@ -105,11 +112,14 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
 
       appRef.current = app;
 
-      // Style the canvas
+      // Style the canvas — positioned absolute so the tray extends below the board border
       const canvas = app.canvas as HTMLCanvasElement;
+      canvas.style.position = "absolute";
+      canvas.style.top = "0";
+      canvas.style.left = "0";
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
-      canvas.style.borderRadius = "16px";
+      canvas.style.borderRadius = "16px 16px 0 0";
       canvas.style.cursor = "default";
       container.appendChild(canvas);
 
@@ -192,11 +202,8 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
         controllerRef.current = null;
       }
       if (app) {
-        // Remove canvas from DOM before destroying
-        const canvas = app.canvas as HTMLCanvasElement;
-        if (canvas.parentNode) {
-          canvas.parentNode.removeChild(canvas);
-        }
+        const canvas = app.canvas as HTMLCanvasElement | undefined;
+        canvas?.parentNode?.removeChild(canvas);
         app.destroy(true, { children: true });
         appRef.current = null;
       }
@@ -218,24 +225,21 @@ export function GameCanvas({ difficulty, onGameOver }: GameCanvasProps) {
         soundManager={soundManager}
         showMoveArcs={showMoveArcs}
         onToggleMoveArcs={handleToggleMoveArcs}
+        title={
+          <span className="font-heading text-base sm:text-lg tracking-wide">
+            <span className="text-cream">Playing vs </span>
+            <span style={{ color: accentColor }}>{opponentName}</span>
+          </span>
+        }
+        message={message}
       >
-        {/* Canvas container — passed as children so HUD wraps around it */}
+        {/* Canvas container */}
         <div
           ref={containerRef}
-          className="w-full rounded-2xl border-2 border-[#8B4513] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
-          onClick={handleRollClick}
-          style={{ cursor: waitingForRoll ? "pointer" : "default", touchAction: "manipulation" }}
+          className="relative w-full aspect-[8/5] rounded-2xl border-2 border-wood overflow-visible shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
+          style={{ touchAction: "manipulation" }}
         />
       </GameHUD>
-
-      {/* Message bar — below the canvas, not overlapping the board */}
-      <div className="h-8 flex items-center justify-center">
-        {message && (
-          <p className="text-[#D4A857] font-heading text-xs sm:text-sm whitespace-nowrap">
-            {message}
-          </p>
-        )}
-      </div>
     </div>
   );
 }

@@ -26,19 +26,19 @@ export default function CreatePage() {
     <div className="animated-bg flex min-h-screen flex-col items-center justify-center px-4 py-16">
       {/* Rasta stripe decoration - top */}
       <div className="rasta-stripe-bar fixed top-0 left-0 right-0 flex h-2 z-50">
-        <div className="rasta-segment flex-1 bg-[#006B3F] origin-top" />
-        <div className="rasta-segment flex-1 bg-[#FFD700] origin-top" />
-        <div className="rasta-segment flex-1 bg-[#CE1126] origin-top" />
+        <div className="rasta-segment flex-1 bg-green origin-top" />
+        <div className="rasta-segment flex-1 bg-gold origin-top" />
+        <div className="rasta-segment flex-1 bg-red origin-top" />
       </div>
 
       {/* Title section */}
       <div className="text-center mb-4 animate-fade-in-up">
-        <h1 className="title-glow font-spice text-4xl sm:text-6xl md:text-7xl text-[#FFD700] tracking-wide">
+        <h1 className="title-glow font-spice text-4xl sm:text-6xl md:text-7xl text-gold tracking-wide">
           Creation Station
         </h1>
       </div>
 
-      <p className="animate-fade-in animate-delay-100 text-[#D4A857] text-lg mb-10 font-heading">
+      <p className="animate-fade-in animate-delay-100 text-gold-dim text-lg mb-10 font-heading">
         Make it yours
       </p>
 
@@ -48,7 +48,7 @@ export default function CreatePage() {
           <Link
             key={card.href}
             href={card.href}
-            className="animate-fade-in-up group rounded-2xl bg-[#2a2a1e] p-6 text-left shadow-lg game-card"
+            className="animate-fade-in-up group rounded-2xl bg-surface p-6 text-left shadow-lg game-card"
             style={{
               borderWidth: "2px",
               borderStyle: "solid",
@@ -62,7 +62,7 @@ export default function CreatePage() {
             >
               {card.title}
             </h3>
-            <p className="text-[#F4E1C1] text-sm font-heading">
+            <p className="text-cream text-sm font-heading">
               {card.description}
             </p>
             <div
@@ -77,13 +77,13 @@ export default function CreatePage() {
       <div className="flex gap-6 mt-10 animate-fade-in animate-delay-400">
         <Link
           href="/my-stuff"
-          className="text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-base font-heading interactive-btn"
+          className="text-gold-dim hover:text-gold transition-colors duration-200 text-base font-heading interactive-btn"
         >
           My Creations
         </Link>
         <Link
           href="/gallery"
-          className="text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-base font-heading interactive-btn"
+          className="text-gold-dim hover:text-gold transition-colors duration-200 text-base font-heading interactive-btn"
         >
           Gallery
         </Link>
@@ -92,16 +92,16 @@ export default function CreatePage() {
       {/* Back link */}
       <Link
         href="/"
-        className="mt-8 text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-lg min-h-[44px] flex items-center interactive-btn font-heading"
+        className="mt-8 text-gold-dim hover:text-gold transition-colors duration-200 text-lg min-h-[44px] flex items-center interactive-btn font-heading"
       >
         &larr; Back to Menu
       </Link>
 
       {/* Rasta stripe decoration - bottom */}
       <div className="rasta-stripe-bar fixed bottom-0 left-0 right-0 flex h-2 z-50">
-        <div className="rasta-segment flex-1 bg-[#006B3F] origin-bottom" />
-        <div className="rasta-segment flex-1 bg-[#FFD700] origin-bottom" />
-        <div className="rasta-segment flex-1 bg-[#CE1126] origin-bottom" />
+        <div className="rasta-segment flex-1 bg-green origin-bottom" />
+        <div className="rasta-segment flex-1 bg-gold origin-bottom" />
+        <div className="rasta-segment flex-1 bg-red origin-bottom" />
       </div>
     </div>
   );

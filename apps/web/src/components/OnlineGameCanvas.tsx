@@ -17,6 +17,7 @@ interface OnlineGameCanvasProps {
   initialState: GameState;
   opponentName: string;
   onGameOver?: (winner: Player, winType: WinType, pointsWon: number) => void;
+  title?: React.ReactNode;
 }
 
 export function OnlineGameCanvas({
@@ -26,6 +27,7 @@ export function OnlineGameCanvas({
   initialState,
   opponentName,
   onGameOver,
+  title,
 }: OnlineGameCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<OnlineGameController | null>(null);
@@ -104,11 +106,14 @@ export function OnlineGameCanvas({
 
       appRef.current = app;
 
-      // Style the canvas
+      // Style the canvas — positioned absolute so the tray extends below the board border
       const canvas = app.canvas as HTMLCanvasElement;
+      canvas.style.position = "absolute";
+      canvas.style.top = "0";
+      canvas.style.left = "0";
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
-      canvas.style.borderRadius = "16px";
+      canvas.style.borderRadius = "16px 16px 0 0";
       canvas.style.cursor = "default";
       container.appendChild(canvas);
 
@@ -189,10 +194,8 @@ export function OnlineGameCanvas({
         controllerRef.current = null;
       }
       if (app) {
-        const canvas = app.canvas as HTMLCanvasElement;
-        if (canvas.parentNode) {
-          canvas.parentNode.removeChild(canvas);
-        }
+        const canvas = app.canvas as HTMLCanvasElement | undefined;
+        canvas?.parentNode?.removeChild(canvas);
         app.destroy(true, { children: true });
         appRef.current = null;
       }
@@ -204,7 +207,7 @@ export function OnlineGameCanvas({
       {/* Opponent disconnect warning */}
       {opponentDisconnected && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50">
-          <div className="bg-[#CE1126]/90 text-white font-heading text-sm px-4 py-2 rounded-xl border border-[#CE1126] animate-pulse">
+          <div className="bg-red/90 text-white font-heading text-sm px-4 py-2 rounded-xl border border-red animate-pulse">
             Opponent disconnected - waiting for reconnect...
           </div>
         </div>
@@ -222,24 +225,16 @@ export function OnlineGameCanvas({
         soundManager={soundManager}
         showMoveArcs={showMoveArcs}
         onToggleMoveArcs={handleToggleMoveArcs}
+        title={title}
+        message={message}
       >
-        {/* Canvas container — passed as children so HUD wraps around it */}
+        {/* Canvas container */}
         <div
           ref={containerRef}
-          className="w-full rounded-2xl border-2 border-[#8B4513] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
-          onClick={handleRollClick}
-          style={{ cursor: waitingForRoll ? "pointer" : "default", touchAction: "manipulation" }}
+          className="relative w-full aspect-[8/5] rounded-2xl border-2 border-wood overflow-visible shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
+          style={{ touchAction: "manipulation" }}
         />
       </GameHUD>
-
-      {/* Message bar */}
-      <div className="h-8 flex items-center justify-center">
-        {message && (
-          <p className="text-[#D4A857] font-heading text-xs sm:text-sm whitespace-nowrap">
-            {message}
-          </p>
-        )}
-      </div>
     </div>
   );
 }

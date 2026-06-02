@@ -3,10 +3,11 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Back Ya'Mon!",
-    short_name: "Backyamon",
+    short_name: "BackYaMon",
     description: "Play backgammon with Rastafarian vibes",
     start_url: "/",
     display: "standalone",
+    orientation: "portrait-primary",
     background_color: "#1A1A0E",
     theme_color: "#1A1A0E",
     icons: [

@@ -1,7 +1,17 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand color tokens */
+  --color-night:    #1a1a0e;
+  --color-gold:     #ffd700;
+  --color-gold-dim: #d4a857;
+  --color-green:    #006b3f;
+  --color-red:      #ce1126;
+  --color-wood:     #8b4513;
+  --color-cream:    #f4e1c1;
+  --color-surface:  #2a2a1e;
 }
 
 /* Custom font utilities — reference next/font CSS variables directly
@@ -44,6 +54,7 @@
   );
   background-size: 400% 400%;
   animation: bg-gradient-shift 20s ease infinite;
+  overscroll-behavior: none;
 }
 
 /* ========== Title glow effect ========== */
@@ -188,8 +199,28 @@
   animation-delay: 0.3s;
 }
 
+.animate-delay-350 {
+  animation-delay: 0.35s;
+}
+
 .animate-delay-400 {
   animation-delay: 0.4s;
+}
+
+/* ========== Rasta loading dots (replaces animate-bounce) ========== */
+@keyframes rasta-dot-pulse {
+  0%, 80%, 100% {
+    transform: scale(0.55);
+    opacity: 0.35;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.rasta-dot {
+  animation: rasta-dot-pulse 1.4s ease-in-out infinite both;
 }
 
 /* ========== Themed loading spinner ========== */
@@ -432,9 +463,11 @@
   outline: none;
 }
 
-.interactive-btn:hover {
-  filter: brightness(1.1);
-  transform: scale(1.05);
+@media (hover: hover) {
+  .interactive-btn:hover {
+    filter: brightness(1.1);
+    transform: scale(1.05);
+  }
 }
 
 .interactive-btn:active {
@@ -452,8 +485,10 @@
   transition: all 0.2s ease;
 }
 
-.game-card:hover {
-  transform: scale(1.03);
+@media (hover: hover) {
+  .game-card:hover {
+    transform: scale(1.03);
+  }
 }
 
 .game-card:active {

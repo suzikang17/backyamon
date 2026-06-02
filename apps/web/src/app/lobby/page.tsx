@@ -241,16 +241,16 @@ export default function LobbyPage() {
   }, [usernameInput]);
 
   return (
-    <div className="animated-bg flex min-h-screen flex-col items-center justify-center px-4">
+    <div className="animated-bg flex min-h-dvh flex-col items-center justify-center px-4">
       {/* Rasta stripe decoration */}
       <div className="rasta-stripe-bar fixed top-0 left-0 right-0 flex h-2 z-50">
-        <div className="rasta-segment flex-1 bg-[#006B3F]" />
-        <div className="rasta-segment flex-1 bg-[#FFD700]" />
-        <div className="rasta-segment flex-1 bg-[#CE1126]" />
+        <div className="rasta-segment flex-1 bg-green" />
+        <div className="rasta-segment flex-1 bg-gold" />
+        <div className="rasta-segment flex-1 bg-red" />
       </div>
 
       {/* Title */}
-      <h1 className="title-glow font-display text-3xl sm:text-5xl md:text-6xl text-[#FFD700] mb-2 tracking-wide">
+      <h1 className="title-glow font-display text-3xl sm:text-5xl md:text-6xl text-gold mb-2 tracking-wide">
         Online Lobby
       </h1>
 
@@ -258,10 +258,10 @@ export default function LobbyPage() {
       <div className="flex items-center gap-2 mb-6">
         <div
           className={`w-2.5 h-2.5 rounded-full ${
-            connected ? "bg-[#006B3F]" : retryInfo || connecting ? "bg-[#FFD700] animate-pulse" : "bg-[#CE1126]"
+            connected ? "bg-green" : retryInfo || connecting ? "bg-gold animate-pulse" : "bg-red"
           }`}
         />
-        <span className="text-[#D4A857] text-sm font-heading">
+        <span className="text-gold-dim text-sm font-heading">
           {retryInfo
             ? `Server waking up... (${retryInfo.attempt}/${retryInfo.max})`
             : connecting
@@ -271,12 +271,12 @@ export default function LobbyPage() {
                 : "Disconnected"}
         </span>
         {displayName && (
-          <span className="text-[#F4E1C1] text-sm ml-1 font-heading">
-            as <span className="text-[#FFD700] font-bold font-heading">{displayName}</span>
+          <span className="text-cream text-sm ml-1 font-heading">
+            as <span className="text-gold font-bold font-heading">{displayName}</span>
             {username && !editingUsername && (
               <button
                 onClick={() => { setEditingUsername(true); setUsernameInput(""); }}
-                className="ml-1.5 text-[#D4A857]/40 hover:text-[#FFD700] text-xs cursor-pointer transition-colors"
+                className="ml-1.5 text-gold-dim/40 hover:text-gold text-xs cursor-pointer transition-colors"
                 title="Switch username"
               >
                 (switch)
@@ -289,7 +289,11 @@ export default function LobbyPage() {
       {/* Username claim / edit — compact inline */}
       {!connecting && connected && (!username || editingUsername) && (
         <div className="flex items-center gap-2 mb-6">
+          <label htmlFor="username-input" className="sr-only">
+            {username ? "Switch username" : "Pick a username"}
+          </label>
           <input
+            id="username-input"
             type="text"
             value={usernameInput}
             onChange={(e) => setUsernameInput(e.target.value)}
@@ -303,37 +307,39 @@ export default function LobbyPage() {
             }}
             placeholder={username ? "Switch username" : "Pick a username"}
             maxLength={20}
-            className="rounded-xl bg-[#1A1A0E] border border-[#8B4513] px-3 py-1.5 text-[#FFD700] font-heading text-sm text-center placeholder:text-[#D4A857]/40 focus:outline-none focus:border-[#FFD700] w-40"
+            aria-describedby={usernameError ? "username-error" : undefined}
+            aria-invalid={!!usernameError}
+            className="rounded-xl bg-night border border-wood px-3 py-1.5 text-gold font-heading text-sm text-center placeholder:text-gold-dim/40 focus:outline-none focus:border-gold w-40"
           />
           <button
             onClick={handleClaimUsername}
             disabled={claimingUsername || !usernameInput.trim()}
-            className="rounded-xl wood-btn wood-btn-green px-4 py-1.5 text-sm font-bold text-[#FFD700] interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-heading"
+            className="rounded-xl wood-btn wood-btn-green px-4 py-1.5 text-sm font-bold text-gold interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-heading"
           >
             {claimingUsername ? "..." : "Go"}
           </button>
           {editingUsername && (
             <button
               onClick={() => { setEditingUsername(false); setUsernameInput(""); setUsernameError(""); }}
-              className="text-[#D4A857]/60 hover:text-[#D4A857] text-sm font-heading cursor-pointer"
+              className="text-gold-dim/60 hover:text-gold-dim text-sm font-heading cursor-pointer"
             >
               Cancel
             </button>
           )}
           {usernameError && (
-            <span className="text-[#CE1126] text-xs font-heading">{usernameError}</span>
+            <span id="username-error" role="alert" className="text-red text-xs font-heading">{usernameError}</span>
           )}
         </div>
       )}
 
       {/* Error */}
       {error && (
-        <div className="bg-[#CE1126]/20 border border-[#CE1126] rounded-xl px-6 py-3 mb-4 max-w-md text-center flex flex-col items-center gap-2">
-          <p className="text-[#CE1126] text-sm font-heading">{error}</p>
+        <div className="bg-red/20 border border-red rounded-xl px-6 py-3 mb-4 max-w-md text-center flex flex-col items-center gap-2">
+          <p className="text-red text-sm font-heading">{error}</p>
           {!connected && !connecting && (
             <button
               onClick={handleRetry}
-              className="rounded-xl wood-btn wood-btn-green px-6 py-1.5 text-sm font-bold text-[#FFD700] interactive-btn cursor-pointer font-heading"
+              className="rounded-xl wood-btn wood-btn-green px-6 py-1.5 text-sm font-bold text-gold interactive-btn cursor-pointer font-heading"
             >
               Try Again
             </button>
@@ -350,7 +356,7 @@ export default function LobbyPage() {
               <button
                 onClick={handleQuickMatch}
                 disabled={!connected || connecting}
-                className="w-full rounded-2xl wood-btn wood-btn-green px-6 sm:px-8 py-3 sm:py-4 text-lg sm:text-xl font-bold text-[#FFD700] shadow-lg interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading hover:shadow-[0_0_20px_rgba(0,107,63,0.4)]"
+                className="w-full rounded-2xl wood-btn wood-btn-green px-6 sm:px-8 py-3 sm:py-4 text-lg sm:text-xl font-bold text-gold shadow-lg interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading hover:shadow-[0_0_20px_rgba(0,107,63,0.4)]"
               >
                 Quick Match
               </button>
@@ -358,12 +364,14 @@ export default function LobbyPage() {
               <button
                 onClick={handleCreateRoom}
                 disabled={!connected || connecting}
-                className="w-full rounded-2xl wood-btn wood-btn-bamboo px-6 sm:px-8 py-3 sm:py-4 text-lg sm:text-xl font-bold text-[#1A1A0E] shadow-lg interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading hover:shadow-[0_0_20px_rgba(212,168,87,0.4)]"
+                className="w-full rounded-2xl wood-btn wood-btn-bamboo px-6 sm:px-8 py-3 sm:py-4 text-lg sm:text-xl font-bold text-night shadow-lg interactive-btn cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-heading hover:shadow-[0_0_20px_rgba(212,168,87,0.4)]"
               >
                 Create Room
               </button>
 
+              <label htmlFor="room-name-input" className="sr-only">Custom room name (optional)</label>
               <input
+                id="room-name-input"
                 type="text"
                 value={customRoomName}
                 onChange={(e) => setCustomRoomName(e.target.value)}
@@ -372,19 +380,19 @@ export default function LobbyPage() {
                 }}
                 placeholder="custom room name (optional)"
                 maxLength={30}
-                className="w-full rounded-xl bg-[#1A1A0E]/60 border border-[#8B4513]/50 px-4 py-2 text-[#FFD700] font-heading text-sm text-center placeholder:text-[#D4A857]/30 focus:outline-none focus:border-[#D4A857] -mt-2"
+                className="w-full rounded-xl bg-night/60 border border-wood/50 px-4 py-2 text-gold font-heading text-sm text-center placeholder:text-gold-dim/30 focus:outline-none focus:border-gold-dim -mt-2"
               />
             </div>
 
             {/* Right column — open rooms */}
             <div className="flex flex-col gap-2">
-              <p className="text-[#D4A857] text-xs font-heading text-center md:text-left tracking-wider uppercase">
+              <p className="text-gold-dim text-xs font-heading text-center md:text-left tracking-wider uppercase">
                 Open Rooms
               </p>
 
               {rooms.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center rounded-xl border border-[#8B4513]/30 bg-[#1A1A0E]/40 min-h-[140px]">
-                  <p className="text-[#D4A857]/40 text-sm text-center px-4 font-heading">
+                <div className="flex-1 flex items-center justify-center rounded-xl border border-wood/30 bg-night/40 min-h-[140px]">
+                  <p className="text-gold-dim/40 text-sm text-center px-4 font-heading">
                     No rooms yet — small up yuhself and create one!
                   </p>
                 </div>
@@ -397,24 +405,24 @@ export default function LobbyPage() {
                       disabled={!connected}
                       className="
                         flex items-center justify-between
-                        rounded-xl bg-[#1A1A0E]/80 border border-[#8B4513]/60
+                        rounded-xl bg-night/80 border border-wood/60
                         px-5 py-3
                         transition-all duration-200
-                        hover:border-[#FFD700] hover:shadow-[0_0_12px_rgba(255,215,0,0.15)]
+                        hover:border-gold hover:shadow-[0_0_12px_rgba(255,215,0,0.15)]
                         active:scale-[0.98]
                         cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed
                         group
                       "
                     >
                       <div className="flex flex-col items-start gap-0.5">
-                        <span className="text-[#FFD700] font-heading text-base">
+                        <span className="text-gold font-heading text-base">
                           {room.id}
                         </span>
-                        <span className="text-[#D4A857]/60 text-xs font-heading">
+                        <span className="text-gold-dim/60 text-xs font-heading">
                           {room.hostName}
                         </span>
                       </div>
-                      <span className="text-[#006B3F] font-heading text-sm group-hover:text-[#FFD700] transition-colors">
+                      <span className="text-green font-heading text-sm group-hover:text-gold transition-colors">
                         Join &rarr;
                       </span>
                     </button>
@@ -427,19 +435,19 @@ export default function LobbyPage() {
 
         {view === "quick-match" && (
           <div className="flex flex-col items-center gap-6 py-8">
-            <div className="flex gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#006B3F] animate-bounce" style={{ animationDelay: "0ms" }} />
-              <div className="w-3 h-3 rounded-full bg-[#FFD700] animate-bounce" style={{ animationDelay: "150ms" }} />
-              <div className="w-3 h-3 rounded-full bg-[#CE1126] animate-bounce" style={{ animationDelay: "300ms" }} />
+            <div className="flex gap-2" role="status" aria-label="Searching for match">
+              <div className="w-3 h-3 rounded-full bg-green rasta-dot" style={{ animationDelay: "0ms" }} />
+              <div className="w-3 h-3 rounded-full bg-gold rasta-dot" style={{ animationDelay: "0.2s" }} />
+              <div className="w-3 h-3 rounded-full bg-red rasta-dot" style={{ animationDelay: "0.4s" }} />
             </div>
 
-            <p className="text-[#FFD700] font-heading text-2xl">
+            <p className="text-gold font-heading text-2xl">
               Mi soon come... searching!
             </p>
 
             <button
               onClick={handleCancelSearch}
-              className="rounded-2xl bg-[#3a3a2e] px-8 py-3 text-lg font-bold text-[#D4A857] shadow-lg interactive-btn cursor-pointer font-heading"
+              className="rounded-2xl bg-[#3a3a2e] px-8 py-3 text-lg font-bold text-gold-dim shadow-lg interactive-btn cursor-pointer font-heading"
             >
               Cancel
             </button>
@@ -448,30 +456,30 @@ export default function LobbyPage() {
 
         {view === "waiting" && (
           <div className="flex flex-col items-center gap-6 py-8">
-            <p className="text-[#D4A857] text-sm font-heading">
+            <p className="text-gold-dim text-sm font-heading">
               Your room is open
             </p>
 
-            <div className="bg-[#1A1A0E] border-2 border-[#FFD700] rounded-2xl px-8 py-4 shadow-[0_0_20px_rgba(255,215,0,0.15)]">
-              <p className="text-[#FFD700] font-heading text-2xl sm:text-3xl tracking-wide select-all text-center">
+            <div className="bg-night border-2 border-gold rounded-2xl px-8 py-4 shadow-[0_0_20px_rgba(255,215,0,0.15)]">
+              <p className="text-gold font-heading text-2xl sm:text-3xl tracking-wide select-all text-center">
                 {roomCode || "..."}
               </p>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="flex gap-1">
-                <div className="w-2 h-2 rounded-full bg-[#FFD700] animate-bounce" style={{ animationDelay: "0ms" }} />
-                <div className="w-2 h-2 rounded-full bg-[#FFD700] animate-bounce" style={{ animationDelay: "150ms" }} />
-                <div className="w-2 h-2 rounded-full bg-[#FFD700] animate-bounce" style={{ animationDelay: "300ms" }} />
+              <div className="flex gap-1" role="status" aria-label="Waiting for opponent">
+                <div className="w-2 h-2 rounded-full bg-gold rasta-dot" style={{ animationDelay: "0ms" }} />
+                <div className="w-2 h-2 rounded-full bg-gold rasta-dot" style={{ animationDelay: "0.2s" }} />
+                <div className="w-2 h-2 rounded-full bg-gold rasta-dot" style={{ animationDelay: "0.4s" }} />
               </div>
-              <p className="text-[#D4A857]/60 text-sm font-heading">
+              <p className="text-gold-dim/60 text-sm font-heading">
                 Mi deh yah, yuh know...
               </p>
             </div>
 
             <button
               onClick={handleCancelRoom}
-              className="rounded-2xl bg-[#3a3a2e] px-8 py-3 text-lg font-bold text-[#D4A857] shadow-lg interactive-btn cursor-pointer font-heading"
+              className="rounded-2xl bg-[#3a3a2e] px-8 py-3 text-lg font-bold text-gold-dim shadow-lg interactive-btn cursor-pointer font-heading"
             >
               Cancel
             </button>
@@ -482,11 +490,11 @@ export default function LobbyPage() {
       {/* Leaderboard */}
       {view === "lobby" && (
         <div className="w-full max-w-3xl mt-8">
-          <p className="text-[#D4A857] text-xs font-heading text-center tracking-wider uppercase mb-3">
+          <p className="text-gold-dim text-xs font-heading text-center tracking-wider uppercase mb-3">
             Leaderboard
           </p>
           {players.length === 0 ? (
-            <p className="text-[#D4A857]/40 text-sm text-center font-heading">
+            <p className="text-gold-dim/40 text-sm text-center font-heading">
               No players yet — claim a username to get listed!
             </p>
           ) : (
@@ -496,37 +504,37 @@ export default function LobbyPage() {
                 .map((p, i) => (
                   <div
                     key={p.username}
-                    className={`rounded-xl bg-[#1A1A0E]/80 border px-4 py-2.5 flex items-center gap-3 ${
+                    className={`rounded-xl bg-night/80 border px-4 py-2.5 flex items-center gap-3 ${
                       i === 0
-                        ? "border-[#FFD700]/60"
+                        ? "border-gold/60"
                         : i === 1
                           ? "border-[#C0C0C0]/40"
                           : i === 2
                             ? "border-[#CD7F32]/40"
-                            : "border-[#8B4513]/30"
+                            : "border-wood/30"
                     }`}
                   >
                     <span
                       className={`font-heading text-sm font-bold w-6 text-center ${
                         i === 0
-                          ? "text-[#FFD700]"
+                          ? "text-gold"
                           : i === 1
                             ? "text-[#C0C0C0]"
                             : i === 2
                               ? "text-[#CD7F32]"
-                              : "text-[#D4A857]/40"
+                              : "text-gold-dim/40"
                       }`}
                     >
                       {i + 1}
                     </span>
                     <PlayerLink
                       username={p.username}
-                      className="text-[#FFD700] font-heading text-sm flex-1"
+                      className="text-gold font-heading text-sm flex-1"
                     />
-                    <span className="text-[#D4A857] font-heading text-sm font-bold">
+                    <span className="text-gold-dim font-heading text-sm font-bold">
                       {p.points} pts
                     </span>
-                    <span className="text-[#D4A857]/40 font-heading text-xs w-12 text-right">
+                    <span className="text-gold-dim/40 font-heading text-xs w-12 text-right">
                       {p.wins}-{p.losses}
                     </span>
                   </div>
@@ -539,33 +547,33 @@ export default function LobbyPage() {
       {/* Recent Matches Feed */}
       {view === "lobby" && recentMatches.length > 0 && (
         <div className="w-full max-w-3xl mt-8">
-          <p className="text-[#D4A857] text-xs font-heading text-center tracking-wider uppercase mb-3">
+          <p className="text-gold-dim text-xs font-heading text-center tracking-wider uppercase mb-3">
             Recent Matches
           </p>
           <div className="flex flex-col gap-1.5">
             {recentMatches.map((m) => (
               <div
                 key={m.id}
-                className="rounded-lg bg-[#1A1A0E]/60 border border-[#8B4513]/30 px-3 py-2 flex items-center justify-center gap-2 text-sm font-heading"
+                className="rounded-lg bg-night/60 border border-wood/30 px-3 py-2 flex items-center justify-center gap-2 text-sm font-heading"
               >
                 <PlayerLink
                   username={m.winner}
-                  className="text-[#FFD700] font-heading text-sm"
+                  className="text-gold font-heading text-sm"
                 />
-                <span className="text-[#D4A857]/50">beat</span>
+                <span className="text-gold-dim/50">beat</span>
                 <PlayerLink
                   username={m.winner === m.goldPlayer ? m.redPlayer : m.goldPlayer}
-                  className="text-[#D4A857] font-heading text-sm"
+                  className="text-gold-dim font-heading text-sm"
                 />
-                <span className="text-[#D4A857]/30">&mdash;</span>
-                <span className="text-[#D4A857]/40 text-xs">
+                <span className="text-gold-dim/30">&mdash;</span>
+                <span className="text-gold-dim/40 text-xs">
                   {m.winType === "ya_mon"
                     ? "Ya Mon"
                     : m.winType === "big_ya_mon"
                       ? "Big Ya Mon"
                       : "Massive Ya Mon"}
                 </span>
-                <span className="text-[#D4A857]/40 text-xs">
+                <span className="text-gold-dim/40 text-xs">
                   {m.pointsWon} pts
                 </span>
               </div>
@@ -576,16 +584,16 @@ export default function LobbyPage() {
 
       <Link
         href="/"
-        className="mt-8 text-[#D4A857] hover:text-[#FFD700] transition-colors duration-200 text-lg font-heading"
+        className="mt-8 text-gold-dim hover:text-gold transition-colors duration-200 text-lg font-heading"
       >
         &larr; Back to Menu
       </Link>
 
       {/* Bottom rasta stripe */}
       <div className="rasta-stripe-bar fixed bottom-0 left-0 right-0 flex h-2 z-50">
-        <div className="rasta-segment flex-1 bg-[#006B3F]" />
-        <div className="rasta-segment flex-1 bg-[#FFD700]" />
-        <div className="rasta-segment flex-1 bg-[#CE1126]" />
+        <div className="rasta-segment flex-1 bg-green" />
+        <div className="rasta-segment flex-1 bg-gold" />
+        <div className="rasta-segment flex-1 bg-red" />
       </div>
     </div>
   );

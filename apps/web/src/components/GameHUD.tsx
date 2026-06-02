@@ -17,6 +17,8 @@ interface GameHUDProps {
   soundManager: SoundManager;
   showMoveArcs?: boolean;
   onToggleMoveArcs?: (show: boolean) => void;
+  title?: React.ReactNode;
+  message?: string;
   children?: React.ReactNode;
 }
 
@@ -33,6 +35,8 @@ export function GameHUD({
   soundManager,
   showMoveArcs,
   onToggleMoveArcs,
+  title,
+  message,
   children,
 }: GameHUDProps) {
   const [muted, setMuted] = useState(soundManager.isMuted());
@@ -50,12 +54,10 @@ export function GameHUD({
     setMuted(soundManager.isMuted());
   }, [soundManager]);
 
-  // Keep musicPlaying state in sync
+  // Keep musicPlaying state in sync via event listener (no polling)
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMusicPlaying(soundManager.isMusicPlaying());
-    }, 500);
-    return () => clearInterval(interval);
+    setMusicPlaying(soundManager.isMusicPlaying());
+    return soundManager.onMusicStateChange(setMusicPlaying);
   }, [soundManager]);
 
   const hasState = state !== null;
@@ -91,13 +93,13 @@ export function GameHUD({
         <PlayerBadge name={opponentName} color={opponentColor} />
         {/* Score display (match play) */}
         {state && state.matchLength > 1 && (
-          <div className="bg-[#1A1A0E]/80 rounded-lg px-3 py-1 text-xs font-heading border border-[#8B4513]">
-            <span className="text-[#D4A857]">Match to {state.matchLength}: </span>
-            <span className="text-[#FFD700]">
+          <div className="bg-night/80 rounded-lg px-3 py-1 text-xs font-heading border border-wood">
+            <span className="text-gold-dim">Match to {state.matchLength}: </span>
+            <span className="text-gold">
               {state.matchScore[playerColor]}
             </span>
-            <span className="text-[#D4A857]"> - </span>
-            <span className="text-[#CE1126]">
+            <span className="text-gold-dim"> - </span>
+            <span className="text-red">
               {state.matchScore[opponentColor]}
             </span>
           </div>
@@ -107,9 +109,8 @@ export function GameHUD({
         {/* Volume toggle */}
         <button
           onClick={(e) => { (e.target as HTMLElement).blur(); handleToggleMute(); }}
-          tabIndex={-1}
-          className="bg-[#1A1A0E]/80 hover:bg-[#1A1A0E] rounded-lg p-2 sm:p-1.5 border border-[#8B4513] transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
-          title={muted ? "Unmute" : "Mute"}
+          aria-label={muted ? "Unmute" : "Mute"}
+          className="bg-night/80 hover:bg-night rounded-lg p-2 sm:p-1.5 border border-wood transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
         >
           {muted ? <SpeakerMutedIcon /> : <SpeakerIcon />}
         </button>
@@ -123,11 +124,9 @@ export function GameHUD({
             } else {
               soundManager.startMusic();
             }
-            setMusicPlaying(!musicPlaying);
           }}
-          tabIndex={-1}
-          className="bg-[#1A1A0E]/80 hover:bg-[#1A1A0E] rounded-lg p-2 sm:p-1.5 border border-[#8B4513] transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
-          title={musicPlaying ? "Stop Music" : "Start Music"}
+          aria-label={musicPlaying ? "Stop music" : "Start music"}
+          className="bg-night/80 hover:bg-night rounded-lg p-2 sm:p-1.5 border border-wood transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
         >
           {musicPlaying ? <MusicOnIcon /> : <MusicOffIcon />}
         </button>
@@ -136,22 +135,22 @@ export function GameHUD({
           <div className="relative">
             <button
               onClick={(e) => { (e.target as HTMLElement).blur(); setSettingsOpen(!settingsOpen); }}
-              tabIndex={-1}
-              className="bg-[#1A1A0E]/80 hover:bg-[#1A1A0E] rounded-lg p-2 sm:p-1.5 border border-[#8B4513] transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
-              title="Settings"
+              aria-label="Settings"
+              aria-expanded={settingsOpen}
+              className="bg-night/80 hover:bg-night rounded-lg p-2 sm:p-1.5 border border-wood transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
               <GearIcon />
             </button>
             {settingsOpen && (
-              <div className="absolute right-0 top-full mt-1 bg-[#1A1A0E]/95 rounded-lg border border-[#8B4513] p-3 min-w-[180px] z-50 shadow-lg">
+              <div className="absolute right-0 top-full mt-1 bg-night/95 rounded-lg border border-wood p-3 min-w-[180px] z-50 shadow-lg">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={showMoveArcs ?? true}
                     onChange={(e) => onToggleMoveArcs(e.target.checked)}
-                    className="accent-[#D4A857] w-4 h-4 cursor-pointer"
+                    className="accent-gold-dim w-4 h-4 cursor-pointer"
                   />
-                  <span className="font-heading text-xs text-[#D4A857]">Show move arcs</span>
+                  <span className="font-heading text-xs text-gold-dim">Show move arcs</span>
                 </label>
               </div>
             )}
@@ -160,77 +159,68 @@ export function GameHUD({
       </div>
     </div>
 
-    {/* Board area — canvas (children) with overlay on top */}
+    {/* Title (optional) — between top HUD and board */}
+    {title && (
+      <div className="px-1 pb-1 text-center">
+        {title}
+      </div>
+    )}
+
+    {/* Board area — canvas with doubling cube indicator only */}
     <div className="relative">
       {children}
       <div className={`absolute inset-0 pointer-events-none z-10${hasState ? "" : " hidden"}`}>
-      {/* Doubling cube - small passive indicator, only visible when value > 1 */}
-      {cubeValue > 1 && (
-        <div className="absolute left-3 top-1/2 -translate-y-1/2">
-          <div className="w-8 h-8 rounded bg-[#1A1A0E]/80 border border-[#8B4513] flex items-center justify-center">
-            <span className="font-heading text-xs text-[#D4A857]">{cubeValue}x</span>
-          </div>
-        </div>
-      )}
-
-      {/* Bottom bar: undo + turn indicator / roll button */}
-      <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between px-3 pb-2">
-        <div className="flex items-center gap-2 pointer-events-auto">
-          {canUndo && onUndo && (
-            <button
-              onClick={(e) => { (e.target as HTMLElement).blur(); onUndo(); }}
-              tabIndex={-1}
-              className="
-                bg-[#1A1A0E]/80 hover:bg-[#1A1A0E]
-                text-[#D4A857] font-heading text-xs
-                px-4 py-2 rounded-lg min-h-[44px]
-                border border-[#8B4513]
-                hover:border-[#D4A857]
-                transition-all duration-150
-                cursor-pointer
-              "
-              title="Undo last move"
-            >
-              Undo
-            </button>
-          )}
-        </div>
-        {canRoll ? (
-          <button
-            onClick={(e) => {
-              (e.target as HTMLElement).blur();
-              soundManager.resumeContext();
-              onRollDice();
-            }}
-            tabIndex={-1}
-            className="
-              pointer-events-auto
-              bg-gradient-to-b from-[#D4A857] to-[#8B4513]
-              text-[#1A1A0E] font-heading text-sm
-              px-6 py-2 rounded-lg min-h-[44px]
-              border border-[#FFD700]
-              shadow-md shadow-[#FFD700]/15
-              hover:brightness-110 active:scale-95
-              transition-all duration-150
-              animate-pulse
-              cursor-pointer
-            "
-          >
-            Roll Dice
-          </button>
-        ) : (
-          <div className="bg-[#1A1A0E]/80 rounded-lg px-4 py-1.5 border border-[#8B4513]">
-            <span className="font-heading text-sm text-[#D4A857]">
-              {turnText}
-            </span>
+        {cubeValue > 1 && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2">
+            <div className="w-8 h-8 rounded bg-night/80 border border-wood flex items-center justify-center">
+              <span className="font-heading text-xs text-gold-dim">{cubeValue}x</span>
+            </div>
           </div>
         )}
       </div>
     </div>
+
+    {/* Dice tray — below board */}
+    <div className={`flex items-center justify-between px-3 pt-2 pb-1${hasState ? "" : " invisible"}`}>
+      <div>
+        {canUndo && onUndo && (
+          <button
+            onClick={(e) => { (e.target as HTMLElement).blur(); onUndo(); }}
+            aria-label="Undo last move"
+            className="bg-night/80 hover:bg-night text-gold-dim font-heading text-sm px-5 py-3 rounded-xl min-h-[52px] border border-wood hover:border-gold-dim transition-all duration-150 cursor-pointer"
+          >
+            Undo
+          </button>
+        )}
+      </div>
+      {canRoll ? (
+        <button
+          onClick={(e) => {
+            (e.target as HTMLElement).blur();
+            soundManager.resumeContext();
+            onRollDice();
+          }}
+          aria-label="Roll dice"
+          className="bg-gradient-to-b from-gold-dim to-wood text-night font-heading text-lg font-bold px-10 py-3 rounded-xl min-h-[56px] border border-gold shadow-lg shadow-gold/20 hover:brightness-110 active:scale-95 transition-all duration-150 animate-pulse cursor-pointer"
+        >
+          Roll Dice
+        </button>
+      ) : (
+        <div className="bg-night/80 rounded-xl px-5 py-2 border border-wood">
+          <span className="font-heading text-sm text-gold-dim">{turnText}</span>
+        </div>
+      )}
     </div>
 
-    {/* Bottom bar: player name — BELOW the board */}
-    <div className={`flex items-center justify-between px-1 pt-1${hasState ? "" : " invisible"}`}>
+    {/* Message */}
+    <div className="h-5 flex items-center justify-center">
+      {message && (
+        <p className="text-gold-dim font-heading text-xs whitespace-nowrap">{message}</p>
+      )}
+    </div>
+
+    {/* Bottom bar: player name */}
+    <div className={`flex items-center justify-between px-1 pt-0.5${hasState ? "" : " invisible"}`}>
       <PlayerBadge name="You" color={playerColor} />
     </div>
     </>
@@ -244,12 +234,12 @@ export function GameHUD({
 function PlayerBadge({ name, color }: { name: string; color: Player }) {
   const dotColor = color === Player.Gold ? "#FFD700" : "#CE1126";
   return (
-    <div className="flex items-center gap-2 bg-[#1A1A0E]/80 rounded-lg px-3 py-1.5 border border-[#8B4513]">
+    <div className="flex items-center gap-2 bg-night/80 rounded-lg px-3 py-1.5 border border-wood">
       <span
-        className="inline-block w-3 h-3 rounded-full border border-[#F4E1C1]/40"
+        className="inline-block w-3 h-3 rounded-full border border-cream/40"
         style={{ backgroundColor: dotColor }}
       />
-      <span className="font-heading text-sm text-[#F4E1C1]">{name}</span>
+      <span className="font-heading text-sm text-cream">{name}</span>
     </div>
   );
 }
@@ -274,18 +264,18 @@ function DoublingCube({
           transition-all duration-300
           ${
             canDouble
-              ? "border-[#FFD700] bg-gradient-to-br from-[#3a2d0a] to-[#1A1A0E] shadow-[0_0_12px_rgba(255,215,0,0.4)]"
-              : "border-[#8B4513] bg-[#1A1A0E]/90"
+              ? "border-gold bg-gradient-to-br from-[#3a2d0a] to-night shadow-[0_0_12px_rgba(255,215,0,0.4)]"
+              : "border-wood bg-night/90"
           }
         `}
       >
         <span
-          className={`${canDouble ? "text-[#FFD700]" : "text-[#D4A857]"}`}
+          className={`${canDouble ? "text-gold" : "text-gold-dim"}`}
         >
           {value}
         </span>
         {/* Amplifier knob notch indicators */}
-        <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-2 h-0.5 bg-[#8B4513] rounded-full" />
+        <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-2 h-0.5 bg-wood rounded-full" />
       </div>
 
       {/* "Turn It Up!" button */}
@@ -294,10 +284,10 @@ function DoublingCube({
           onClick={onDouble}
           className="
             pointer-events-auto
-            bg-gradient-to-b from-[#FFD700] to-[#D4A857]
-            text-[#1A1A0E] font-heading text-[10px]
+            bg-gradient-to-b from-gold to-gold-dim
+            text-night font-heading text-[10px]
             px-2 py-0.5 rounded-md
-            border border-[#8B4513]
+            border border-wood
             hover:brightness-110 active:scale-95
             transition-all duration-150
             shadow-[0_0_8px_rgba(255,215,0,0.3)]

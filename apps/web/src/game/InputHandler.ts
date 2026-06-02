@@ -48,7 +48,7 @@ export class InputHandler {
   private dieDragIndex = -1;
   private dieDragValue = 0;
   private dieDragContainer: Container | null = null;
-  private dieDragHoveredFrom: number | "bar" | null = null;
+  private dieDragHoveredTo: number | "off" | null = null;
   private dieDragHoveredPiece: Container | null = null;
   private dieMoveHandler: ((e: FederatedPointerEvent) => void) | null = null;
   private dieUpHandler: ((e: FederatedPointerEvent) => void) | null = null;
@@ -737,31 +737,46 @@ export class InputHandler {
     }
   }
 
-  private getEligiblePieceAtPosition(
+  private getDestinationAtPosition(
     x: number,
     y: number,
     dieValue: number
-  ): number | "bar" | null {
+  ): { to: number | "off"; moves: Move[] } | null {
     if (!this.state || !this.state.dice) return null;
     const player = this.state.currentPlayer;
     const remaining = this.state.dice.remaining;
-    const hitRadius = this.boardRenderer.getPieceRadius() * 1.6;
+    const pw = this.boardRenderer.getPointWidth();
+    const bounds = this.boardRenderer.getPlayAreaBounds();
+    const hitHalfW = pw * 0.6;
+    const colH = bounds.height * 0.48;
 
-    const eligibleFroms = new Set(
-      this.legalMoves
-        .filter((m) => computeDieValue(m, player, remaining) === dieValue)
-        .map((m) => m.from)
+    const eligibleMoves = this.legalMoves.filter(
+      (m) => computeDieValue(m, player, remaining) === dieValue
     );
 
-    for (const from of eligibleFroms) {
-      let pos: { x: number; y: number };
-      if (from === "bar") {
-        const b = this.boardRenderer.getBarBounds();
-        pos = { x: b.x + b.width / 2, y: b.y + b.height / 2 };
-      } else {
-        pos = this.boardRenderer.getPointPosition(from as number);
+    const destMap = new Map<string, { to: number | "off"; moves: Move[] }>();
+    for (const m of eligibleMoves) {
+      const key = String(m.to);
+      if (!destMap.has(key)) {
+        destMap.set(key, { to: m.to as number | "off", moves: [] });
       }
-      if (Math.hypot(x - pos.x, y - pos.y) < hitRadius) return from;
+      destMap.get(key)!.moves.push(m);
+    }
+
+    for (const dest of destMap.values()) {
+      if (dest.to === "off") {
+        const pos = this.boardRenderer.getBearOffPosition(player);
+        if (pos && Math.hypot(x - pos.x, y - pos.y) < this.boardRenderer.getPieceRadius() * 2.5) return dest;
+        continue;
+      }
+      const ptIdx = dest.to as number;
+      const pos = this.boardRenderer.getPointPosition(ptIdx);
+      const dir = this.boardRenderer.getPointDirection(ptIdx);
+      if (Math.abs(x - pos.x) > hitHalfW) continue;
+      // Cover the full column: base to triangle tip
+      if (dir === "up" ? (y >= pos.y - colH && y <= pos.y) : (y >= pos.y && y <= pos.y + colH)) {
+        return dest;
+      }
     }
 
     return null;
@@ -778,14 +793,14 @@ export class InputHandler {
       container.cursor = "grab";
 
       const onDieDown = (e: FederatedPointerEvent) => {
-        if (!this.enabled || container.alpha < 0.5) return; // skip used dice
+        if (!this.enabled || container.alpha < 0.5) return;
         e.stopPropagation();
 
         this.dieDragActive = true;
         this.dieDragIndex = index;
         this.dieDragValue = value;
         this.dieDragContainer = container;
-        this.dieDragHoveredFrom = null;
+        this.dieDragHoveredTo = null;
         this.dieDragHoveredPiece = null;
 
         container.zIndex = 900;
@@ -797,32 +812,42 @@ export class InputHandler {
           this.dieDragContainer.x = moveE.global.x;
           this.dieDragContainer.y = moveE.global.y;
 
-          const hitFrom = this.getEligiblePieceAtPosition(
+          const destInfo = this.getDestinationAtPosition(
             moveE.global.x,
             moveE.global.y,
             this.dieDragValue
           );
+          const newTo = destInfo?.to ?? null;
 
-          if (hitFrom !== this.dieDragHoveredFrom) {
+          if (String(newTo) !== String(this.dieDragHoveredTo)) {
             // Clear previous hover
             if (this.dieDragHoveredPiece) {
               this.dieDragHoveredPiece.scale.set(1);
               this.dieDragHoveredPiece.zIndex = 0;
               this.dieDragHoveredPiece = null;
             }
-            this.moveLineRenderer.clearHighlight();
+            this.boardRenderer.clearHighlights();
 
-            this.dieDragHoveredFrom = hitFrom;
+            this.dieDragHoveredTo = newTo;
 
-            if (hitFrom !== null) {
-              const player = this.state!.currentPlayer;
-              const piece = this.pieceRenderer.getPieceAt(hitFrom, player);
-              if (piece) {
-                this.dieDragHoveredPiece = piece;
-                piece.scale.set(1.15);
-                piece.zIndex = 800;
+            if (destInfo !== null && this.state) {
+              const player = this.state.currentPlayer;
+              // Highlight source piece for the first valid move to this destination
+              const firstMove = destInfo.moves[0];
+              if (firstMove) {
+                const piece = this.pieceRenderer.getPieceAt(firstMove.from, player);
+                if (piece) {
+                  this.dieDragHoveredPiece = piece;
+                  piece.scale.set(1.15);
+                  piece.zIndex = 800;
+                }
               }
-              this.moveLineRenderer.highlightFrom(hitFrom);
+              // Highlight the destination point
+              if (typeof destInfo.to === "number") {
+                this.boardRenderer.highlightPoints([destInfo.to]);
+              } else if (destInfo.to === "off") {
+                this.boardRenderer.highlightBearOff(player);
+              }
             }
           }
         };
@@ -833,7 +858,7 @@ export class InputHandler {
           this.app.stage.off("pointerup", this.dieUpHandler!);
           this.app.stage.off("pointerupoutside", this.dieUpHandler!);
 
-          const fromHit = this.dieDragHoveredFrom;
+          const toHit = this.dieDragHoveredTo;
 
           // Clear hover visuals
           if (this.dieDragHoveredPiece) {
@@ -841,16 +866,16 @@ export class InputHandler {
             this.dieDragHoveredPiece.zIndex = 0;
             this.dieDragHoveredPiece = null;
           }
-          this.moveLineRenderer.clearHighlight();
+          this.boardRenderer.clearHighlights();
           this.dieDragActive = false;
-          this.dieDragHoveredFrom = null;
+          this.dieDragHoveredTo = null;
 
-          if (fromHit !== null && this.state && this.state.dice) {
+          if (toHit !== null && this.state && this.state.dice) {
             const player = this.state.currentPlayer;
             const remaining = this.state.dice.remaining;
             const targetMove = this.legalMoves.find(
               (m) =>
-                m.from === fromHit &&
+                m.to === toHit &&
                 computeDieValue(m, player, remaining) === this.dieDragValue
             );
             if (targetMove) {
@@ -874,7 +899,6 @@ export class InputHandler {
       };
 
       container.on("pointerdown", onDieDown);
-      // Store cleanup reference via tag
       (container as any).__dieDragCleanup = () => {
         container.off("pointerdown", onDieDown);
         container.eventMode = "none";
@@ -885,7 +909,7 @@ export class InputHandler {
 
   disableDieDrag(): void {
     this.dieDragActive = false;
-    this.dieDragHoveredFrom = null;
+    this.dieDragHoveredTo = null;
     if (this.dieDragHoveredPiece) {
       this.dieDragHoveredPiece.scale.set(1);
       this.dieDragHoveredPiece.zIndex = 0;

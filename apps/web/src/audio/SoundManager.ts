@@ -44,6 +44,7 @@ export class SoundManager {
   private _volume = 0.5;
   private _muted = false;
   private destroyed = false;
+  private musicListeners: ((playing: boolean) => void)[] = [];
 
   private speechVoice: SpeechSynthesisVoice | null = null;
   private speechReady = false;
@@ -647,6 +648,15 @@ export class SoundManager {
   // Music API
   // ---------------------------------------------------------------------------
 
+  onMusicStateChange(cb: (playing: boolean) => void): () => void {
+    this.musicListeners.push(cb);
+    return () => { this.musicListeners = this.musicListeners.filter(l => l !== cb); };
+  }
+
+  private notifyMusicListeners(playing: boolean): void {
+    for (const cb of this.musicListeners) cb(playing);
+  }
+
   startMusic(): void {
     this.resumeContext();
     if (this.customMusic) {
@@ -657,6 +667,7 @@ export class SoundManager {
       this.music.start();
     }
     this.startAmbience();
+    this.notifyMusicListeners(true);
   }
 
   setMusicStyle(style: MusicStyle): void {
@@ -670,6 +681,7 @@ export class SoundManager {
       this.music.stop();
     }
     this.stopAmbience();
+    this.notifyMusicListeners(false);
   }
 
   updateMood(state: GameState): void {
