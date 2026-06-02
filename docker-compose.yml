@@ -32,8 +32,8 @@ services:
     ports:
       - "127.0.0.1:3001:3001"
     env_file: .env
-    # State lives in Turso (DB) + Cloudflare R2 (assets), so the container is
-    # stateless. If you instead use a LOCAL sqlite file (TURSO_DATABASE_URL=
-    # file:/data/backyamon.db), uncomment the volume below to persist it:
-    # volumes:
-    #   - ./data:/data
+    # SQLite DB file, persisted on the host so it survives container rebuilds.
+    # Requires TURSO_DATABASE_URL=file:/data/backyamon.db in .env.
+    # (Assets live in Cloudflare R2 — only the DB needs a volume.)
+    volumes:
+      - ./data:/data

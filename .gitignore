@@ -3,6 +3,10 @@ dist/
 .next/
 .turbo/
 *.db
+*.db-shm
+*.db-wal
+data/
 .env
 .env.local
 .vercel
+.gstack/
