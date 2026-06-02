@@ -86,14 +86,24 @@ docker image prune -f             # optional: clean old layers
 > `docker-compose.yml`). If you change it, you must rebuild the `web` image, not
 > just restart it.
 
-## Backups (SQLite)
+## Backups (SQLite → R2 via Litestream)
 
-The DB is a file at `./data/backyamon.db` on the VPS. With local SQLite you own
-backups — a nightly cron is enough:
+The DB is a file at `./data/backyamon.db`. The `litestream` container (in
+`docker-compose.yml`) continuously replicates it to the **`backyamon-backups`**
+R2 bucket — offsite, with point-in-time recovery. It reuses the `R2_*` creds
+from `.env`, so once those are set it just works after `docker compose up -d`.
 
+Verify it's replicating:
 ```bash
-# crontab -e
-0 4 * * *  sqlite3 /path/to/backyamon/data/backyamon.db ".backup '/path/to/backups/by-$(date +\%F).db'" && find /path/to/backups -name 'by-*.db' -mtime +14 -delete
+docker compose logs litestream        # should show "replicating to" / sync activity
 ```
 
-`.backup` is safe to run on a live DB (no need to stop the server). Keeps 14 days.
+**Restore** (on a fresh box, before starting the server):
+```bash
+docker compose run --rm litestream restore -o /data/backyamon.db /data/backyamon.db
+docker compose up -d
+```
+
+> Litestream needs the DB in WAL mode — Backyamon already uses WAL, so nothing
+> to do. If you ever drop Litestream, a simple offline alternative is a nightly
+> `sqlite3 ... ".backup ..."` cron, but that leaves backups on the same disk.

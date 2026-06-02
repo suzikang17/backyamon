@@ -1,0 +1,18 @@
+# Litestream — continuously replicates the SQLite DB to Cloudflare R2.
+# Reuses the same R2_* credentials as asset storage (from .env), but a SEPARATE
+# bucket (backyamon-backups). Gives offsite, point-in-time recoverable backups.
+#
+# Restore (on a fresh box, before starting the server):
+#   docker compose run --rm litestream restore -o /data/backyamon.db /data/backyamon.db
+
+dbs:
+  - path: /data/backyamon.db
+    replicas:
+      - type: s3
+        endpoint: https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com
+        bucket: backyamon-backups
+        path: backyamon.db
+        access-key-id: ${R2_ACCESS_KEY_ID}
+        secret-access-key: ${R2_SECRET_ACCESS_KEY}
+        region: auto
+        force-path-style: true
