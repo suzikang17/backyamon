@@ -365,7 +365,7 @@ export default function GalleryPage() {
   };
 
   return (
-    <div className="animated-bg flex min-h-dvh flex-col items-center px-4 py-16">
+    <div className="animated-bg flex min-h-dvh flex-col items-center px-4 pt-20 pb-16">
       {/* Rasta stripe decoration - top */}
       <div className="rasta-stripe-bar fixed top-0 left-0 right-0 flex h-2 z-50">
         <div className="rasta-segment flex-1 bg-green origin-top" />

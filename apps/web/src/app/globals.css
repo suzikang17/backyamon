@@ -479,6 +479,13 @@
   outline-offset: 2px;
 }
 
+/* ========== Creation Station card hover glow ========== */
+@media (hover: hover) {
+  .create-card:hover {
+    box-shadow: var(--hover-shadow, 0 0 20px rgba(255, 215, 0, 0.2));
+  }
+}
+
 /* ========== Consistent card style ========== */
 .game-card {
   border-radius: 1rem;

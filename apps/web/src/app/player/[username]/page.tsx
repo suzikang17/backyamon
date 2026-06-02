@@ -101,8 +101,15 @@ export default function PlayerProfilePage() {
   }, [fetchProfile]);
 
   return (
-    <main className="min-h-screen bg-[#2C1B0E] flex flex-col items-center px-4 py-8">
-      <div className="w-full max-w-2xl">
+    <main className="animated-bg min-h-screen flex flex-col items-center px-4 py-8">
+      {/* Rasta stripe — top */}
+      <div className="rasta-stripe-bar fixed top-0 left-0 right-0 flex h-2 z-50">
+        <div className="rasta-segment flex-1 bg-green origin-top" />
+        <div className="rasta-segment flex-1 bg-gold origin-top" />
+        <div className="rasta-segment flex-1 bg-red origin-top" />
+      </div>
+
+      <div className="w-full max-w-2xl pt-4">
         <Link
           href="/lobby"
           className="text-gold-dim/60 text-sm font-heading hover:text-gold-dim transition-colors"
@@ -111,8 +118,13 @@ export default function PlayerProfilePage() {
         </Link>
 
         {loading && (
-          <div className="mt-12 text-center">
-            <span className="text-gold-dim text-sm font-heading animate-pulse">
+          <div className="mt-12 flex flex-col items-center gap-4">
+            <div className="flex gap-2" role="status" aria-label="Loading profile">
+              <div className="w-3 h-3 rounded-full bg-green rasta-dot" style={{ animationDelay: "0ms" }} />
+              <div className="w-3 h-3 rounded-full bg-gold rasta-dot" style={{ animationDelay: "0.2s" }} />
+              <div className="w-3 h-3 rounded-full bg-red rasta-dot" style={{ animationDelay: "0.4s" }} />
+            </div>
+            <span className="text-gold-dim text-sm font-heading">
               Loading profile...
             </span>
           </div>
@@ -130,11 +142,11 @@ export default function PlayerProfilePage() {
           <>
             {/* Header */}
             <div className="mt-6 text-center">
-              <h1 className="font-heading text-4xl text-gold tracking-wide">
+              <h1 className="title-glow font-display text-4xl sm:text-5xl text-gold tracking-wide">
                 {profile.username}
               </h1>
               <p className="mt-2 font-heading text-lg text-gold-dim">
-                {profile.wins}-{profile.losses}
+                {profile.wins}W &ndash; {profile.losses}L
                 {profile.wins + profile.losses > 0 && (
                   <span className="text-gold-dim/50 ml-2">
                     ({profile.winPct}%)
@@ -163,7 +175,7 @@ export default function PlayerProfilePage() {
                         <span
                           className={`font-heading text-xs font-bold px-2 py-0.5 rounded ${
                             m.result === "win"
-                              ? "bg-green/30 text-[#00FF88]"
+                              ? "bg-green/30 text-green"
                               : "bg-red/20 text-red"
                           }`}
                         >
@@ -220,6 +232,13 @@ export default function PlayerProfilePage() {
             )}
           </>
         )}
+      </div>
+
+      {/* Rasta stripe — bottom */}
+      <div className="rasta-stripe-bar fixed bottom-0 left-0 right-0 flex h-2 z-50">
+        <div className="rasta-segment flex-1 bg-green origin-bottom" />
+        <div className="rasta-segment flex-1 bg-gold origin-bottom" />
+        <div className="rasta-segment flex-1 bg-red origin-bottom" />
       </div>
     </main>
   );

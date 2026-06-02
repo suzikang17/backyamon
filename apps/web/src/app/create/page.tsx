@@ -6,18 +6,21 @@ const cards = [
     description: "Create custom game pieces with your own style",
     href: "/create/piece",
     accent: "#FFD700",
+    hoverShadow: "0 0 24px rgba(255,215,0,0.3)",
   },
   {
     title: "Upload Sound Effect",
     description: "Add your own sounds to the game",
     href: "/create/sound",
     accent: "#006B3F",
+    hoverShadow: "0 0 24px rgba(0,107,63,0.35)",
   },
   {
     title: "Upload Music",
     description: "Bring your own riddims to the board",
     href: "/create/music",
     accent: "#CE1126",
+    hoverShadow: "0 0 24px rgba(206,17,38,0.3)",
   },
 ];
 
@@ -48,12 +51,14 @@ export default function CreatePage() {
           <Link
             key={card.href}
             href={card.href}
-            className="animate-fade-in-up group rounded-2xl bg-surface p-6 text-left shadow-lg game-card"
+            className="create-card animate-fade-in-up group rounded-2xl bg-surface p-6 text-left shadow-lg game-card"
             style={{
               borderWidth: "2px",
               borderStyle: "solid",
               borderColor: card.accent,
               animationDelay: `${(index + 1) * 0.1}s`,
+              // CSS custom property consumed by the .create-card:hover rule in globals.css
+              ["--hover-shadow" as string]: card.hoverShadow,
             }}
           >
             <h3

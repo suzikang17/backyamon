@@ -447,7 +447,7 @@ export default function LobbyPage() {
 
             <button
               onClick={handleCancelSearch}
-              className="rounded-2xl bg-[#3a3a2e] px-8 py-3 text-lg font-bold text-gold-dim shadow-lg interactive-btn cursor-pointer font-heading"
+              className="rounded-2xl bg-surface border border-wood/40 px-8 py-3 text-lg font-bold text-gold-dim shadow-lg interactive-btn cursor-pointer font-heading hover:border-gold/40 transition-colors duration-200"
             >
               Cancel
             </button>
@@ -479,7 +479,7 @@ export default function LobbyPage() {
 
             <button
               onClick={handleCancelRoom}
-              className="rounded-2xl bg-[#3a3a2e] px-8 py-3 text-lg font-bold text-gold-dim shadow-lg interactive-btn cursor-pointer font-heading"
+              className="rounded-2xl bg-surface border border-wood/40 px-8 py-3 text-lg font-bold text-gold-dim shadow-lg interactive-btn cursor-pointer font-heading hover:border-gold/40 transition-colors duration-200"
             >
               Cancel
             </button>
@@ -508,9 +508,9 @@ export default function LobbyPage() {
                       i === 0
                         ? "border-gold/60"
                         : i === 1
-                          ? "border-[#C0C0C0]/40"
+                          ? "border-cream/20"
                           : i === 2
-                            ? "border-[#CD7F32]/40"
+                            ? "border-wood/60"
                             : "border-wood/30"
                     }`}
                   >
@@ -519,9 +519,9 @@ export default function LobbyPage() {
                         i === 0
                           ? "text-gold"
                           : i === 1
-                            ? "text-[#C0C0C0]"
+                            ? "text-cream/70"
                             : i === 2
-                              ? "text-[#CD7F32]"
+                              ? "text-gold-dim"
                               : "text-gold-dim/40"
                       }`}
                     >

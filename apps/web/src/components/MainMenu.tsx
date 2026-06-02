@@ -29,6 +29,9 @@ export default function MainMenu() {
         <h1 className="title-glow font-spice text-4xl sm:text-6xl md:text-7xl lg:text-8xl text-gold tracking-wide">
           Back Ya&apos;Mon!
         </h1>
+        <p className="animate-fade-in animate-delay-100 mt-3 text-gold-dim/60 text-sm sm:text-base font-heading tracking-widest uppercase">
+          Backgammon with riddim
+        </p>
       </div>
 
       {/* Rasta divider */}

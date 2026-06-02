@@ -341,7 +341,7 @@ export default function MyStuffPage() {
   };
 
   return (
-    <div className="animated-bg flex min-h-screen flex-col items-center px-4 py-16">
+    <div className="animated-bg flex min-h-screen flex-col items-center px-4 pt-20 pb-16">
       {/* Rasta stripe decoration - top */}
       <div className="rasta-stripe-bar fixed top-0 left-0 right-0 flex h-2 z-50">
         <div className="rasta-segment flex-1 bg-green origin-top" />
@@ -410,21 +410,12 @@ export default function MyStuffPage() {
       <div className="w-full max-w-4xl">
         {loading ? (
           <div className="flex flex-col items-center gap-4 py-16">
-            <div className="flex gap-2">
-              <div
-                className="w-3 h-3 rounded-full bg-green animate-bounce"
-                style={{ animationDelay: "0ms" }}
-              />
-              <div
-                className="w-3 h-3 rounded-full bg-gold animate-bounce"
-                style={{ animationDelay: "150ms" }}
-              />
-              <div
-                className="w-3 h-3 rounded-full bg-red animate-bounce"
-                style={{ animationDelay: "300ms" }}
-              />
+            <div className="flex gap-2" role="status" aria-label="Loading your stuff">
+              <div className="w-3 h-3 rounded-full bg-green rasta-dot" style={{ animationDelay: "0ms" }} />
+              <div className="w-3 h-3 rounded-full bg-gold rasta-dot" style={{ animationDelay: "0.2s" }} />
+              <div className="w-3 h-3 rounded-full bg-red rasta-dot" style={{ animationDelay: "0.4s" }} />
             </div>
-            <p className="text-gold-dim font-heading">Loading your stuff...</p>
+            <p className="text-gold-dim font-heading" aria-hidden="true">Loading your stuff...</p>
           </div>
         ) : filteredAssets.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-16">
