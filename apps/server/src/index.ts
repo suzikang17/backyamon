@@ -46,10 +46,19 @@ import { deleteObject, getPublicUrl, getUploadUrl } from "./r2.js";
 // Map socketId -> playerId for session tracking
 const socketToPlayer = new Map<string, { playerId: string; displayName: string }>();
 
+// Comma-separated allowlist of web origins permitted to connect (browser CORS).
+// Native clients (e.g. the iOS app) don't send an Origin header, so they are
+// unaffected. Set WEB_URL on the host, e.g.:
+//   WEB_URL=https://backyamon.com,https://www.backyamon.com,https://backyamon.vercel.app
+const allowedOrigins = (process.env.WEB_URL || "http://localhost:3000")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 const httpServer = createServer();
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.WEB_URL || "http://localhost:3000",
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
   },
   pingInterval: 10_000, // 10s — check connection frequently
@@ -1165,23 +1174,33 @@ io.on("connection", (socket) => {
   );
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = parseInt(String(process.env.PORT || 3001), 10);
 
 // Track whether the database is ready
 let dbReady = false;
 
-// Start listening immediately so Render's port scan succeeds,
-// then initialize the database in the background
-httpServer.listen(PORT, () => {
-  console.log(`Backyamon server running on port ${PORT}`);
-  console.log("Initializing database...");
-  initDatabase()
-    .then(() => {
-      dbReady = true;
-      console.log("Database initialized successfully");
-    })
-    .catch((err: unknown) => {
-      console.error("Failed to initialize database:", err);
-      process.exit(1);
-    });
-});
+function startListening(port: number): void {
+  httpServer.once("error", (err: NodeJS.ErrnoException) => {
+    if (err.code === "EADDRINUSE") {
+      console.log(`Port ${port} in use, trying ${port + 1}...`);
+      startListening(port + 1);
+    } else {
+      throw err;
+    }
+  });
+  httpServer.listen(port, () => {
+    console.log(`Backyamon server running on port ${port}`);
+    console.log("Initializing database...");
+    initDatabase()
+      .then(() => {
+        dbReady = true;
+        console.log("Database initialized successfully");
+      })
+      .catch((err: unknown) => {
+        console.error("Failed to initialize database:", err);
+        process.exit(1);
+      });
+  });
+}
+
+startListening(PORT);
