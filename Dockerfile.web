@@ -1,0 +1,57 @@
+# Multi-stage build for the Next.js frontend (@backyamon/web).
+# Mirrors Dockerfile.server. Runs `next start` (serves public/ — including the
+# Serwist service worker — automatically, so the PWA works with no extra wiring).
+
+FROM node:22-alpine AS build
+
+WORKDIR /app
+
+# Copy workspace root files
+COPY package.json package-lock.json turbo.json ./
+
+# Copy only the packages needed for the web app
+COPY packages/engine/package.json packages/engine/
+COPY apps/web/package.json apps/web/
+
+# Install dependencies (incl. dev deps — needed to build: tailwind, serwist, tsc)
+RUN npm ci
+
+# Copy source
+COPY packages/engine/ packages/engine/
+COPY apps/web/ apps/web/
+
+# NEXT_PUBLIC_* vars are inlined into the client bundle at BUILD time, so the
+# server URL must be present here, not just at runtime. Same-origin by default:
+# the browser connects to backyamon.com and nginx routes /socket.io to :3001.
+ARG NEXT_PUBLIC_SERVER_URL=https://backyamon.com
+ENV NEXT_PUBLIC_SERVER_URL=$NEXT_PUBLIC_SERVER_URL
+
+# Build engine then web (also generates public/sw.js via Serwist)
+RUN npx turbo build --filter=@backyamon/web
+
+# ── Production image ──────────────────────────────────────────────────
+FROM node:22-alpine
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+COPY package.json package-lock.json turbo.json ./
+COPY packages/engine/package.json packages/engine/
+COPY apps/web/package.json apps/web/
+
+RUN npm ci --omit=dev
+
+# Engine runtime (workspace dependency)
+COPY --from=build /app/packages/engine/dist packages/engine/dist
+
+# Built web app + static assets. public/ holds the Serwist service worker.
+COPY --from=build /app/apps/web/.next apps/web/.next
+COPY --from=build /app/apps/web/public apps/web/public
+COPY --from=build /app/apps/web/next.config.ts apps/web/next.config.ts
+
+ENV PORT=3000
+EXPOSE 3000
+
+WORKDIR /app/apps/web
+CMD ["npx", "next", "start", "-p", "3000"]

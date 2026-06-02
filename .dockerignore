@@ -1,0 +1,24 @@
+# Keep the build context small and reproducible (avoids shipping 500MB+ of
+# node_modules / build output / local DBs into the image).
+**/node_modules
+**/.next
+**/dist
+.git
+.github
+.vercel
+**/.vercel
+*.tsbuildinfo
+**/*.tsbuildinfo
+*.db
+*.db-shm
+*.db-wal
+**/*.db
+**/*.db-shm
+**/*.db-wal
+.DS_Store
+**/.DS_Store
+.env
+.env.*
+!.env.example
+.serena
+.omc
