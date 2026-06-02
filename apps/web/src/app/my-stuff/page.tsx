@@ -261,6 +261,7 @@ export default function MyStuffPage() {
             <img
               src={`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(meta.svg_gold)))}`}
               alt="Piece preview"
+              loading="lazy"
               className="w-16 h-16 object-contain"
             />
           </div>

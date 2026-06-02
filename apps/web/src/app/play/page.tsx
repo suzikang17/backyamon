@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Player, type GameState, type WinType } from "@backyamon/engine";
 import { GameCanvas } from "@/components/GameCanvas";
 import { OnlineGameCanvas } from "@/components/OnlineGameCanvas";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SocketClient } from "@/multiplayer/SocketClient";
 import { PlayerLink } from "@/components/PlayerLink";
 
@@ -491,7 +492,9 @@ export default function PlayPage() {
           </div>
         }
       >
-        <PlayContent />
+        <ErrorBoundary>
+          <PlayContent />
+        </ErrorBoundary>
       </Suspense>
     </main>
   );

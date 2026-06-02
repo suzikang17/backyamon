@@ -11,6 +11,7 @@ type PageStatus = "connecting" | "ready" | "saving" | "saved" | "error";
 export default function PieceDesignerPage() {
   const router = useRouter();
   const socketRef = useRef<SocketClient | null>(null);
+  const savingRef = useRef(false);
   const [status, setStatus] = useState<PageStatus>("connecting");
   const [title, setTitle] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -42,6 +43,11 @@ export default function PieceDesignerPage() {
 
   const handleSave = useCallback(
     async (goldSvg: string, redSvg: string) => {
+      // Guard against double-submit: ignore re-entrant saves while one is
+      // already in flight (the designer's Save button stays interactive
+      // during the async request).
+      if (savingRef.current) return;
+
       const client = socketRef.current;
       if (!client) return;
 
@@ -52,6 +58,7 @@ export default function PieceDesignerPage() {
         return;
       }
 
+      savingRef.current = true;
       setStatus("saving");
       setErrorMessage("");
 
@@ -71,6 +78,8 @@ export default function PieceDesignerPage() {
           err instanceof Error ? err.message : "Failed to save piece"
         );
         setStatus("error");
+      } finally {
+        savingRef.current = false;
       }
     },
     [title]
