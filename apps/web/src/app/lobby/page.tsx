@@ -391,8 +391,8 @@ export default function LobbyPage() {
               </p>
 
               {rooms.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center rounded-xl border border-wood/30 bg-night/40 min-h-[140px]">
-                  <p className="text-gold-dim/40 text-sm text-center px-4 font-heading">
+                <div className="flex-1 flex flex-col items-center justify-center rounded-xl border border-wood/30 bg-night/40 min-h-[180px] px-6 py-8 text-center">
+                  <p className="text-gold-dim/40 text-sm font-heading leading-relaxed">
                     No rooms yet — small up yuhself and create one!
                   </p>
                 </div>

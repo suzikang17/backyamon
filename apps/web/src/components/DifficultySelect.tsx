@@ -62,13 +62,14 @@ export default function DifficultySelect({ onBack }: DifficultySelectProps) {
             onClick={() =>
               router.push(`/play?mode=ai&difficulty=${opp.difficulty}`)
             }
-            className={`animate-fade-in-up animate-delay-${(index + 1) * 100} group rounded-2xl bg-surface p-4 sm:p-6 text-left shadow-lg game-card cursor-pointer`}
+            className={`animate-fade-in-up animate-delay-${(index + 1) * 100} group rounded-2xl bg-surface p-4 sm:p-6 text-left shadow-lg game-card create-card cursor-pointer`}
             style={{
               borderWidth: "2px",
               borderStyle: "solid",
               borderColor: opp.accent,
               animationDelay: `${(index + 1) * 0.1}s`,
-            }}
+              "--hover-shadow": `0 0 24px ${opp.accentGlow}, 0 0 8px ${opp.accentGlow}`,
+            } as React.CSSProperties}
           >
             <div className="flex items-center justify-between mb-3">
               <h3

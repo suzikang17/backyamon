@@ -252,10 +252,18 @@ export default function GalleryPage() {
         );
       } catch {
         return (
-          <div className="w-full h-24 flex items-center justify-center bg-night/50 rounded-lg">
-            <span className="text-gold-dim/40 text-sm font-heading">
-              Preview unavailable
-            </span>
+          <div className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-night/50 rounded-lg">
+            {/* Checker/piece outline icon */}
+            <svg viewBox="0 0 48 48" className="w-10 h-10 text-gold-dim/30" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="24" cy="24" r="16" />
+              <circle cx="24" cy="24" r="10" />
+              <circle cx="24" cy="24" r="4" />
+              <line x1="24" y1="8" x2="24" y2="14" strokeWidth="1.5" />
+              <line x1="24" y1="34" x2="24" y2="40" strokeWidth="1.5" />
+              <line x1="8" y1="24" x2="14" y2="24" strokeWidth="1.5" />
+              <line x1="34" y1="24" x2="40" y2="24" strokeWidth="1.5" />
+            </svg>
+            <span className="text-gold-dim/35 text-xs font-heading">Preview unavailable</span>
           </div>
         );
       }
@@ -282,10 +290,13 @@ export default function GalleryPage() {
         );
       } catch {
         return (
-          <div className="w-full h-24 flex items-center justify-center bg-night/50 rounded-lg">
-            <span className="text-gold-dim/40 text-sm font-heading">
-              Audio
-            </span>
+          <div className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-night/50 rounded-lg">
+            <svg viewBox="0 0 48 48" className="w-10 h-10 text-gold-dim/30" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M16 18 L22 13 L22 35 L16 30 L9 30 L9 18 Z" strokeLinejoin="round" />
+              <path d="M27 19 Q32 24 27 29" strokeLinecap="round" />
+              <path d="M31 15 Q39 24 31 33" strokeLinecap="round" />
+            </svg>
+            <span className="text-gold-dim/35 text-xs font-heading">Sound Effect</span>
           </div>
         );
       }
@@ -312,10 +323,14 @@ export default function GalleryPage() {
         );
       } catch {
         return (
-          <div className="w-full h-24 flex items-center justify-center bg-night/50 rounded-lg">
-            <span className="text-gold-dim/40 text-sm font-heading">
-              Music
-            </span>
+          <div className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-night/50 rounded-lg">
+            <svg viewBox="0 0 48 48" className="w-10 h-10 text-gold-dim/30" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="24" cy="24" r="20" />
+              <circle cx="24" cy="24" r="13" strokeDasharray="4 3" />
+              <circle cx="24" cy="24" r="6" />
+              <circle cx="24" cy="24" r="2.5" fill="currentColor" stroke="none" />
+            </svg>
+            <span className="text-gold-dim/35 text-xs font-heading">Music</span>
           </div>
         );
       }
@@ -436,6 +451,59 @@ export default function GalleryPage() {
           </div>
         ) : filteredAssets.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-16">
+            {/* Icon depends on which tab is active */}
+            {activeTab === "music" ? (
+              /* Vinyl record */
+              <svg viewBox="0 0 80 80" className="w-20 h-20 text-gold-dim/25" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="40" cy="40" r="34" />
+                <circle cx="40" cy="40" r="22" strokeDasharray="6 4" />
+                <circle cx="40" cy="40" r="10" />
+                <circle cx="40" cy="40" r="4" fill="currentColor" stroke="none" />
+                <line x1="40" y1="6" x2="40" y2="18" strokeWidth="1.5" />
+                <line x1="66" y1="14" x2="58" y2="22" strokeWidth="1.5" />
+                <line x1="74" y1="40" x2="62" y2="40" strokeWidth="1.5" />
+              </svg>
+            ) : activeTab === "piece" ? (
+              /* Checker/game piece outline */
+              <svg viewBox="0 0 80 80" className="w-20 h-20 text-gold-dim/25" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="40" cy="40" r="28" />
+                <circle cx="40" cy="40" r="20" strokeDasharray="5 3" />
+                <circle cx="40" cy="40" r="10" />
+                <circle cx="40" cy="40" r="3" fill="currentColor" stroke="none" />
+                <ellipse cx="40" cy="40" rx="28" ry="6" strokeDasharray="3 5" opacity="0.4" />
+              </svg>
+            ) : activeTab === "sfx" ? (
+              /* Speaker / sound wave */
+              <svg viewBox="0 0 80 80" className="w-20 h-20 text-gold-dim/25" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M28 30 L38 22 L38 58 L28 50 L18 50 L18 30 Z" strokeLinejoin="round" />
+                <path d="M46 30 Q54 40 46 50" strokeLinecap="round" />
+                <path d="M52 24 Q64 40 52 56" strokeLinecap="round" />
+                <path d="M58 18 Q74 40 58 62" strokeLinecap="round" />
+              </svg>
+            ) : (
+              /* Dice / board icon for "All" tab */
+              <svg viewBox="0 0 80 80" className="w-20 h-20 text-gold-dim/25" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="12" y="12" width="26" height="26" rx="4" />
+                <circle cx="25" cy="25" r="2.5" fill="currentColor" stroke="none" />
+                <circle cx="19" cy="19" r="2" fill="currentColor" stroke="none" />
+                <circle cx="31" cy="31" r="2" fill="currentColor" stroke="none" />
+                <rect x="42" y="12" width="26" height="26" rx="4" />
+                <circle cx="49" cy="19" r="2" fill="currentColor" stroke="none" />
+                <circle cx="55" cy="25" r="2" fill="currentColor" stroke="none" />
+                <circle cx="61" cy="31" r="2" fill="currentColor" stroke="none" />
+                <rect x="12" y="42" width="26" height="26" rx="4" />
+                <circle cx="19" cy="49" r="2" fill="currentColor" stroke="none" />
+                <circle cx="25" cy="55" r="2" fill="currentColor" stroke="none" />
+                <circle cx="19" cy="61" r="2" fill="currentColor" stroke="none" />
+                <circle cx="31" cy="61" r="2" fill="currentColor" stroke="none" />
+                <rect x="42" y="42" width="26" height="26" rx="4" />
+                <circle cx="49" cy="49" r="2" fill="currentColor" stroke="none" />
+                <circle cx="61" cy="49" r="2" fill="currentColor" stroke="none" />
+                <circle cx="49" cy="61" r="2" fill="currentColor" stroke="none" />
+                <circle cx="61" cy="61" r="2" fill="currentColor" stroke="none" />
+                <circle cx="55" cy="55" r="2" fill="currentColor" stroke="none" />
+              </svg>
+            )}
             <p className="text-gold-dim/60 text-lg font-heading text-center">
               {assets.length === 0
                 ? "No published creations yet \u2014 be the first!"

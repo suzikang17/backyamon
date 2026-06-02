@@ -141,7 +141,7 @@ export default function PlayerProfilePage() {
         {profile && (
           <>
             {/* Header */}
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center animate-fade-in-up">
               <h1 className="title-glow font-display text-4xl sm:text-5xl text-gold tracking-wide">
                 {profile.username}
               </h1>
@@ -156,7 +156,7 @@ export default function PlayerProfilePage() {
             </div>
 
             {/* Recent Matches */}
-            <div className="mt-8">
+            <div className="mt-8 animate-fade-in-up animate-delay-200">
               <h2 className="text-gold-dim text-xs font-heading tracking-wider uppercase mb-3">
                 Recent Matches
               </h2>
@@ -208,7 +208,7 @@ export default function PlayerProfilePage() {
 
             {/* Head-to-Head */}
             {profile.headToHead.length > 0 && (
-              <div className="mt-8">
+              <div className="mt-8 animate-fade-in-up animate-delay-300">
                 <h2 className="text-gold-dim text-xs font-heading tracking-wider uppercase mb-3">
                   Head-to-Head
                 </h2>
