@@ -1,0 +1,21 @@
+# Host-wide Caddy stub for the VPS — reference copy.
+# Installed ONCE to /etc/caddy/Caddyfile and rarely touched again.
+# Per-site config lives in /etc/caddy/sites/*.caddy, each file deployed
+# from its own project repo (backyamon → deploy/caddy/backyamon.caddy,
+# urlovematters → its own repo, etc.). App deploys must never overwrite
+# /etc/caddy/Caddyfile itself.
+#
+# One-time install:
+#   sudo mkdir -p /etc/caddy/sites
+#   sudo cp deploy/caddy/Caddyfile.host /etc/caddy/Caddyfile
+#   sudo cp deploy/caddy/backyamon.caddy /etc/caddy/sites/
+#   (move other projects' site blocks into /etc/caddy/sites/<project>.caddy)
+#   sudo caddy validate --config /etc/caddy/Caddyfile
+#   sudo systemctl reload caddy
+
+{
+	# ACME account email (Let's Encrypt expiry notices).
+	email suzi@scaledbydesign.com
+}
+
+import /etc/caddy/sites/*.caddy

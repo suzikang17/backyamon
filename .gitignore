@@ -10,3 +10,7 @@ data/
 .env.local
 .vercel
 .gstack/
+
+# Caddy deploy config is intentionally versioned (global gitignore excludes caddy/ dirs)
+!deploy/caddy/
+!deploy/caddy/**

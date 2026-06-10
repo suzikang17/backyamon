@@ -1,0 +1,50 @@
+# Backyamon site config — versioned in the backyamon repo.
+# Deployed to /etc/caddy/sites/backyamon.caddy on the VPS; the host
+# /etc/caddy/Caddyfile imports /etc/caddy/sites/*.caddy.
+#
+# Deploy:
+#   sudo cp deploy/caddy/backyamon.caddy /etc/caddy/sites/
+#   sudo caddy validate --config /etc/caddy/Caddyfile
+#   sudo systemctl reload caddy
+
+# ── Frontend + same-origin Socket.IO (PWA) ──────────────────────────────────
+backyamon.com {
+	encode zstd gzip
+
+	# Socket.IO → backend on :3001. Caddy proxies WebSocket upgrades natively.
+	# Must precede the catch-all (handle blocks are first-match, in order).
+	handle /socket.io/* {
+		reverse_proxy 127.0.0.1:3001 {
+			header_up X-Real-IP {remote_host}
+		}
+	}
+
+	# PWA service worker: never cache, so new versions roll out immediately.
+	handle /sw.js {
+		reverse_proxy 127.0.0.1:3000 {
+			header_down Cache-Control "no-cache, no-store, must-revalidate"
+		}
+	}
+
+	# Everything else → Next.js frontend on :3000.
+	handle {
+		reverse_proxy 127.0.0.1:3000 {
+			header_up X-Real-IP {remote_host}
+		}
+	}
+}
+
+# www → apex.
+www.backyamon.com {
+	redir https://backyamon.com{uri} permanent
+}
+
+# ── API (iOS app) ────────────────────────────────────────────────────────────
+# HTTPS with Caddy auto-TLS. The iOS app connects to
+# https://api.backyamon.com (SocketClient.swift) — an http://-only block here
+# makes Caddy reject the TLS handshake and takes the whole iOS app offline.
+api.backyamon.com {
+	reverse_proxy 127.0.0.1:3001 {
+		header_up X-Real-IP {remote_host}
+	}
+}

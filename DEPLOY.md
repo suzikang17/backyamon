@@ -1,22 +1,27 @@
 # Deploying Backyamon to the VPS
 
 Everything runs on one box under `backyamon.com`: the Next.js frontend and the
-Socket.IO server as Docker containers, with host **nginx** terminating TLS and
+Socket.IO server as Docker containers, with host **Caddy** terminating TLS and
 reverse-proxying to them. Same origin → no CORS, one deploy, one domain.
 
 ```
-                         ┌─────────── VPS (host nginx) ───────────┐
+                         ┌─────────── VPS (host Caddy) ───────────┐
   backyamon.com  ──────▶ │  :443  ─┬─ /socket.io/ ─▶ server :3001  │
   www.backyamon.com ───▶ │         └─ /*           ─▶ web    :3000 │
-  api.backyamon.com ───▶ │  :443  ──────────────── ─▶ server :3001 │ (iOS app, unchanged)
+  api.backyamon.com ───▶ │  :443  ──────────────── ─▶ server :3001 │ (iOS app: HTTPS)
                          └────────────────────────────────────────┘
                           DB → SQLite (./data volume)   Assets → Cloudflare R2
 ```
 
+Caddy config is split: a host-wide stub at `/etc/caddy/Caddyfile` (installed
+once, imports `/etc/caddy/sites/*.caddy`) and per-project site files, each
+versioned in its own repo. This repo owns `deploy/caddy/backyamon.caddy`.
+**App deploys must never overwrite `/etc/caddy/Caddyfile` itself.**
+
 ## 1. DNS (Cloudflare)
 
 Add records pointing the apex + www at the VPS. Set them to **DNS only (grey
-cloud)** so certbot can issue certs and nginx serves TLS directly:
+cloud)** so Caddy can issue Let's Encrypt certs and serve TLS directly:
 
 | Type | Name | Value          | Proxy    |
 |------|------|----------------|----------|
@@ -44,22 +49,36 @@ curl -I http://127.0.0.1:3000   # frontend responds
 curl  http://127.0.0.1:3001/socket.io/?EIO=4\&transport=polling   # server handshake
 ```
 
-## 4. nginx + TLS
+## 4. Caddy + TLS
+
+One-time host setup (skip if `/etc/caddy/Caddyfile` already imports
+`/etc/caddy/sites/*.caddy`):
 
 ```bash
-sudo cp deploy/nginx/backyamon.com.conf /etc/nginx/sites-available/backyamon.com
-sudo ln -s /etc/nginx/sites-available/backyamon.com /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo certbot --nginx -d backyamon.com -d www.backyamon.com    # issues + wires TLS
-sudo systemctl reload nginx
+sudo mkdir -p /etc/caddy/sites
+sudo cp deploy/caddy/Caddyfile.host /etc/caddy/Caddyfile
 ```
+
+Deploy (or update) this project's site config:
+
+```bash
+sudo cp deploy/caddy/backyamon.caddy /etc/caddy/sites/
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+```
+
+Caddy obtains + auto-renews Let's Encrypt certs for all three hostnames — no
+certbot. `api.backyamon.com` must be a normal HTTPS site (the iOS app connects
+to `https://api.backyamon.com`); an `http://`-prefixed block makes Caddy reject
+the TLS handshake and takes the iOS app offline.
 
 ## 5. Verify (from your laptop)
 
 ```bash
 curl -I https://backyamon.com                       # 200
 curl -I https://backyamon.com/sw.js                 # 200, Cache-Control: no-cache
-curl  https://backyamon.com/socket.io/?EIO=4\&transport=polling   # 0{"sid":...}
+curl  https://backyamon.com/socket.io/?EIO=4\&transport=polling       # 0{"sid":...}
+curl  https://api.backyamon.com/socket.io/?EIO=4\&transport=polling   # 0{"sid":...} (iOS app)
 ```
 
 Then open `https://backyamon.com`, DevTools → Application → Service Workers
